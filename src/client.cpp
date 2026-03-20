@@ -1,7 +1,5 @@
 #include "tcp_client/client.hpp"
-
 #include <boost/asio.hpp>
-
 #include <utility>
 
 namespace tcp_client {
