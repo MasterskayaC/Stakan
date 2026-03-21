@@ -6,6 +6,13 @@ GraphicalUI::GraphicalUI(QWidget *parent):QMainWindow(parent){
     connect(ui.actiontest_sub,&QAction::triggered,this,&GraphicalUI::TestSubClicked);
 }
 
+int GraphicalUI::Run(int argc, char *argv[]){
+    QApplication a(argc, argv);
+    GraphicalUI graph;
+    graph.show();
+    return a.exec();
+}
+
 void GraphicalUI::TestSubClicked(){
     QString user_name = QInputDialog::getText(this,"","Input User name: ");
     QString password = QInputDialog::getText(this,"","input password :");

@@ -14,6 +14,7 @@ class GraphicalUI:public QMainWindow{
     
 public:
     GraphicalUI(QWidget *parent = nullptr);
+    static int Run(int argc, char* argv[]);
 private:
     void TestSubClicked();
     void PushButton1Clicked();
