@@ -1,0 +1,7 @@
+﻿[requires]
+libpqxx/7.7.5
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout
