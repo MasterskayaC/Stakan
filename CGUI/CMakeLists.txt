@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
-project(Stakan)
+project(gui_library)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -9,10 +9,19 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(SOURCES
-   main.cpp
-   graphicalui.cpp
+    graphicalui.cpp
 )
 
-add_executable(stakan ${SOURCES})
+set(HEADERS
+    graphicalui.h
+)
 
-target_link_libraries(stakan Qt5::Widgets)
+set(UI_FILES
+    mainwindow.ui
+)
+
+add_library(gui STATIC ${SOURCES} ${HEADERS} ${UI_FILES})
+
+target_link_libraries(gui Qt5::Widgets)
+
+target_include_directories(gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
