@@ -1,37 +1,21 @@
 #pragma once
-#include <QApplication>
 #include <QMainWindow>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QTextEdit>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QTextEdit>
+#include <QLineEdit>
 #include <QProgressBar>
-#include <QLabel>
-#include <QObject>       
-#include <QMetaObject>    
-#include <functional>  
-
-class GraphicalUI:public QObject{
+#include <QPushButton>
+#include <QVBoxLayout>
+#include"ui_mainwindow.h"
+class GraphicalUI:public QMainWindow{
     Q_OBJECT
-    QMainWindow* window;
-    QTextEdit* textDisplay;
-    QLineEdit* inputLine;
-    QProgressBar* progressBar;
+     Ui_MainWindow ui;
     
 public:
-    GraphicalUI();
-        
-    void ShowMessage(const std::string& msg);
-    
-    std::string GetUserInput(const std::string& prompt);
-    
-    void DisplayError(const std::string& error);
-    
-    void ShowProgress(int percent);
-    
-    void Clear();
+    GraphicalUI(QWidget *parent = nullptr);
+private:
+    void TestSubClicked();
+    void PushButton1Clicked();
 };
 
