@@ -8,12 +8,14 @@
 
 using SessionId = std::size_t;
 
+// Типы команд — чё вообще broadcaster'у делать-то
 enum class CommandType : uint8_t {
     SendSnapshotTo,   // отправить snapshot нашему конкретному клиенту
     SendSnapshotAll,  // отправить snapshot всем клиентикам
     SendMDUpdate,     // отправить MD Update всем
 };
 
+// Команда для broadcaster'а — тип + кому слать (если кому-то конкретному)
 struct BroadcastCommand {
     CommandType type;
     SessionId   client_id;  // только для SendSnapshotTo

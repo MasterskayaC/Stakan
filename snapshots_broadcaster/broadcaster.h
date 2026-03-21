@@ -22,6 +22,7 @@ public:
         , clients_(clients) {
     }
 
+    // Деструктор — останавливает поток при уничтожении
     ~Broadcaster() {
         stop();
     }

@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <vector>
 
+// Один уровень цены в стакане — цена и количество, ничего лишнего
 struct PriceLevel {
     uint32_t price;
     uint32_t quantity;
 };
 
+// Снэпшот стакана — бидики и аскики, весь расклад на текущий момент
 struct Snapshot {
     std::vector<PriceLevel> bids;
     std::vector<PriceLevel> asks;
