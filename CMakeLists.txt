@@ -5,8 +5,8 @@ project(TCPServer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(BOOST_ROOT "C:/include/boost_1_90_0")
-find_package(Boost REQUIRED)
+include_directories("C:/include/boost_1_90_0")
+link_directories("C:/include/boost_1_90_0/stage/lib")
 
 add_executable(TCPServer
     main.cpp
@@ -15,7 +15,8 @@ add_executable(TCPServer
     src/session.cpp
     src/tcpserver.cpp)
 
-target_include_directories(TCPServer PUBLIC ${BOOST_ROOT})
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(TCPServer ${Boost_LIBRARIES})
 
 if(WIN32)
     target_link_libraries(TCPServer ws2_32 wsock32)

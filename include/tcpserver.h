@@ -7,7 +7,7 @@
 
 using boost::asio::ip::tcp;
 
-class TCPServer {
+class TCPServer :public std::enable_shared_from_this<TCPServer> {
 public:
     TCPServer(boost::asio::io_context& io_context, unsigned short port);
     ~TCPServer();

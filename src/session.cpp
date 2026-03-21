@@ -48,7 +48,7 @@ void Session::Write() {
     }
 
     is_writing_ = true;
-    auto message = messages_queue_.front();
+    const std::string& message = messages_queue_.front();
     boost::asio::async_write(
         *socket_,
         boost::asio::buffer(message),
@@ -58,10 +58,10 @@ void Session::Write() {
 }
 
 void Session::ProcessWrite(const boost::system::error_code& error, size_t bytes_transferred) {
-    std::lock_guard<std::mutex> lock(write_mutex_);
-    messages_queue_.pop();
+    std::lock_guard<std::mutex> lock(write_mutex_);   
 
     if (!error) {
+        messages_queue_.pop();
         Write();
     } else {
         std::cout << "Write error: " << error.message() << std::endl;

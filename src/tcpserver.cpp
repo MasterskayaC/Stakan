@@ -5,6 +5,10 @@ TCPServer::TCPServer(boost::asio::io_context& io_context, unsigned short port)
     , acceptor_(io_context, tcp::endpoint(tcp::v4(), port)) {
 }
 
+TCPServer::~TCPServer() {
+    StopServer();
+}
+
 void TCPServer::StartServer() {
     do_accept();
 }
@@ -19,7 +23,7 @@ void TCPServer::do_accept() {
     auto socket = std::make_shared<tcp::socket>(io_context_);
 
     acceptor_.async_accept(*socket,
-                           boost::bind(&TCPServer::on_accept, this, socket,
+                           boost::bind(&TCPServer::on_accept, shared_from_this(), socket,
                                        boost::asio::placeholders::error));
 }
 
