@@ -20,6 +20,7 @@ public:
     GraphicalUI(const IOrderBookClient* client, QWidget *parent = nullptr);
     static int Run(int argc, char* argv[]);
     void notify();
+    void LoadConfiguration();
 private:
 
     void TestSubClicked();
