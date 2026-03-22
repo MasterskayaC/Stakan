@@ -1,5 +1,0 @@
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/exc_glass.dir
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/edit_cache.dir
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/rebuild_cache.dir
-/Users/wannabeanything/repos/Stakan/build/src/CMakeFiles/edit_cache.dir
-/Users/wannabeanything/repos/Stakan/build/src/CMakeFiles/rebuild_cache.dir
