@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/wannabeanything/repos/Stakan/build/cmake_install.cmake",
+		"/Users/wannabeanything/repos/Stakan/build/src/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

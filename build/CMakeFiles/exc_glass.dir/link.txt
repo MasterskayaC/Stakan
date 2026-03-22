@@ -1,0 +1,1 @@
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++20 -stdlib=libc++ -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/exc_glass.dir/main.cpp.o -o exc_glass  /opt/homebrew/lib/libboost_serialization.dylib
