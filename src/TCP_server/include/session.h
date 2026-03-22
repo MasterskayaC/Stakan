@@ -10,55 +10,6 @@
 #include <queue>
 
 /**
- *  Struct for de/serealization order
-*/
-
-struct OrderBinaryMessage {
-    uint8_t  messageType;
-    uint32_t price;
-    uint32_t quantity;
-    uint64_t orderId;
-
-    OrderBinaryMessage() {}
-    OrderBinaryMessage(uint8_t mt, uint32_t p, uint32_t q, uint64_t oid)
-        : messageType(mt), price(p), quantity(q), orderId(oid) {
-    }
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& messageType;
-        ar& price;
-        ar& quantity;
-        ar& orderId;
-    }
-};
-
-/**
- *  Struct for de/serealization update message
-*/
-
-struct UpdateBinaryMessage {
-    uint32_t bid_price;
-    uint32_t bid_quantity;
-    uint32_t ask_price;
-    uint32_t ask_quantity;
-
-    UpdateBinaryMessage() {}
-    UpdateBinaryMessage(uint32_t b_p, uint32_t b_q, uint32_t a_p, uint32_t a_q)
-        : bid_price(b_p), bid_quantity(b_q), ask_price(a_p), ask_quantity(a_q) {
-    }
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar& bid_price;
-        ar& bid_quantity;
-        ar& ask_price;
-        ar& ask_quantity;
-    }
-};
-
-
-/**
  *  @brief Interface session/ It's the object of a specific connection
 */
 class Session : public std::enable_shared_from_this<Session> {
@@ -112,11 +63,7 @@ private:
     */
     template <typename StructMsg>
     void SendBinaryMessage(const StructMsg& msg) { //
-        std::ostringstream archive_stream;
-        boost::archive::binary_oarchive archive(archive_stream);
-        archive << msg;
 
-        SendMsg(archive_stream.str());
     }
 
     /**
