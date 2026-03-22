@@ -7,24 +7,46 @@
 
 using boost::asio::ip::tcp;
 
+/**
+ *  @brief Interface tcp server
+*/
 class TCPServer :public std::enable_shared_from_this<TCPServer> {
 public:
     TCPServer(boost::asio::io_context& io_context, unsigned short port);
     ~TCPServer();
 
-    void StartServer(); // start server
+    /**
+     *  @brief Init socket and  do_accept
+    */
+    void StartServer();
+
+    /**
+     *  @brief Close acceptor
+    */
     void StopServer();  // stop server
 
-    void update_message(const std::string& message); // send update msg to all client
+    /**
+     *  @brief Aend update msg to all client
+     *  @param Update message
+    */
+    void update_message(const std::string& message); //
 
 private:
-    void do_accept(); // init async waiting new connection
+
+    /**
+     *  @brief Init async waiting new connection
+    */
+    void do_accept(); //
+
+    /**
+     *  @brief Set session to sessions container
+     *  @param Socket
+     *  @param Error object
+    */
     std::shared_ptr<Session> on_accept(std::shared_ptr<tcp::socket> socket,
-                   const boost::system::error_code& error); // get session to sessions container
+                   const boost::system::error_code& error); //
 
     boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;
-
-    //std::vector<std::shared_ptr<class Session>> sessions_; // change to unordered_map and do id is key ??
     mutable std::mutex sessions_mutex_;
 };
