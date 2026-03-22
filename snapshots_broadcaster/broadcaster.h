@@ -1,14 +1,14 @@
 #pragma once
 
 #include "command_queue.h"
-#include "snapshot.h"
 
 #include <thread>
 #include <atomic>
 
-// Forward declarations реализации у client list'a и в модуле OrderBook
+// Forward declarations — реализация в других модулях у других людей
 class IClientList;
 class OrderBook;
+struct Snapshot;
 
 // Broadcaster отдельный поток, получающий команды на рассылку
 // через MPSC-очередь от потока OrderBook и сетевого потока.
@@ -29,7 +29,7 @@ public:
 
     // Добавляет команду в очередь. Вызывается из других потоков
     void enqueue(BroadcastCommand cmd) {
-        queue_.push(std::move(cmd));
+        //заглушка
     }
 
     // Запускает поток-обработчик
@@ -78,12 +78,6 @@ private:
         return;
     }
 
-    // Формирует snapshot — актуальный срез стакана из order book
-    // Вызывается в потоке broadcaster, читает order book через интерфейс
-    Snapshot build_snapshot() {
-        // заглушка
-        return Snapshot{};
-    }
 
 private:
     CommandQueue        queue_;
