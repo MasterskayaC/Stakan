@@ -16,17 +16,17 @@ class Session : public std::enable_shared_from_this<Session> {
 public:
     Session(std::shared_ptr<boost::asio::ip::tcp::socket> socket);
     /**
-     *  @brief Start asynk reading
+     *  @brief Start async reading
     */
     void Start();
 
     /**
-     *  @brief Close socet and stop all operations
+     *  @brief Close socket and stop all operations
     */
     void Stop();
 
     /**
-     *  @brief Push msg to mesaages queue and start writing to stream
+     *  @brief Push msg to messages queue and start writing to stream
      *  @param Message
     */
     void SendMsg(const std::string& message);

@@ -2,11 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(TCPServer LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories("C:/include/boost_1_90_0")
-link_directories("C:/include/boost_1_90_0/stage/lib")
+find_package(Boost 1.90.0 REQUIRED COMPONENTS)
 
 add_executable(TCPServer
     main.cpp
