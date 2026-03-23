@@ -3,10 +3,10 @@
 #include <utility>
 
 int main() {
-    app::ConectionData data;
+    app::client_lib::ClientConfig conect;
 
     app::Application app(
-        std::move(data)
+        std::move(conect)
     );
     app.Run();
 }

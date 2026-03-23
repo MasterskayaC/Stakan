@@ -4,22 +4,30 @@ namespace cli {
 
 namespace detail {
 
-struct BestBidAsk {
-    std::vector<int> bid;
-    std::vector<int> ask;
-};
+/** @todo Remove this forward declaration once Snapshot is in the repo */
+struct Snapshot;
 
-void PrintBestBidAndAsk(std::ostream& output, BestBidAsk&& bid_ask) {}
+void PrintSnapshot(std::ostream& output, Snapshot&& snapshot) {}
     
 } // namespace detail
 
-CommandHandlers::CommandHandlers(menu::Menu& menu, /*net::Client& client*/
-                   std::istream& input, std::ostream& output)
-    : menu_(menu)
-    /*client_(client)*/
-    , input_(input)
-    , output_(output)
-    {}
+
+CommandHandlers::CommandHandlers(menu::Menu& menu,
+                                 std::istream& input,
+                                 std::ostream& output,
+                                 client_lib::IOrderBookClient& client)
+    : menu_(menu),
+        input_(input),
+        output_(output),
+        client_(client) {}
+
+bool CommandHandlers::Buy(std::istream& input) const {
+    return false;
+}
+
+bool CommandHandlers::Sell(std::istream& input) const {
+    return false;
+}
 
 bool CommandHandlers::Book(std::istream& input) const {
     return false;
@@ -29,11 +37,7 @@ bool CommandHandlers::Exit() const {
     return false;
 }
 
-bool CommandHandlers::Buy(std::istream& input) const {
-    return false;
-}
-
-bool CommandHandlers::Sell(std::istream& input) const {
+bool CommandHandlers::Help() const {
     return false;
 }
 
