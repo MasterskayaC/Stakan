@@ -51,19 +51,7 @@ public:
 };
 
 /**
- * @brief Concrete implementation of IClientSessionManager using an unordered_map
- *
- * Stores client sessions in a hash map keyed by client ID
+ * @brief Creates a new instance of IClientSessionManager.
+ * @return A unique pointer owning the newly created IClientSessionManager object.
  */
-class ClientSessionManager : public IClientSessionManager {
-private:
-    std::unordered_map<ClientId, SessionPtr> sessions_;
-
-public:
-    void add_session(ClientId id, SessionPtr session) override;
-    void remove_session(ClientId id) override;
-
-    SessionPtr get_session(ClientId id) const override;
-    size_t size() const override;
-    std::vector<SessionPtr> get_all_sessions() const override;
-};
+std::unique_ptr<IClientSessionManager> makeClientSessionManager();
