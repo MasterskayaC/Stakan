@@ -8,26 +8,28 @@
 
 using SessionId = std::size_t;
 
-// Типы команд — чё вообще broadcaster'у делать-то
+/// @brief Типы команд — что broadcaster должен делать.
 enum class CommandType : uint8_t {
-    SendSnapshotTo,   // отправить snapshot нашему конкретному клиенту
-    SendSnapshotAll,  // отправить snapshot всем клиентикам
-    SendMDUpdate,     // отправить MD Update всем
+    SendSnapshotTo,   ///< Отправить snapshot конкретному клиенту.
+    SendSnapshotAll,  ///< Отправить snapshot всем клиентам.
+    SendMDUpdate,     ///< Отправить MD Update всем.
 };
 
-// Команда для broadcaster'а — тип + кому слать (если кому-то конкретному)
+/// @brief Команда для broadcaster'а — тип + кому слать (если кому-то конкретному).
 struct BroadcastCommand {
     CommandType type;
-    SessionId   client_id;  // только для SendSnapshotTo
+    SessionId   client_id;  ///< Используется только для SendSnapshotTo.
 };
 
-// MPSC очередь команд с логикой поглощения
-// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до него
-// SendMDUpdate не участвует в поглощении
+/// @brief MPSC очередь команд с логикой поглощения.
+///
+/// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до него.
+/// SendMDUpdate не участвует в поглощении.
 class CommandQueue {
 public:
-    // Добавляет команду в очередь
-    // вызывается из потоков OrderBook и сетевого потока
+    /// @brief Добавляет команду в очередь.
+    ///
+    /// Вызывается из потоков OrderBook и сетевого потока.
     void push(BroadcastCommand cmd) {
         // заглушка
         // 1. lock mutex_
@@ -37,8 +39,9 @@ public:
         return;
     }
 
-    // Извлекает следующую команду из очереди
-    //  и я ее блокирую, если очередь пуста
+    /// @brief Извлекает следующую команду из очереди.
+    ///
+    /// Блокирует вызывающий поток, если очередь пуста.
     BroadcastCommand pop() {
         // заглушка
         // - lock mutex_
@@ -48,7 +51,8 @@ public:
         return BroadcastCommand{};
     }
 
-    // Неблокирующее извлечение. Возвращает nullopt, если очередь пуста
+    /// @brief Неблокирующее извлечение.
+    /// @return Команда или std::nullopt, если очередь пуста.
     std::optional<BroadcastCommand> try_pop() {
         // заглушка
         return std::nullopt;

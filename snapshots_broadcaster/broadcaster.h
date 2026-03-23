@@ -5,34 +5,36 @@
 #include <thread>
 #include <atomic>
 
-// Forward declarations — реализация в других модулях у других людей
+// Forward declarations — реализация в других модулях
 class IClientList;
 class OrderBook;
 struct Snapshot;
 
-// Broadcaster отдельный поток, получающий команды на рассылку
-// через MPSC-очередь от потока OrderBook и сетевого потока.
-// Формирует snapshot в момент обработки команды 
+/// @brief Broadcaster — отдельный поток, получающий команды на рассылку
+/// через MPSC-очередь от потока OrderBook и сетевого потока.
+///
+/// Формирует snapshot в момент обработки команды.
 class Broadcaster {
 public:
-    // order_book ссылка на order book для чтения текущего состояния стакана
-    // clients реестр подключённых TCP-клиентов (IClientList) - интерфейс client list'a
+    /// @brief Конструктор.
+    /// @param order_book Ссылка на OrderBook для чтения текущего состояния стакана.
+    /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
     Broadcaster(const OrderBook& order_book, IClientList& clients)
         : order_book_(order_book)
         , clients_(clients) {
     }
 
-    // Деструктор — останавливает поток при уничтожении
+    /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
         stop();
     }
 
-    // Добавляет команду в очередь. Вызывается из других потоков
+    /// @brief Добавляет команду в очередь. Вызывается из других потоков.
     void enqueue(BroadcastCommand cmd) {
         //заглушка
     }
 
-    // Запускает поток-обработчик
+    /// @brief Запускает поток-обработчик.
     void start() {
         // заглушка
         // running_ = true;
@@ -40,7 +42,7 @@ public:
         return;
     }
 
-    // Останавливает поток-обработчик
+    /// @brief Останавливает поток-обработчик.
     void stop() {
         // заглушка
         // running_ = false;
@@ -50,29 +52,30 @@ public:
     }
 
 private:
-    // Главный цикл обработки команд. Крутится в потоке
+    /// @brief Главный цикл обработки команд. Крутится в потоке.
     void run() {
-        // заглушечка
+        // заглушка
         // while (running_) {
         //     auto cmd = queue_.pop();
-        //     switch (cmd.type) { че то тама }
+        //     switch (cmd.type) { ... }
         // }
         return;
     }
 
-    // Отправляет snapshot конкретному клиенту
+    /// @brief Отправляет snapshot конкретному клиенту.
+    /// @param id Идентификатор сессии клиента.
     void handle_send_snapshot_to(SessionId id) {
         // заглушка
         return;
     }
 
-    // Отправляет snapshot всем подключённым клиентам
+    /// @brief Отправляет snapshot всем подключённым клиентам.
     void handle_send_snapshot_all() {
         // заглушка
         return;
     }
 
-    // Отправляет MD Update всем подключённым клиентам.
+    /// @brief Отправляет MD Update всем подключённым клиентам.
     void handle_send_md_update() {
         // заглушка
         return;
@@ -80,9 +83,9 @@ private:
 
 
 private:
-    CommandQueue        queue_;
-    const OrderBook&    order_book_;
-    IClientList&        clients_;       // интерфейс client list'a
-    std::thread         thread_;
-    std::atomic<bool>   running_{false};
+    CommandQueue        queue_;           ///< MPSC-очередь команд.
+    const OrderBook&    order_book_;      ///< Ссылка на OrderBook (только чтение).
+    IClientList&        clients_;         ///< Интерфейс реестра клиентов.
+    std::thread         thread_;          ///< Рабочий поток broadcaster'а.
+    std::atomic<bool>   running_{false};  ///< Флаг работы потока.
 };
