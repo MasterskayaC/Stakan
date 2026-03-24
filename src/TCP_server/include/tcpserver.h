@@ -23,28 +23,28 @@ public:
     /**
      *  @brief Close acceptor
     */
-    void StopServer();  // stop server
+    void StopServer();
 
     /**
      *  @brief Aend update msg to all client
      *  @param Update message
     */
-    void update_message(const std::string& message); //
+    void SendUpdateMessage(const std::string& message);
 
 private:
 
     /**
      *  @brief Init async waiting new connection
     */
-    void do_accept(); //
+    void DoAccept();
 
     /**
-     *  @brief Set session to sessions container
+     *  @brief Create socket ptr, set session to sessions container
      *  @param Socket
      *  @param Error object
     */
-    std::shared_ptr<Session> on_accept(std::shared_ptr<tcp::socket> socket,
-                   const boost::system::error_code& error); //
+    std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
+                   const boost::system::error_code& error);
 
     boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;

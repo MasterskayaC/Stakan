@@ -62,7 +62,7 @@ private:
      *  @param Order or update struct
     */
     template <typename StructMsg>
-    void SendBinaryMessage(const StructMsg& msg) { //
+    void SendBinaryMessage(const StructMsg& msg) {
 
     }
 
@@ -76,8 +76,8 @@ private:
     }
 
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
-    std::array<char, 1024> read_buffer_; // need to rework
-    std::queue<std::string> messages_queue_;
+    std::array<char, 1024> read_buffer_; //TODO (artem simanov): review & rework
+    std::queue<std::string> messages_queue_; //TODO (artem simanov): review & rework
     std::mutex write_mutex_;
     bool is_writing_ = false;
 

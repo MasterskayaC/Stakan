@@ -6,37 +6,25 @@ TCPServer::TCPServer(boost::asio::io_context& io_context, unsigned short port)
 }
 
 TCPServer::~TCPServer() {
-    StopServer();
+
 }
 
 void TCPServer::StartServer() {
-    do_accept();
 }
 
 void TCPServer::StopServer() {
-    acceptor_.close();
 
-    //need session:: Stop() for all session
 }
 
-void TCPServer::do_accept() {
-    auto socket = std::make_shared<tcp::socket>(io_context_);
+void TCPServer::DoAccept() {
 
-    acceptor_.async_accept(*socket,
-                           boost::bind(&TCPServer::on_accept, shared_from_this(), socket,
-                                       boost::asio::placeholders::error));
 }
 
-std::shared_ptr<Session> TCPServer::on_accept(std::shared_ptr<tcp::socket> socket,
+std::shared_ptr<Session> TCPServer::OnAccept(std::shared_ptr<tcp::socket> socket,
                           const boost::system::error_code& error) {
-    std::shared_ptr<Session> session;
-
-    //create session
-
-    do_accept();
-    return session;
+    return {};
 }
 
-void TCPServer::update_message(const std::string& message) {
+void TCPServer::SendUpdateMessage(const std::string& message) {
 
 }
