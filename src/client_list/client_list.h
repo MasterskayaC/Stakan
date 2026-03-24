@@ -5,9 +5,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "client_order_manager.h"
-#include "client_session_manager.h"
-
 using ClientId = uint64_t;
 using OrderId = uint64_t;
 class Session;
@@ -57,6 +54,13 @@ public:
      */
     virtual std::vector<SessionPtr> get_all_sessions() const = 0;
 
+    /**
+     * @brief Retrieves information about the client's existence
+     * @param id Client identifier
+     * @return true/false about the client's existence
+     */
+    virtual bool has_client(ClientId id) const = 0;
+
     // ---------- Order Management ----------
     /**
      * @brief Adds a bid order to a client's list
@@ -89,32 +93,40 @@ public:
     /**
      * @brief Retrieves all bid orders of a client
      * @param id Client identifier
-     * @return Vector of bid order IDs
+     * @return Vector of bid orders
      */
-    virtual std::vector<OrderId> get_bids(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<Order>> get_bids(ClientId id) const = 0;
 
     /**
      * @brief Retrieves all bid orders of a client
      * @param id Client identifier
-     * @return Vector of bid order IDs
+     * @return Vector of bid orders
      */
-    virtual const std::vector<OrderId>& get_bids_ref(ClientId id) const = 0;
+    virtual const std::vector<std::shared_ptr<Order>>& get_bids_ref(ClientId id) const = 0;
 
     /**
      * @brief Retrieves all ask orders of a client
      * @param id Client identifier
-     * @return Vector of ask order IDs
+     * @return Vector of ask orders
      */
-    virtual std::vector<OrderId> get_asks(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<Order>> get_asks(ClientId id) const = 0;
 
     /**
      * @brief Retrieves all ask orders of a client
      * @param id Client identifier
-     * @return Vector of ask order IDs
+     * @return Vector of ask orders
      */
-    virtual const std::vector<OrderId>& get_asks_ref(ClientId id) const = 0;
+    virtual const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const = 0;
 
     // ---------- Subscription Management ----------
+
+    /**
+     * @brief Retrieves information about the customer's subscription availability
+     * @param id Client identifier
+     * @return true/false about the client's subscription
+     */
+    virtual bool is_subscribed(ClientId id) const = 0;
+
     /**
      * @brief Subscribes a client to order book updates
      * @param id Client identifier
@@ -132,6 +144,12 @@ public:
      * @return Vector of client IDs
      */
     virtual std::vector<ClientId> get_subscribed_clients() const = 0;
+
+    /**
+     * @brief Retrieves all subscribed client SessionPtr
+     * @return Vector of client SessionPtr
+     */
+    virtual std::vector<SessionPtr> get_subscribed_sessions() const = 0;
 
     /**
      * @brief Broadcasts a message to all subscribed clients

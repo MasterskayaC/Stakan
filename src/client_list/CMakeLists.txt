@@ -5,8 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(client_list STATIC
-    client_order_manager.h
-    client_session_manager.h
+    client_list.cpp
     client_list.h
 )
 
