@@ -22,7 +22,7 @@ void Session::ProcessRead(const boost::system::error_code& error, size_t bytes_t
 }
 
 void Session::SendMsg(const std::string& message) {
-
+    //TODO: decide upon asyncSend
 }
 
 void Session::Write() {    
