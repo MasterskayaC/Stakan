@@ -27,16 +27,26 @@ namespace menu {
  * @endcode
  */
 
-class Menu {
+class Menu final {
 public:
     using Handler = std::function<bool(std::istream&)>;
 
     Menu(std::istream& input, std::ostream& output);
 
+    /**
+     * @brief The method adds a command and associated action
+     * @param comand      Menu command
+     * @param args        Set of command arguments
+     * @param description Brief description of the command
+     * @param handler     Handler function for the command
+     */
     void AddAction(std::string comand, 
                    std::set<std::string> args, 
                    std::string description, 
                    Handler handler);
+    /**
+     * @brief The method starts processing commands
+     */
     void Run();
 
 private:
@@ -46,6 +56,10 @@ private:
         std::string description;
     };
 
+    /**
+     * @brief The method adds a command and associated action
+     * @param input Start of user input
+     */
     [[nodiscard]] bool ParseComand(std::istream& input);
 
 private:

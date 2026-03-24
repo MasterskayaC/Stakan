@@ -13,6 +13,8 @@ void Menu::AddAction(std::string comand,
 
 void Menu::Run() {}
 
-[[nodiscard]] bool Menu::ParseComand(std::istream& input) { return false; }
+[[nodiscard]] bool Menu::ParseComand(std::istream& input) { 
+    return false; 
+}
 
 } // namespace menu

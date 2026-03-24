@@ -1,7 +1,7 @@
 #pragma once
 
 /** @todo Uncomment after client_lib_interface.hpp is added to the repo */
-// #include "client_lib_interface.hpp"
+// #include "../client_lib/client_lib_interface.hpp"
 
 namespace app {
 
@@ -13,10 +13,17 @@ struct IOrderBookClient {};
 
 } // namespace client_lib
 
-class Application {
+class Application final {
 public:
-    explicit Application(client_lib::ClientConfig&&);
+    /**
+     * @brief The constructor establishes a connection to the server
+     * @param conect right ref to connection configuration
+     */
+    explicit Application(client_lib::ClientConfig&& conect);
 
+    /**
+     * @brief The method starts the application
+     */
     void Run();
 
 private:

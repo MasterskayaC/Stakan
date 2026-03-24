@@ -7,6 +7,8 @@ namespace detail {
 /** @todo Remove this forward declaration once Snapshot is in the repo */
 struct Snapshot;
 
+/** @todo Command argument parsing functions */
+
 void PrintSnapshot(std::ostream& output, Snapshot&& snapshot) {}
     
 } // namespace detail
