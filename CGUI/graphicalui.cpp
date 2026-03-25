@@ -14,8 +14,8 @@ int GraphicalUI::Run(int argc, char *argv[]){
 }
 
 void GraphicalUI::TestSubClicked(){
-    QString user_name = QInputDialog::getText(this,"","Input User name: ");
-    QString password = QInputDialog::getText(this,"","input password :");
+    QString user_name = QInputDialog::getText(this,"","Input user name: ");
+    QString password = QInputDialog::getText(this,"","Input password : ");
 }
 
 void GraphicalUI::PushButton1Clicked(){
