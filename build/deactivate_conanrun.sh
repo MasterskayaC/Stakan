@@ -1,1 +1,0 @@
-. "/Users/wannabeanything/repos/Stakan/build/deactivate_conanrunenv-release-armv8.sh"

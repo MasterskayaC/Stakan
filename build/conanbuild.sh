@@ -1,1 +1,0 @@
-. "/Users/wannabeanything/repos/Stakan/build/conanbuildenv-release-armv8.sh"

@@ -1,7 +1,0 @@
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/exc_glass.dir
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/edit_cache.dir
-/Users/wannabeanything/repos/Stakan/build/CMakeFiles/rebuild_cache.dir
-/Users/wannabeanything/repos/Stakan/build/snapshots_broadcaster/CMakeFiles/edit_cache.dir
-/Users/wannabeanything/repos/Stakan/build/snapshots_broadcaster/CMakeFiles/rebuild_cache.dir
-/Users/wannabeanything/repos/Stakan/build/bid_ask_snaphot_interface/CMakeFiles/edit_cache.dir
-/Users/wannabeanything/repos/Stakan/build/bid_ask_snaphot_interface/CMakeFiles/rebuild_cache.dir
