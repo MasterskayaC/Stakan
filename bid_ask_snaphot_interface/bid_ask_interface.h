@@ -34,6 +34,7 @@ namespace common
         Snapshot(std::array<common::Order, topN> bids, std::array<common::Order, topN> asks);
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
+
         template<class Archive>
         void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
             ar << topBids;
