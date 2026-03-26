@@ -14,3 +14,5 @@ add_subdirectory(client_lib)
 add_subdirectory(tcp_client)
 
 add_executable(exc_glass main.cpp)
+
+add_subdirectory(tcp_client)
