@@ -9,6 +9,7 @@ add_subdirectory(snapshots_broadcaster)
 
 add_subdirectory(src/database)
 
+
 add_executable(exc_glass main.cpp)
 
 target_link_libraries(exc_glass database_lib)
