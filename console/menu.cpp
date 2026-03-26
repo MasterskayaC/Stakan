@@ -6,10 +6,13 @@ Menu::Menu(std::istream& input, std::ostream& output)
     : input_(input)
     , output_(output) {}
 
-void Menu::AddAction(std::string comand, 
-                     std::set<std::string> args, 
-                     std::string description, 
-                     Handler handler) {}
+void Menu::AddCommand(const std::string command, 
+                    const std::string description,
+                    Menu::CommandHandler handler) {}
+
+void Menu::AddArgsParser(std::string command,
+                         std::set<std::string>&& args, 
+                         Menu::ArgParser parser) {}
 
 void Menu::Run() {}
 

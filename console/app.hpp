@@ -1,14 +1,13 @@
 #pragma once
 
-/** @todo Uncomment after client_lib_interface.hpp is added to the repo */
-// #include "../client_lib/client_lib_interface.hpp"
+/** @todo Uncomment after client_lib is added to the repo */
+// #include <client_lib/client_lib_interface.hpp>
 
 namespace app {
 
 /** @todo remove the namespace when client_lib_interface.hpp appears in the repo*/
 namespace client_lib {
 
-struct ClientConfig {};
 struct IOrderBookClient {};
 
 } // namespace client_lib
@@ -16,13 +15,12 @@ struct IOrderBookClient {};
 class Application final {
 public:
     /**
-     * @brief The constructor establishes a connection to the server
-     * @param conect right ref to connection configuration
+     * @brief The constructor establishes a connection to the server.
      */
-    explicit Application(client_lib::ClientConfig&& conect);
+    explicit Application();
 
     /**
-     * @brief The method starts the application
+     * @brief The method starts the application.
      */
     void Run();
 

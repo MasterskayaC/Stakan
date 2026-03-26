@@ -1,18 +1,13 @@
 #include <iostream>
 
 #include "app.hpp"
-#include "cli.hpp"
 #include "menu.hpp"
+#include "menu_action.hpp"
 
 namespace app {
 
-Application::Application(client_lib::ClientConfig&& conect) {}
+Application::Application() {}
 
-void Application::Run() {
-    menu::Menu menu { std::cin, std::cout };
-    /** @todo Uncomment after client_lib_interface.hpp is added to the repo */
-    //cli::CommandHandlers ch{ menu, std::cin, std::cout, , client_ };
-    menu.Run();
-}
+void Application::Run() {}
 
 } // namespace app

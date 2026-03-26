@@ -8,8 +8,8 @@ add_executable(cui
     main.cpp
     app.hpp
     app.cpp
-    cli.hpp
-    cli.cpp
     menu.hpp
     menu.cpp
+    menu_action.hpp
+    menu_action.cpp
 )
