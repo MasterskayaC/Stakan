@@ -8,7 +8,7 @@ GraphicalUI::GraphicalUI(QWidget *parent):QMainWindow(parent){
 
 int GraphicalUI::Run(int argc, char *argv[]){
     QApplication a(argc, argv);
-    GraphicalUI graph;
+    GraphicalUI graph(nullptr);
     graph.show();
     return a.exec();
 }
@@ -21,3 +21,8 @@ void GraphicalUI::TestSubClicked(){
 void GraphicalUI::PushButton1Clicked(){
     QMessageBox::information(this, "Привет", "Кнопка нажата!");
 }
+
+    void OnTopOfBook(const TopLevel&){}
+    void OnError(ClientError, std::string_view){}
+    void TestSubClicked(){}
+    void PushButton1Clicked(){}
