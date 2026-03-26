@@ -1,6 +1,6 @@
 #include"graphicalui.h"
 
-GraphicalUI::GraphicalUI(QWidget *parent):QMainWindow(parent){
+GraphicalUI::GraphicalUI(const IOrderBookClient* client, QWidget *parent):QMainWindow(parent){
     ui.setupUi(this);   
     connect(ui.pushButton1,&QPushButton::clicked,this,&GraphicalUI::PushButton1Clicked);
     connect(ui.actiontest_sub,&QAction::triggered,this,&GraphicalUI::TestSubClicked);
