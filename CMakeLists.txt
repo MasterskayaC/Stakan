@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 
 project(Stakan LANGUAGES CXX)
 
@@ -9,5 +9,6 @@ add_subdirectory(snapshots_broadcaster)
 add_subdirectory(bid_ask_snaphot_interface)
 add_subdirectory(src/client_list)
 add_subdirectory(src/TCP_server)
+add_subdirectory(client_lib)
 
 add_executable(exc_glass main.cpp)
