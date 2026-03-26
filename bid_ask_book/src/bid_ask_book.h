@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vector>
 #include <chrono>
+#include <shared_mutex>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
-
+#include "bid_ask_interface.h"
 
 namespace server {
     enum class LogLevel {
@@ -15,7 +15,7 @@ namespace server {
         Warning,
         Error
     };
-
+    // первоначальная имплементация базового логгера, ToDo - перенести его в более подходящее место
     class Logger {
     public:
         static void Log(LogLevel level, const std::string& msg);
@@ -25,48 +25,31 @@ namespace server {
         static const char* ToString(LogLevel level);
     };
 
-
-    using ID = uint64_t;
-    using Price = int64_t;
-
-    enum class Side {Bid, Ask};
-
-    std::string SideToString (Side side);
-
-    // предполагается, что будем брать из Interface
-    struct Order {
-        ID id = 0;
-        Side side = Side::Ask;
-        Price price = 0;
-        int quantity = 0;
-    };
-
     class OrderBook {
     public:
-        void NewOrder(const Order& order);
-        void CancelOrder(Side side, ID order_id);
-        void ReplaceOrder(const Order& old_order, const Order& new_order);
+        //отдельный метод для каждого контейнера
+        void NewBid(common::Order order);
+        void NewAsk(common::Order order);
+        void CancelBid(common::ID order_id);
+        void CancelAsk(common::ID order_id);
+        void ReplaceBid(common::Order old_order, common::Order new_order);
+        void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-        struct Snapshot {
-            std::vector<const Order*> topBids;
-            std::vector<const Order*> topAsks;
-        };
+        [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
-        [[nodiscard]] Snapshot GetTopSnapshot(size_t topN = 20) const;
-
-        [[nodiscard]] const Order* BestBid() const;
-        [[nodiscard]] const Order* BestAsk() const;
+        [[nodiscard]] common::Order BestBid() const;
+        [[nodiscard]] common::Order BestAsk() const;
 
     private:
         struct BidComparator {
-            bool operator()(const Order& a, const Order& b) const {
+            bool operator()(const common::Order& a, const common::Order& b) const {
                 if (a.price != b.price) return a.price > b.price;
                 if (a.quantity != b.quantity) return a.quantity > b.quantity;
                 return a.id < b.id;
             }
         };
         struct AskComparator {
-            bool operator()(const Order& a, const Order& b) const {
+            bool operator()(const common::Order& a, const common::Order& b) const {
                 if (a.price != b.price) return a.price < b.price;
                 if (a.quantity != b.quantity) return a.quantity > b.quantity;
                 return a.id < b.id;
@@ -75,34 +58,38 @@ namespace server {
 
         // то же что set (сортировка по цене) + map <Id, it>, только атомарный + надежнее
         using BidContainer = boost::multi_index::multi_index_container<
-            Order,
+            common::Order,
             boost::multi_index::indexed_by<
                 // индекс по цене
                 boost::multi_index::ordered_non_unique<
-                    boost::multi_index::identity<Order>,
+                    boost::multi_index::identity<common::Order>,
                     BidComparator
                 >,
                 // индекс по id
                 boost::multi_index::hashed_unique<
-                    boost::multi_index::member<Order, ID, &Order::id>
+                    boost::multi_index::member<common::Order, common::ID, &common::Order::id>
                 >
             >
         >;
 
         using AskContainer = boost::multi_index::multi_index_container<
-            Order,
+            common::Order,
             boost::multi_index::indexed_by<
                 boost::multi_index::ordered_non_unique<
-                    boost::multi_index::identity<Order>,
+                    boost::multi_index::identity<common::Order>,
                     AskComparator
                 >,
                 boost::multi_index::hashed_unique<
-                    boost::multi_index::member<Order, ID, &Order::id>
+                    boost::multi_index::member<common::Order, common::ID, &common::Order::id>
                 >
             >
         >;
 
         BidContainer bids_;
         AskContainer asks_;
+
+        // мьютексы для потокобезопасности
+        mutable std::shared_mutex bids_mutex_;
+        mutable std::shared_mutex asks_mutex_;
     };
 }
