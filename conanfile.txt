@@ -10,11 +10,9 @@ CMakeToolchain
 [options]
 boost/*:shared=True
 
-qt/*:with_mysql=False      # MySQL (432 MB)
-qt/*:with_pgsql=False      # PostgreSQL
-qt/*:with_sqlite3=False    # SQLite
-qt/*:with_openssl=False    # OpenSSL (HTTPS)
-qt/*:with_odbc=False       # ODBC
-
-# ОТКЛЮЧАЕМ СЕТЬ
-qt/*:with_network=False    # ❌ QtNetwork модуль (HTTP, TCP, SSL)
+qt/*:with_mysql=False      
+qt/*:with_pgsql=False      
+qt/*:with_sqlite3=False    
+qt/*:with_openssl=False    
+qt/*:with_odbc=False      
+qt/*:with_network=False   
