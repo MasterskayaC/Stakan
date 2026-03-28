@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tcp_client/types.hpp"
+#include "types.hpp"
 
 #include <cstdint>
 #include <memory>

@@ -1,4 +1,4 @@
-#include "tcp_client/protocol.hpp"
+#include "../include/tcp_client/protocol.hpp"
 
 namespace tcp_client {
 

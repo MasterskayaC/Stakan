@@ -1,6 +1,7 @@
 #pragma once
 
 #include "command_queue.h"
+#include "bid_ask_interface.h"
 
 #include <thread>
 #include <atomic>
@@ -19,9 +20,8 @@ public:
     /// @brief Конструктор.
     /// @param order_book Ссылка на OrderBook для чтения текущего состояния стакана.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
-    Broadcaster(const OrderBook& order_book, IClientList& clients)
-        : order_book_(order_book)
-        , clients_(clients) {
+    Broadcaster(IClientList& clients)
+        : clients_(clients) {
     }
 
     /// @brief Деструктор — останавливает поток при уничтожении.
@@ -84,7 +84,6 @@ private:
 
 private:
     CommandQueue        queue_;           ///< MPSC-очередь команд.
-    const OrderBook&    order_book_;      ///< Ссылка на OrderBook (только чтение).
     IClientList&        clients_;         ///< Интерфейс реестра клиентов.
     std::thread         thread_;          ///< Рабочий поток broadcaster'а.
     std::atomic<bool>   running_{false};  ///< Флаг работы потока.
