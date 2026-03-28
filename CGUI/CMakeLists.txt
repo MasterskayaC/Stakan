@@ -10,6 +10,9 @@ set(HEADERS
 set(UI_FILES
     mainwindow.ui
 )
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 add_library(gui STATIC ${SOURCES} ${HEADERS} ${UI_FILES})
 
