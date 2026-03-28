@@ -6,22 +6,16 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <memory>
 
 namespace client_lib {
-
-    /**
-     * @brief Структура верхнего уровня стакана.
-     *
-     * Полное определение пока в другом коде
-     */
-    struct TopLevel;
 
     /**
      * @brief Структура snapshot-снимка состояния рынка.
      *
      * Полное определение пока в другом коде
      */
-    struct Snapshot;
+    struct Snapshot { int price; };
 
     /**
      * @brief Состояние клиентской библиотеки.
@@ -49,40 +43,17 @@ namespace client_lib {
     };
 
     /**
-     * @brief Конфигурация подключения клиента.
-     */
-    struct ClientConfig {
-        /// Адрес сервера.
-        std::string host{ "127.0.0.1" };
-
-        /// TCP-порт сервера.
-        std::uint16_t port{ 0 };
-
-        /// Флаг автоматического переподключения при обрыве связи.
-        bool auto_reconnect{ true };
-
-        /// Задержка между попытками переподключения.
-        std::chrono::milliseconds reconnect_delay{ 1000 };
-    };
-
-    /**
      * @brief Набор callback-функций для уведомления внешнего кода о событиях клиента.
      */
-    struct ClientCallbacks {
+    struct ClientCallbacks final {
         /// Вызывается после успешного подключения к серверу.
         std::function<void()> on_connected;
 
         /// Вызывается при разрыве соединения.
         std::function<void()> on_disconnected;
 
-        /// Вызывается при изменении состояния клиента.
-        std::function<void(ConnectionState)> on_state_changed;
-
-        /// Вызывается при получении snapshot.
-        std::function<void(const Snapshot&)> on_snapshot;
-
         /// Вызывается при получении обновления top-of-book.
-        std::function<void(const TopLevel&)> on_top_of_book;
+        std::function<void(const Snapshot&)> on_snapshot;
 
         /**
          * @brief Вызывается при возникновении ошибки.
@@ -107,18 +78,9 @@ namespace client_lib {
         virtual ~IOrderBookClient() = default;
 
         /**
-         * @brief Устанавливает callback-функции клиента.
-         *
-         * @param callbacks Набор обработчиков событий.
+         * @brief Открывает сооединение с сервером.
          */
-        virtual void SetCallbacks(ClientCallbacks callbacks) = 0;
-
-        /**
-         * @brief Настраивает подключение по переданной конфигурации.
-         *
-         * @param config Параметры подключения к серверу.
-         */
-        virtual void Connect(const ClientConfig& config) = 0;
+        virtual void Connect() = 0;
 
         /**
          * @brief Разрывает соединение с сервером.
@@ -131,17 +93,17 @@ namespace client_lib {
          * Обычно здесь стартует внутренняя логика обработки,
          * сетевой поток и приём сообщений.
          */
-        virtual void Start() = 0;
+        virtual void Subscribe(std::string ticker) = 0;
 
         /**
          * @brief Останавливает работу клиента.
          */
-        virtual void Stop() = 0;
+        virtual void Unsubscribe(std::string ticker) = 0;
 
         /**
          * @brief Запрашивает snapshot текущего состояния у сервера.
          */
-        virtual void RequestSmapshot() = 0;
+        virtual void RequestSnapshot() = 0;
 
         /**
          * @brief Проверяет наличие активного соединения.
@@ -158,5 +120,7 @@ namespace client_lib {
          */
         virtual ConnectionState State() const noexcept = 0;
     };
+
+    std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc);
 
 } // namespace client_lib
