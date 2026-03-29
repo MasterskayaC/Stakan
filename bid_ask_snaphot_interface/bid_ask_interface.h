@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <format>
 
 namespace common
 {
@@ -22,9 +23,9 @@ namespace common
 
         template<class Archive>
         void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar << id;
-            ar << price;
-            ar << quantity;
+            ar & id;
+            ar & price;
+            ar & quantity;
         }
     };
 
@@ -35,15 +36,24 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
+        std::string operator()();
+
         template<class Archive>
         void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar << topBids;
-            ar << topAsks;
+            ar & topBids;
+            ar & topAsks;
         }
     };
-
-    // @brief Функции для се/десериализации snapshot
-    inline std::vector<uint8_t> SerializeSnapshot(const Snapshot &snap);
-    inline Snapshot DeserializeSnapshot(const std::vector<uint8_t>& serialized_snapshot);
     
+    std::string Snapshot::operator()() {
+        std::string result = "Top Bids:\n";
+        for (const auto& bid : topBids) {
+            result += std::format("Price: {}, Quantity: {}\n", bid.price, bid.quantity);
+        }
+        result += "Top Asks:\n";
+        for (const auto& ask : topAsks) {
+            result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
+        }
+        return result;
+    }
 }
