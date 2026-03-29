@@ -1,11 +1,11 @@
 
+set(MENU menu.hpp menu.cpp)
+set(APP app.hpp app.cpp)
+set(MENU_ACTION menu_action.hpp menu_action.cpp)
 add_library(cui STATIC
-    app.hpp
-    app.cpp
-    menu.hpp
-    menu.cpp
-    menu_action.hpp
-    menu_action.cpp
+    ${MENU}
+    ${APP}
+    ${MENU_ACTION}
 )
 
 target_include_directories( cui PUBLIC
