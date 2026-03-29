@@ -5,20 +5,38 @@
 #include <deque>
 #include <mutex>
 #include <condition_variable>
+#include <variant>
 
 using SessionId = std::size_t;
 
+struct MDUpdate {       //TMP for std::variant
+    enum class UpdateType : uint8_t {
+        Add,
+        Modify,
+        Delete
+    };
+
+    enum class Side : uint8_t {
+        Bid,
+        Ask
+    };
+
+    UpdateType type;
+    Side side;
+    common::Order order;
+};
+
 /// @brief Типы команд — что broadcaster должен делать.
 enum class CommandType : uint8_t {
-    SendSnapshotTo,   ///< Отправить snapshot конкретному клиенту.
-    SendSnapshotAll,  ///< Отправить snapshot всем клиентам.
-    SendMDUpdate,     ///< Отправить MD Update всем.
+    SendSnapshot,     ///< Отправить snapshot
+    SendMDUpdate,     ///< Отправить MD Update
 };
 
 /// @brief Команда для broadcaster'а — тип + кому слать (если кому-то конкретному).
 struct BroadcastCommand {
     CommandType type;
-    SessionId   client_id;  ///< Используется только для SendSnapshotTo.
+    std::optional<SessionId>   client_id;  ///< конкретному клиенту или всем подписанным.
+    std::variant<common::Snapshot, MDUpdate> data;  // либо шаблон вместо std::variant
 };
 
 /// @brief MPSC очередь команд с логикой поглощения.
