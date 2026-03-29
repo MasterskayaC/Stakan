@@ -1,19 +1,22 @@
 #include "client_list.h"
 
+#include <stdexcept>
 #include <unordered_map>
+
+#include "command_queue.h"
 
 class ClientList : public IClientList {
 private:
     struct ClientContext {
         SessionPtr session;
-        std::vector<std::shared_ptr<Order>> bids;
-        std::vector<std::shared_ptr<Order>> asks;
+        std::vector<std::shared_ptr<common::Order>> bids;
+        std::vector<std::shared_ptr<common::Order>> asks;
         bool subscribed = false;
     };
     std::unordered_map<ClientId, ClientContext> clients_;
     mutable std::mutex mutex_;
-public:
 
+public:
     void add_session(ClientId id, SessionPtr session) override {
         return;
     }
@@ -23,7 +26,14 @@ public:
     }
 
     SessionPtr get_session(ClientId id) const override {
-        return SessionPtr{};
+        SessionPtr res;
+        try {
+            ClientContext cc = clients_.at(id);
+            res = cc.session;
+        } catch (const std::out_of_range&) {
+            throw std::runtime_error("Client " + std::to_string(id) + " not found");
+        }
+        return res;
     }
 
     size_t size() const override {
@@ -39,11 +49,11 @@ public:
         return false;
     }
 
-    void add_bid(ClientId id, std::shared_ptr<Order> bid) override {
+    void add_bid(ClientId id, std::shared_ptr<common::Order> bid) override {
         return;
     }
 
-    void add_ask(ClientId id, std::shared_ptr<Order> ask) override {
+    void add_ask(ClientId id, std::shared_ptr<common::Order> ask) override {
         return;
     }
 
@@ -55,21 +65,21 @@ public:
         return;
     }
 
-    std::vector<std::shared_ptr<Order>> get_bids(ClientId id) const override {
-        std::vector<std::shared_ptr<Order>> tmp;
+    std::vector<std::shared_ptr<common::Order>> get_bids(ClientId id) const override {
+        std::vector<std::shared_ptr<common::Order>> tmp;
         return tmp;
     }
 
-    const std::vector<std::shared_ptr<Order>>& get_bids_ref(ClientId id) const override {
+    const std::vector<std::shared_ptr<common::Order>>& get_bids_ref(ClientId id) const override {
         throw std::out_of_range("Client not found");
     }
 
-    std::vector<std::shared_ptr<Order>> get_asks(ClientId id) const override {
-        std::vector<std::shared_ptr<Order>> tmp;
+    std::vector<std::shared_ptr<common::Order>> get_asks(ClientId id) const override {
+        std::vector<std::shared_ptr<common::Order>> tmp;
         return tmp;
     }
 
-    const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const override {
+    const std::vector<std::shared_ptr<common::Order>>& get_asks_ref(ClientId id) const override {
         throw std::out_of_range("Client not found");
     }
 
@@ -91,12 +101,27 @@ public:
     }
 
     std::vector<SessionPtr> get_subscribed_sessions() const override {
-        std::vector<SessionPtr> tmp;
-        return tmp;
+        std::vector<SessionPtr> res;
+        res.reserve(clients_.size());
+        for (auto [client_id, client_context] : clients_) {
+            if (client_context.subscribed) {
+                res.push_back(client_context.session);
+            }
+        }
+        return res;
     }
 
     void broadcast_to_subscribed(const std::vector<char>& message) override {
-        return;
+        std::vector<SessionPtr> sub_sessions = get_subscribed_sessions();
+        std::string str(message.begin(), message.end());
+        for (SessionPtr s : sub_sessions) {
+            s->SendMsg(str);
+        }
     }
 
+    void broadcast_to_certain(ClientId id, const std::vector<char>& message) override {
+        std::string str(message.begin(), message.end());
+        SessionPtr s = get_session(id);
+        s->SendMsg(str);
+    }
 };
