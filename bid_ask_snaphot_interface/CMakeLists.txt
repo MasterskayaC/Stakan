@@ -1,12 +1,12 @@
-add_library(interface_bid_ask STATIC
+add_library(interface_bid_ask INTERFACE
 bid_ask_interface.cpp)
 
-target_include_directories(interface_bid_ask PUBLIC
+target_include_directories(interface_bid_ask INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS} )
 
 target_link_libraries(interface_bid_ask
-    PUBLIC
+    INTERFACE
        ${Boost_LIBRARIES}
        Threads::Threads
 )
