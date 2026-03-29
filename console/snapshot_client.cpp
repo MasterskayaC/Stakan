@@ -12,15 +12,21 @@ SnapshotConsoleClient::SnapshotConsoleClient()
 void SnapshotConsoleClient::connect_to_server(const std::string& host, uint16_t port) {
     host_ = host;
     port_ = port;
-    //заглушка
+    connected_ = true;
 }
 
 void SnapshotConsoleClient::fetch_snapshot() {
-    //заглушка
+    if (!connected_) {
+        std::cerr << "Not connected to server\n";
+        return;
+    }
 }
 
 void SnapshotConsoleClient::display_realtime_updates() {
-    //заглушка
+    if (!connected_) {
+        std::cerr << "Not connected to server\n";
+        return;
+    }
 }
 
-} // namespace console
+} 
