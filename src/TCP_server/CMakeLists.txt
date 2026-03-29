@@ -1,9 +1,14 @@
-add_library(TCPServer STATIC
+set(SESSION_FILES
     include/session.h
-    include/tcpserver.h
     src/session.cpp
-    src/tcpserver.cpp)
+)
 
+set(TCPSERVER_FILES
+    include/tcpserver.h
+    src/tcpserver.cpp
+)
+
+add_library(TCPServer STATIC ${TCPSERVER_FILES} ${SESSION_FILES}) 
 
 target_include_directories(TCPServer PUBLIC 
 ${CMAKE_CURRENT_SOURCE_DIR}/include/
