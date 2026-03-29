@@ -48,10 +48,12 @@ namespace common
     std::string Snapshot::operator()() {
         std::string result = "Top Bids:\n";
         for (const auto& bid : topBids) {
+            if(bid.id == 0) break;
             result += std::format("Price: {}, Quantity: {}\n", bid.price, bid.quantity);
         }
         result += "Top Asks:\n";
         for (const auto& ask : topAsks) {
+            if(ask.id == 0) break;
             result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
         }
         return result;

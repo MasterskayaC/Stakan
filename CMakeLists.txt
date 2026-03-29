@@ -14,7 +14,6 @@ add_subdirectory(client_lib)
 add_subdirectory(tcp_client)
 add_subdirectory(bid_ask_book)
 add_subdirectory(console)
-add_subdirectory(serialization)
 
 add_executable(exc_glass main.cpp)
 
