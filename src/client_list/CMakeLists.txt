@@ -1,6 +1,6 @@
+set(CLIENT_LIST client_list.cpp client_list.h)
 add_library(client_list STATIC
-    client_list.cpp
-    client_list.h
+    ${CLIENT_LIST}
 )
 
 target_include_directories(client_list PUBLIC 
