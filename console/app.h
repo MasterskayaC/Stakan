@@ -2,44 +2,50 @@
 
 #include <cstdint>
 #include <string>
+#include <memory>
+
 #include "snapshot_client.h"
+
+namespace menu {
+class Menu;
+class CommandHandlers;
+class ArgsParsers;
+} // namespace menu
 
 namespace app {
 
-/// @brief Главный класс приложения для консольного клиента
-///
-/// Координирует пользовательский ввод, подключение к серверу и
-/// отображение снапшотов в интерактивном командном цикле
+/// @brief Главный класс приложения
 class Application final {
 public:
-    /// @brief Конструируем приложение и инициализируем клиент снапшотов
+    /// @brief Конструктор
     explicit Application();
-
-    /// @brief Деструктор, гарантирует остановку обновлений при выходе
+    /// @brief Деструктор
     ~Application();
 
-    /// @brief Запускаем интерактивный командный цикл
+    /// @brief Запуск приложения
     void Run();
-
-    /// @brief Печатаем доступные команды в stdout
-    void print_help();
-
-    /// @brief Устанавливаем подключение к серверу стакана заказов
+    /// @brief Подключение к серверу
     bool connect(const std::string& host, uint16_t port);
-
-    /// @brief Запрашиваем снапшот у сервера
-    /// @return true, если запрос успешно отправлен
+    /// @brief Запрос снапшота
     bool fetch_snapshot();
-
-    /// @brief Начинаем приём обновлений стакана заказов в реальном времени
+    /// @brief Подписка на обновления
     void start_updates();
-
-    /// @brief Останавливаем приём обновлений стакана заказов в реальном времени
+    /// @brief Отписка от обновлений
     void stop_updates();
 
 private:
+    /// @brief Обработка полученного снапшота
+    void on_snapshot_received(const common::Snapshot& snapshot);
+    /// @brief Обработка полученного обновления
+    void on_update_received(const tcp_client::TopOfBook& update);
+    /// @brief Обработка ошибки
+    void on_error(const std::string& error);
+
+private:
     console::SnapshotConsoleClient snapshot_client_;
-    bool running_ = false;
+    std::unique_ptr<menu::Menu> menu_;
+    std::unique_ptr<menu::CommandHandlers> command_handlers_;
+    std::unique_ptr<menu::ArgsParsers> args_parsers_;
 };
 
-}  
+} // namespace app

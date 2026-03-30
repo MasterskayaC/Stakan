@@ -1,78 +1,57 @@
 #include <iostream>
-#include <string>
-
 #include "app.h"
+#include "menu.h"
+#include "menu_action.h"
 
 namespace app {
 
-Application::Application()
-    : running_(false) {
+/// @brief Конструктор
+Application::Application() {
+    menu_.reset(new menu::Menu(std::cin, std::cout, snapshot_client_));
+    command_handlers_.reset(new menu::CommandHandlers(*menu_, std::cout, snapshot_client_));
+    args_parsers_.reset(new menu::ArgsParsers(*menu_, std::cin));
 }
 
+/// @brief Деструктор
 Application::~Application() {
     stop_updates();
 }
 
+/// @brief Запуск приложения
 void Application::Run() {
     std::cout << "Snapshot Console Client\n";
-    print_help();
-
-    running_ = true;
-    while (running_) {
-        std::cout << "> ";
-        std::string cmd;
-        if (!(std::cin >> cmd)) {
-            break;
-        }
-
-        if (cmd == "connect") {
-            std::string host;
-            uint16_t port;
-            std::cin >> host >> port;
-            connect(host, port);
-        } else if (cmd == "snapshot") {
-            fetch_snapshot();
-        } else if (cmd == "subscribe") {
-            start_updates();
-        } else if (cmd == "unsubscribe") {
-            stop_updates();
-        } else if (cmd == "help") {
-            print_help();
-        } else if (cmd == "exit") {
-            running_ = false;
-        } else {
-            std::cout << "Unknown command: " << cmd << "\n";
-            print_help();
-        }
-    }
+    menu_->PrintHelp();
+    menu_->Run();
 }
 
-void Application::print_help() {
-    std::cout << "Commands:\n";
-    std::cout << "  connect <host> <port> - Connect to server\n";
-    std::cout << "  snapshot               - Request snapshot\n";
-    std::cout << "  subscribe              - Start receiving updates\n";
-    std::cout << "  unsubscribe            - Stop receiving updates\n";
-    std::cout << "  help                   - Show this help\n";
-    std::cout << "  exit                   - Exit\n";
-}
-
+/// @brief Подключение к серверу
 bool Application::connect(const std::string& host, uint16_t port) {
-    // заглушка
     return true;
 }
 
+/// @brief Запрос снапшота
 bool Application::fetch_snapshot() {
-    // заглушка
     return true;
 }
 
+/// @brief Подписка на обновления
 void Application::start_updates() {
-    // заглушка
 }
 
+/// @brief Отписка от обновлений
 void Application::stop_updates() {
-    // заглушка
 }
 
-} 
+/// @brief Обработка полученного снапшота
+void Application::on_snapshot_received(const common::Snapshot& snapshot) {
+}
+
+/// @brief Обработка полученного обновления
+void Application::on_update_received(const tcp_client::TopOfBook& update) {
+}
+
+/// @brief Обработка ошибки
+void Application::on_error(const std::string& error) {
+}
+
+} // namespace app
