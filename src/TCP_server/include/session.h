@@ -1,87 +1,36 @@
 #pragma once
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/export.hpp>
-#include <iostream>
-#include <queue>
+#include <deque>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 
-/**
- *  @brief Interface session/ It's the object of a specific connection
-*/
+// Обертка над одним TCP-клиентом: чтение команд и отправка бинарных сообщений.
 class Session : public std::enable_shared_from_this<Session> {
 public:
+    using OnLineCallback = std::function<void(const std::string&, const std::shared_ptr<Session>&)>;
+    using OnDisconnectCallback = std::function<void(const std::shared_ptr<Session>&)>;
+
     Session(std::shared_ptr<boost::asio::ip::tcp::socket> socket);
-    /**
-     *  @brief Start async reading
-    */
     void Start();
-
-    /**
-     *  @brief Close socket and stop all operations
-    */
     void Stop();
-
-    /**
-     *  @brief Push msg to messages queue and start writing to stream
-     *  @param Message
-    */
-    void SendMsg(const std::string& message);
+    void SendMsg(const std::vector<char>& message);
+    bool IsOpen() const;
+    void SetCallbacks(OnLineCallback on_line, OnDisconnectCallback on_disconnect);
 
 private:
-
-    /**
-     *  @brief Async reading from socket
-    */
     void Read();
-
-    /**
-     *  @brief Check error and read "bytes_transferred" bytes
-     *  @param Error object
-     *  @param Numbers reading bytes
-    */
-    void ProcessRead(const boost::system::error_code& error, size_t bytes_transferred);
-
-    /**
-     *  @brief Async writing to stream
-    */
+    void ProcessRead(const boost::system::error_code& error, std::size_t bytes_transferred);
     void Write();
-
-    /**
-     *  @brief Check error and write "bytes_transferred" bytes
-     *  @param Error object
-     *  @param Numbers bytes to writing
-    */
-    void ProcessWrite(const boost::system::error_code& error, size_t bytes_transferred);
-
-    /**
-     *  @brief Serialize and send msg
-     *  @param Order or update struct
-    */
-    template <typename StructMsg>
-    void SendBinaryMessage(const StructMsg& msg) {
-
-    }
-
-    /**
-     *  @brief deserialize and read msg
-     *  @param Order or update struct
-    */
-    template <typename StructMsg>
-    void ReadBinaryMessage(const StructMsg& msg) {
-
-    }
+    void ProcessWrite(const boost::system::error_code& error, std::size_t bytes_transferred);
 
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
-    std::array<char, 1024> read_buffer_; //TODO (artem simanov): review & rework
-    std::queue<std::string> messages_queue_; //TODO (artem simanov): review & rework
+    boost::asio::streambuf read_buffer_;
+    std::deque<std::vector<char>> messages_queue_;
     std::mutex write_mutex_;
-    bool is_writing_ = false;
-
+    OnLineCallback on_line_;
+    OnDisconnectCallback on_disconnect_;
 };
-
-
-
