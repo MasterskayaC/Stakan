@@ -1,7 +1,4 @@
 #pragma once
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/vector.hpp>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -20,13 +17,6 @@ namespace common
         ID id = 0;
         Price price = 0;
         int quantity = 0;
-
-        template<class Archive>
-        void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar & id;
-            ar & price;
-            ar & quantity;
-        }
     };
 
     struct Snapshot
@@ -37,12 +27,6 @@ namespace common
         std::array<common::Order, topN>  topAsks;
 
         std::string operator()();
-
-        template<class Archive>
-        void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar & topBids;
-            ar & topAsks;
-        }
     };
     
     std::string Snapshot::operator()() {

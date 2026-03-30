@@ -1,16 +1,10 @@
 #include "serialization.h"
 
 std::vector<char> SerializeSnapshot::Serialize(const common::Snapshot& snapshot) {
-
+    constexpr size_t size = sizeof(common::Snapshot);
     try {
-        std::vector<char> buffer;
-        {
-            boost::iostreams::back_insert_device<std::vector<char>> device(buffer);
-            boost::iostreams::stream<boost::iostreams::back_insert_device<std::vector<char>>> os(device);
-
-            boost::archive::binary_oarchive oa(os);
-            oa << snapshot;
-        }            
+        std::vector<char> buffer(size);
+        std::memcpy(buffer.data(), &snapshot, size);
         return buffer;
     }
     catch (const std::exception& e) {
@@ -24,15 +18,9 @@ common::Snapshot SerializeSnapshot::Deserialize(const std::vector<char>& data) {
     }
 
     try{
-        boost::iostreams::basic_array_source<char> source(data.data(), data.size());
-        boost::iostreams::stream<boost::iostreams::basic_array_source<char>> is(source);
-
-        common::Snapshot snapshot;
-
-        boost::archive::binary_iarchive ia(is);
-        ia >> snapshot;
-
-        return snapshot;
+        common::Snapshot result;
+        std::memcpy(&result, data.data(), sizeof(common::Snapshot));
+        return result;
     }
     catch (const std::exception& e) {
         throw std::runtime_error("Deserialization error: " + std::string(e.what()));
