@@ -42,6 +42,7 @@ CMakeUserPresets.json
 
 # Build directories
 build/
+build-vcpkg/
 Build/
 out/
 debug/

@@ -1,7 +1,10 @@
 #pragma once
+#include <array>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/array.hpp>
 #include <boost/serialization/vector.hpp>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <sstream>

@@ -1,0 +1,12 @@
+{
+  "name": "stakan",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "boost-asio",
+    "boost-bind",
+    "boost-multi-index",
+    "boost-serialization",
+    "boost-system",
+    "catch2"
+  ]
+}

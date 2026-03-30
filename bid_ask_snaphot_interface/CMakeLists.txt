@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED COMPONENTS serialization)
+find_package(Boost CONFIG REQUIRED COMPONENTS serialization)
 find_package(Threads REQUIRED)
 
 add_library(interface_bid_ask INTERFACE)
