@@ -1,5 +1,3 @@
-#pragma once
-
 #include "client_lib_interface.hpp"
 
 /** @todo Разобраться с включением TCP-client */
@@ -11,12 +9,28 @@
 
 namespace client_lib {
 
-/** @brief Создает объект client lib с дефолной конфиграцией соединения
- * 
- * @param сс ClientCallbacks структура callback-ов от ui;
+/**
+ * @brief Преобразует TopOfBook в формат Snapshot для UI.
  */
-std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc) {
-    return std::make_unique<IOrderBookClient>(std::move(cc));
+Snapshot ToSnapshot(const tcp_client::TopOfBook& top) {
+    Snapshot snapshot;
+    
+    snapshot.bids.reserve(1);
+    snapshot.asks.reserve(1);
+
+    snapshot.bids.push_back({
+        .price = static_cast<double>(top.best_bid.price),
+        .quantity = static_cast<double>(top.best_bid.quantity),
+    });
+
+    snapshot.asks.push_back({
+        .price = static_cast<double>(top.best_ask.price),
+        .quantity = static_cast<double>(top.best_ask.quantity),
+    });
+
+    snapshot.exchange_timestamp_ns = top.exchange_timestamp_ns;
+
+    return snapshot;
 }
 
  /**
@@ -30,17 +44,15 @@ public:
     ~CallbacksAdapter() = default;
 
     void OnConnected() override {
-        cc_.on_connected;
+        cc_.on_connected();
     }
 
     void OnDisconnected() override {
-        cc_.on_disconnected;
+        cc_.on_disconnected();
     }
 
     void OnTopOfBook(const tcp_client::TopOfBook& update) override {
-        /** @todo сделать из TopOfBook какой-то Snapshot*/
-        Snapshot snp;
-        cc_.on_snapshot(snp);
+        cc_.on_snapshot(ToSnapshot(update));
     }
 
     void OnError(std::string_view message) override {};
@@ -58,11 +70,22 @@ private:
 class OrderBookClient final : public IOrderBookClient {
 public:
     /**
-     * @brief Создаёт объект клиентской библиотеки.
+     * @brief Создает клиент с дефолтными настройками.
      */
-    OrderBookClient::OrderBookClient(ClientCallbacks&& cc) 
-        : callbaks_(std::move(cc)) {
-        client_ = std::make_unique<tcp_client::TcpClient>(config_, callbaks_);
+    OrderBookClient(ClientCallbacks&& cc) 
+        : callbaсks_(std::move(cc)) {
+        client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
+    }
+
+    /**
+     * @brief Создает клиент с кастомным хостом и портом.
+     */
+    OrderBookClient(const std::string& host,
+                    std::uint16_t port,
+                    ClientCallbacks&& cc)
+        : callbaсks_(std::move(cc)),
+          config_({host, port}) {
+        client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
     }
 
     /**
@@ -81,10 +104,6 @@ public:
 
     /**
      * @brief Разрывает текущее соединение.
-     *
-     * В заглушечной реализации метод переводит клиент в состояние
-     * @ref ConnectionState::Disconnected и вызывает транспортный
-     * метод отключения, если транспорт уже был создан.
      */
     void Disconnect() override {
         if (IsConnected()) {
@@ -94,10 +113,6 @@ public:
 
     /**
      * @brief Подписка на инструмент.
-     *
-     * В дальнейшем здесь будет создаваться и запускаться транспортный
-     * клиент, а также стартовать цикл приёма сообщений.
-     * Сейчас метод выполняет только минимальную инициализацию.
      */
     void Subscribe(std::string ticker) override {
         if (client_->Subscribe(ticker)) {
@@ -116,6 +131,9 @@ public:
 
     /**
      * @brief Запрашивает snapshot у сервера.
+     * 
+     * Залушечная реализация.
+     * 
      */
     void RequestSnapshot() override {}
 
@@ -132,6 +150,8 @@ public:
     /**
      * @brief Возвращает текущее состояние клиента.
      *
+     * Залушечная реализация.
+     * 
      * @return Текущее состояние клиентской библиотеки.
      */
     ConnectionState State() const noexcept override {};
@@ -147,6 +167,8 @@ private:
     /**
      * @brief Сообщает об ошибке через пользовательский callback.
      *
+     * Залушечная реализация.
+     * 
      * @param error Код ошибки.
      * @param message Текстовое описание ошибки.
      */
@@ -154,9 +176,25 @@ private:
 
 private:
     std::set<std::string> tickers_;
-    CallbacksAdapter callbaks_;
+    CallbacksAdapter callbaсks_;
     tcp_client::ClientConfig config_;
     std::unique_ptr<tcp_client::TcpClient> client_;
 };
+
+std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(
+    ClientCallbacks&& cc) {
+    return std::make_unique<OrderBookClient>(std::move(cc));
+}
+
+std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
+                                                       uint16_t port,
+                                                       ClientCallbacks&& cc) {
+  tcp_client::ClientConfig config{
+      .host = std::move(host),
+      .port = port,
+  };
+  
+  return std::make_unique<OrderBookClient>(std::move(config), std::move(cc));
+}
 
 } // namespace client_lib
