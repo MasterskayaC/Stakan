@@ -47,8 +47,8 @@ namespace server {
         } else {
             snapshot = order_book_->GetTopSnapshot();
         }
-        BroadcastCommand cmd{ CommandType::SendSnapshot, client_id, snapshot };
-        broadcaster_->enqueue(cmd);
+        auto cmd = std::make_unique<BroadcastSnapshotCommand>(client_id, std::move(snapshot));
+        broadcaster_->enqueue(std::move(cmd));
     }
 
     void DOMManager::send_snapshots(bool use_test_broadcast) {
@@ -59,8 +59,8 @@ namespace server {
         } else {
             snapshot = order_book_->GetTopSnapshot();
         }
-        BroadcastCommand cmd{ CommandType::SendSnapshot, std::nullopt, snapshot };
-        broadcaster_->enqueue(cmd);
+        auto cmd = std::make_unique<BroadcastSnapshotCommand>(std::move(snapshot));
+        broadcaster_->enqueue(std::move(cmd));
     }
 
     // TmpSnapshotCreator implementation

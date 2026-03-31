@@ -28,7 +28,7 @@ public:
     }
 
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
-    void enqueue(BroadcastCommand cmd) {
+    void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
         //заглушка
     }
 
