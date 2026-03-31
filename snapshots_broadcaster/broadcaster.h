@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <optional>
 #include <thread>
 
 #include "bid_ask_interface.h"
@@ -17,7 +18,7 @@ class Broadcaster {
 public:
     /// @brief Конструктор.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
-    Broadcaster(IClientList& clients) : clients_(clients) {}
+    Broadcaster(IClientList& clients, boost::asio::io_context& io) : clients_(clients), io_(io) {}
 
     /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
@@ -26,34 +27,43 @@ public:
 
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
     void enqueue(BroadcastCommand cmd) {
-        // заглушка
+        queue_.push(cmd);
     }
 
     /// @brief Запускает поток-обработчик.
     void start() {
-        // заглушка
-        // running_ = true;
-        // thread_ = std::thread(&Broadcaster::run, this);
-        return;
+        running_ = true;
+        thread_ = std::thread(&Broadcaster::run, this);
     }
 
     /// @brief Останавливает поток-обработчик.
     void stop() {
-        // заглушка
-        // running_ = false;
-        // разбудить поток (push специальной команды или notify)
-        // if (thread_.joinable()) thread_.join();
+        running_ = false;
+        if (thread_.joinable()) thread_.join();
         return;
     }
 
 private:
     /// @brief Главный цикл обработки команд. Крутится в потоке.
     void run() {
-        // заглушка
-        // while (running_) {
-        //     auto cmd = queue_.pop();
-        //     switch (cmd.type) { ... }
-        // }
+        while (running_) {
+            auto cmd = queue_.pop();
+            switch (cmd.type){
+                case CommandType::SendSnapshot:
+                    if(cmd.client_id == std::nullopt){
+                        boost::asio::post(io_, [this, &cmd]{handle_send_snapshot_all(std::get<common::Snapshot>(cmd.data));}); 
+                    }
+                    else{
+                        boost::asio::post(io_, [this, &cmd]{handle_send_snapshot_to(cmd.client_id.value(), std::get<common::Snapshot>(cmd.data));}); 
+                    }
+                    break;
+                default:
+                    boost::asio::post(io_, [this, &cmd]{handle_send_md_update();}); 
+                    break;
+                    
+            }
+
+        }
         return;
     }
 
@@ -81,4 +91,5 @@ private:
     IClientList& clients_;              ///< Интерфейс реестра клиентов.
     std::thread thread_;                ///< Рабочий поток broadcaster'а.
     std::atomic<bool> running_{false};  ///< Флаг работы потока.
+    boost::asio::io_context& io_;
 };

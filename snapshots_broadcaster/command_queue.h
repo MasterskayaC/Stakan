@@ -44,24 +44,21 @@ public:
     ///
     /// Вызывается из потоков OrderBook и сетевого потока.
     void push(BroadcastCommand cmd) {
-        // заглушка
-        // 1. lock mutex_
-        // 2. если cmd.type == SendSnapshotAll — удалить все SendSnapshotTo из очереди
-        // 3. добавить cmd в очереди
-        // 4. notify_one на cv_
-        return;
+        std::unique_lock<std::mutex> ulck(mutex_);
+        if(cmd.client_id == std::nullopt)queue_.clear();
+        queue_.push_back(cmd);
+        cv_.notify_one();
     }
 
     /// @brief Извлекает следующую команду из очереди.
     ///
     /// Блокирует вызывающий поток, если очередь пуста.
     BroadcastCommand pop() {
-        // заглушка
-        // - lock mutex_
-        // - cv_.wait пока очередь пуста
-        // - забрать front, pop_front
-        // - возвращаем команду
-        return BroadcastCommand{};
+        std::unique_lock<std::mutex> ulck(mutex_);
+        cv_.wait(ulck,[this]{return !queue_.empty();});
+        BroadcastCommand cmd = queue_.front();
+        queue_.pop_front();
+        return cmd;
     }
 
     /// @brief Неблокирующее извлечение.
