@@ -9,10 +9,10 @@ namespace menu {
 /// @brief Конструктор
 CommandHandlers::CommandHandlers(Menu& menu,
                                  std::ostream& output,
-                                 console::SnapshotConsoleClient& client)
+                                 std::shared_ptr<console::SnapshotConsoleClient> client)
     : menu_(menu)
     , output_(output)
-    , client_(client) {
+    , client_(std::move(client)) {
 }
 
 /// @brief Команда connect
@@ -22,16 +22,10 @@ bool CommandHandlers::Connect(CommandArgs&& args) {
 
 /// @brief Команда snapshot
 bool CommandHandlers::Snapshot(CommandArgs&& args) {
-    return false;
-}
-
-/// @brief Команда subscribe
-bool CommandHandlers::Subscribe(CommandArgs&& args) {
-    return false;
-}
-
-/// @brief Команда unsubscribe
-bool CommandHandlers::Unsubscribe(CommandArgs&& args) {
+    if (client_) {
+        client_->fetch_snapshot();
+        return true;
+    }
     return false;
 }
 

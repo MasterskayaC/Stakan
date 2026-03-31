@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 
 #include "snapshot_client.h"
@@ -12,16 +13,12 @@ namespace menu {
 class CommandHandlers final {
 public:
     /// @brief Конструктор
-    CommandHandlers(Menu& menu, std::ostream& output, console::SnapshotConsoleClient& client);
+    CommandHandlers(Menu& menu, std::ostream& output, std::shared_ptr<console::SnapshotConsoleClient> client);
 
     /// @brief Команда connect
     bool Connect(CommandArgs&& args);
     /// @brief Команда snapshot
     bool Snapshot(CommandArgs&& args);
-    /// @brief Команда subscribe
-    bool Subscribe(CommandArgs&& args);
-    /// @brief Команда unsubscribe
-    bool Unsubscribe(CommandArgs&& args);
     /// @brief Команда help
     bool Help(CommandArgs&& args);
     /// @brief Команда exit
@@ -30,7 +27,7 @@ public:
 private:
     Menu& menu_;
     std::ostream& output_;
-    console::SnapshotConsoleClient& client_;
+    std::shared_ptr<console::SnapshotConsoleClient> client_;
 };
 
 /// @brief Парсеры аргументов

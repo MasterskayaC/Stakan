@@ -7,26 +7,17 @@
 
 namespace menu {
 
-/// @brief Конструктор
-Menu::Menu(std::istream& input, std::ostream& output, console::SnapshotConsoleClient& client)
+Menu::Menu(std::istream& input, std::ostream& output, std::shared_ptr<console::SnapshotConsoleClient> client)
     : input_(input)
     , output_(output)
-    , client_(client) {
+    , client_(std::move(client)) {
 }
 
-/// @brief Добавить команду
-void Menu::AddCommand(const std::string& command,
-                      const std::string& description,
-                      menu::CommandHandler handler) {
+void Menu::RegisterHandler(const std::string& command, const std::string& description, CommandHandler handler) {
+    auto cmd_ptr = std::make_shared<Command>(Command{command, description, std::move(handler)});
+    commands_.emplace(command, cmd_ptr);
 }
 
-/// @brief Добавить парсер аргументов
-void Menu::AddArgsParser(const std::string& command,
-                         std::set<std::string>&& args,
-                         ArgParser parser) {
-}
-
-/// @brief Запуск обработки команд
 void Menu::Run() {
     running_ = true;
     while (running_) {
@@ -35,38 +26,38 @@ void Menu::Run() {
         if (!(input_ >> cmd)) {
             break;
         }
-
-        if (cmd == "help") {
-            PrintHelp();
-        } else {
-            ParseCommand(input_);
-        }
+        ParseCommand(input_);
     }
 }
 
-/// @brief Остановка обработки команд
 void Menu::Stop() {
     running_ = false;
 }
 
-/// @brief Парсинг команды
 bool Menu::ParseCommand(std::istream& input) {
-    return false;
+    std::string cmd;
+    if (!(input >> cmd)) {
+        return false;
+    }
+
+    auto it = commands_.find(cmd);
+    if (it == commands_.end()) {
+        if (cmd == "help") {
+            PrintHelp();
+            return true;
+        }
+        output_ << "Unknown command: " << cmd << "\n";
+        return false;
+    }
+
+    CommandArgs args{std::in_place_type<NoArgs>};
+    return it->second->handler(args);
 }
 
-/// @brief Печать справки
 void Menu::PrintHelp() {
     output_ << "Available commands:\n";
-    for (const auto& cmd : commands_) {
-        std::string args_str;
-        for (const auto& arg : cmd->args) {
-            args_str += "<" + arg + "> ";
-        }
-        output_ << "  " << cmd->command;
-        if (!args_str.empty()) {
-            output_ << " " << args_str;
-        }
-        output_ << " - " << cmd->description << "\n";
+    for (const auto& [name, cmd] : commands_) {
+        output_ << "  " << cmd->command << " - " << cmd->description << "\n";
     }
 }
 

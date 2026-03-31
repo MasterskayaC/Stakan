@@ -34,21 +34,6 @@ void SnapshotConsoleClient::fetch_snapshot() {
     }
 }
 
-/// @brief Подписка на обновления
-void SnapshotConsoleClient::display_realtime_updates() {
-    if (!connected_) {
-        std::cerr << "Not connected to server\n";
-        return;
-    }
-}
-
-/// @brief Отписка от обновлений
-void SnapshotConsoleClient::stop_realtime_updates() {
-    if (!connected_) {
-        return;
-    }
-}
-
 /// @brief Проверка соединения
 bool SnapshotConsoleClient::is_connected() const {
     return connected_;
@@ -57,11 +42,6 @@ bool SnapshotConsoleClient::is_connected() const {
 /// @brief Установка колбэка снапшота
 void SnapshotConsoleClient::set_snapshot_callback(SnapshotCallback callback) {
     snapshot_callback_ = std::move(callback);
-}
-
-/// @brief Установка колбэка обновлений
-void SnapshotConsoleClient::set_update_callback(UpdateCallback callback) {
-    update_callback_ = std::move(callback);
 }
 
 /// @brief Установка колбэка ошибок
@@ -77,20 +57,6 @@ void SnapshotConsoleClient::on_connected() {
 /// @brief Обработка отключения
 void SnapshotConsoleClient::on_disconnected() {
     connected_ = false;
-}
-
-/// @brief Обработка полученного снапшота
-void SnapshotConsoleClient::on_snapshot_received(const common::Snapshot& snapshot) {
-    if (snapshot_callback_) {
-        snapshot_callback_(snapshot);
-    }
-}
-
-/// @brief Обработка полученного обновления
-void SnapshotConsoleClient::on_update_received(const tcp_client::TopOfBook& update) {
-    if (update_callback_) {
-        update_callback_(update);
-    }
 }
 
 /// @brief Обработка ошибки
