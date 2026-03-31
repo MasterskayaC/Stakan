@@ -1,7 +1,5 @@
-#include "bid_ask_book.h"
-#include <iomanip>
-#include <sstream>
-#include <iostream>
+﻿#include "bid_ask_book.h"
+
 #include <format>
 #include <mutex>
 
@@ -18,30 +16,6 @@ bool validate(const Order& order, const char* operation) {
 
     return true;
 }
-}
-
-void Logger::Log(const LogLevel level, const std::string &msg) {
-    std::cout << "[" << Now() << "] "
-            << "[" << ToString(level) << "] "
-            << msg << std::endl;
-}
-
-std::string Logger::Now() {
-    const auto now = std::chrono::system_clock::now();
-    const auto time = std::chrono::system_clock::to_time_t(now);
-
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time), "%H:%M:%S");
-    return ss.str();
-}
-
-const char * Logger::ToString(const LogLevel level) {
-    switch (level) {
-        case LogLevel::Info: return "INFO";
-        case LogLevel::Warning: return "WARNING";
-        case LogLevel::Error: return "ERROR";
-    }
-    return "";
 }
 
 void OrderBook::NewBid(Order order) {
@@ -116,8 +90,8 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+            std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
+                        old_order.id, new_order.id));
         return;
     }
 
@@ -146,8 +120,8 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+            std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
+                        old_order.id, new_order.id));
         return;
     }
 

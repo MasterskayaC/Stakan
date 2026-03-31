@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+﻿cmake_minimum_required(VERSION 3.11)
 project(bid_ask_book)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -11,6 +11,8 @@ set(MAIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(bid_ask_book
         ${MAIN_SOURCE_DIR}/src/bid_ask_book.cpp
         ${MAIN_SOURCE_DIR}/src/bid_ask_book.h
+        ${MAIN_SOURCE_DIR}/src/logger.cpp
+        ${MAIN_SOURCE_DIR}/src/logger.h
         ${MAIN_SOURCE_DIR}/src/tests.cpp
 )
 
