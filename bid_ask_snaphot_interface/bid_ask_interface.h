@@ -10,13 +10,15 @@ namespace common
 
     using ID = uint64_t;
     using Price = uint64_t;
+    using Quantity = uint64_t;
+
     struct Order {
         Order() = default;
         Order(ID number, Price p, int qty)
             : id(number), price(p), quantity(qty) {}
         ID id = 0;
         Price price = 0;
-        int quantity = 0;
+        Quantity quantity = 0;
     };
 
     struct Snapshot
@@ -27,6 +29,8 @@ namespace common
         std::array<common::Order, topN>  topAsks;
 
         std::string operator()();
+        std::vector<char> Serialize() const;
+        static Snapshot Deserialize(const std::vector<char>& data);
     };
     
     std::string Snapshot::operator()() {
@@ -40,6 +44,24 @@ namespace common
             if(ask.id == 0) break;
             result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
         }
+        return result;
+    }
+
+    std::vector<char> Snapshot::Serialize() const {
+        size_t size = sizeof(Snapshot);
+        std::vector<char> buffer(size);
+        std::memcpy(buffer.data(), &topBids, sizeof (topBids));
+        std::memcpy(buffer.data() + sizeof (topBids), &topAsks, sizeof(topAsks));
+        return buffer;
+    }
+
+    Snapshot Snapshot::Deserialize(const std::vector<char>& data) {
+        if (data.size() < sizeof(Snapshot)) {
+            throw std::runtime_error("Deserialization error: incorrect data size");
+        }
+        Snapshot result;
+        std::memcpy(&result.topBids, data.data(), sizeof(topBids));
+        std::memcpy(&result.topAsks, data.data() + sizeof(topBids), sizeof(topAsks));
         return result;
     }
 }
