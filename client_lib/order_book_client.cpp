@@ -1,11 +1,10 @@
-#include "client_lib_interface.hpp"
-
-/** @todo Разобраться с включением TCP-client */
-#include "../include/tcp_client/client.hpp"
-
 #include <memory>
 #include <set>
 #include <utility>
+
+#include "client_lib_interface.hpp"
+/** @todo Разобраться с включением TCP-client */
+#include "../include/tcp_client/client.hpp"
 
 namespace client_lib {
 
@@ -14,32 +13,26 @@ namespace client_lib {
  */
 Snapshot ToSnapshot(const tcp_client::TopOfBook& top) {
     Snapshot snapshot;
-    
+
     snapshot.bids.reserve(1);
     snapshot.asks.reserve(1);
 
-    snapshot.bids.push_back({
-        .price = static_cast<double>(top.best_bid.price),
-        .quantity = static_cast<double>(top.best_bid.quantity),
-    });
-
-    snapshot.asks.push_back({
-        .price = static_cast<double>(top.best_ask.price),
-        .quantity = static_cast<double>(top.best_ask.quantity),
-    });
+    snapshot.bids.push_back(
+        {.price = static_cast<double>(top.best_bid.price), .quantity = static_cast<double>(top.best_bid.quantity)});
+    snapshot.asks.push_back(
+        {.price = static_cast<double>(top.best_ask.price), .quantity = static_cast<double>(top.best_ask.quantity)});
 
     snapshot.exchange_timestamp_ns = top.exchange_timestamp_ns;
 
     return snapshot;
 }
 
- /**
+/**
  * @brief Реализация интерфеса IClientCallbacks
  */
 class CallbacksAdapter : public tcp_client::IClientCallbacks {
 public:
-    CallbacksAdapter(ClientCallbacks&& cc)
-        : cc_(std::move(cc)) {}
+    CallbacksAdapter(ClientCallbacks&& cc) : cc_(std::move(cc)) {}
 
     ~CallbacksAdapter() = default;
 
@@ -72,19 +65,15 @@ public:
     /**
      * @brief Создает клиент с дефолтными настройками.
      */
-    OrderBookClient(ClientCallbacks&& cc) 
-        : callbaсks_(std::move(cc)) {
+    OrderBookClient(ClientCallbacks&& cc) : callbaсks_(std::move(cc)) {
         client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
     }
 
     /**
      * @brief Создает клиент с кастомным хостом и портом.
      */
-    OrderBookClient(const std::string& host,
-                    std::uint16_t port,
-                    ClientCallbacks&& cc)
-        : callbaсks_(std::move(cc)),
-          config_({host, port}) {
+    OrderBookClient(const std::string& host, std::uint16_t port, std::string name, ClientCallbacks&& cc) :
+        callbaсks_(std::move(cc)), config_({.host = host, .port = port, .client_name = name}) {
         client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
     }
 
@@ -131,9 +120,9 @@ public:
 
     /**
      * @brief Запрашивает snapshot у сервера.
-     * 
+     *
      * Залушечная реализация.
-     * 
+     *
      */
     void RequestSnapshot() override {}
 
@@ -151,7 +140,7 @@ public:
      * @brief Возвращает текущее состояние клиента.
      *
      * Залушечная реализация.
-     * 
+     *
      * @return Текущее состояние клиентской библиотеки.
      */
     ConnectionState State() const noexcept override {};
@@ -168,7 +157,7 @@ private:
      * @brief Сообщает об ошибке через пользовательский callback.
      *
      * Залушечная реализация.
-     * 
+     *
      * @param error Код ошибки.
      * @param message Текстовое описание ошибки.
      */
@@ -181,20 +170,17 @@ private:
     std::unique_ptr<tcp_client::TcpClient> client_;
 };
 
-std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(
-    ClientCallbacks&& cc) {
+std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc) {
     return std::make_unique<OrderBookClient>(std::move(cc));
 }
 
 std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
                                                        uint16_t port,
+                                                       std::string name,
                                                        ClientCallbacks&& cc) {
-  tcp_client::ClientConfig config{
-      .host = std::move(host),
-      .port = port,
-  };
-  
-  return std::make_unique<OrderBookClient>(std::move(config), std::move(cc));
+    tcp_client::ClientConfig config{.host = std::move(host), .port = port, .client_name = name};
+
+    return std::make_unique<OrderBookClient>(std::move(config), std::move(cc));
 }
 
-} // namespace client_lib
+}  // namespace client_lib

@@ -1,10 +1,8 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -15,8 +13,8 @@ namespace client_lib {
  * @brief Данные отдельного уровня цен в стакане.
  */
 struct Order {
-    double price {0.0};
-    double quantity {0.0};
+    double price{0.0};
+    double quantity{0.0};
 };
 
 /**
@@ -43,18 +41,19 @@ enum class ConnectionState {
  * @brief Типы ошибок, которые может вернуть клиентская библиотека.
  */
 enum class ClientError {
-    None,                   ///< Ошибки нет.
-    SocketOpenFailed,       ///< Не удалось открыть сокет.
-    ConnectFailed,          ///< Не удалось подключиться к серверу.
-    ReadFailed,             ///< Ошибка чтения из сокета.
-    WriteFailed,            ///< Ошибка записи в сокет.
-    ProtocolError,          ///< Ошибка формата или обработки протокола.
-    UnexpectedMessage,      ///< Получено неожиданное сообщение.
-    SnapshotRequestFailed   ///< Не удалось запросить snapshot.
+    None,                  ///< Ошибки нет.
+    SocketOpenFailed,      ///< Не удалось открыть сокет.
+    ConnectFailed,         ///< Не удалось подключиться к серверу.
+    ReadFailed,            ///< Ошибка чтения из сокета.
+    WriteFailed,           ///< Ошибка записи в сокет.
+    ProtocolError,         ///< Ошибка формата или обработки протокола.
+    UnexpectedMessage,     ///< Получено неожиданное сообщение.
+    SnapshotRequestFailed  ///< Не удалось запросить snapshot.
 };
 
 /**
- * @brief Набор callback-функций для уведомления внешнего кода о событиях клиента.
+ * @brief Набор callback-функций для уведомления внешнего кода о событиях
+ * клиента.
  */
 struct ClientCallbacks final {
     /// Вызывается после успешного подключения к серверу.
@@ -133,11 +132,10 @@ public:
 };
 
 /** @brief Создает объект client lib с дефолной конфиграцией соединения.
- * 
+ *
  * @param сс ClientCallbacks структура callback-ов от ui.
  */
-std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(
-    ClientCallbacks&& cc);
+std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc);
 
 /** @brief Создает объект client lib с параметрами соединения из UI.
  * @param host IP адрес сервера.
@@ -146,6 +144,7 @@ std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(
  */
 std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
                                                        uint16_t port,
+                                                       std::string name,
                                                        ClientCallbacks&& cc);
 
-} // namespace client_lib
+}  // namespace client_lib
