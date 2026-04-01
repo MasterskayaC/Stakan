@@ -31,7 +31,7 @@ public:
      * @brief Returns the next snapshot in the cyclic list
      * @return A snapshot
     */
-    common::Snapshot get_snapshot() override;
+    std::optional<common::Snapshot> get_snapshot() override;
 
 private:
     std::vector<common::Snapshot> snapshots_;
@@ -94,7 +94,10 @@ TmpSnapshotCreator::TmpSnapshotCreator(bool random, uint8_t count)
     }
 }
 
-common::Snapshot TmpSnapshotCreator::get_snapshot() {
+std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
+    if (!snapshots_.size()) {
+        return std::nullopt;
+    }
     size_t idx = current_index_.fetch_add(1, std::memory_order_relaxed) % snapshots_.size();
     return snapshots_[idx];
 }

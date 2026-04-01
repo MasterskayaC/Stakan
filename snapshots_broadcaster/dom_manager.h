@@ -78,13 +78,6 @@ namespace server {
         boost::asio::io_context& io_context_;                ///< Reference to the io_context for asynchronous operations
 
         /**
-         * @brief Sends the current snapshot to all clients via the broadcaster
-         * @param use_test_broadcast If true, uses test snapshots from TmpSnapshotCreator;
-         *                           otherwise uses the order book snapshots
-         */
-        void send_snapshots(bool use_test_broadcast = false);
-
-        /**
          * @brief Starts broadcasting snapshots at regular intervals
          * @param interval_ms Time in milliseconds between snapshots (default = DEFAULT_INTERVAL)
          * @param use_test_broadcast If true, uses test snapshots from TmpSnapshotCreator;
@@ -98,12 +91,19 @@ namespace server {
         void stop_broadcasting();
 
         /**
+         * @brief Sends the current snapshot to all clients via the broadcaster
+         * @param use_test_broadcast If true, uses test snapshots from TmpSnapshotCreator;
+         *                           otherwise uses the order book snapshots
+         */
+        void send_snapshot(bool use_test_broadcast = false);
+
+        /**
          * @brief Sends a snapshot to a specific client
          * @param client_id Identifier of the target client
          * @param use_test_broadcast If true, uses a test snapshot from TmpSnapshotCreator
          *                           otherwise uses the current snapshot from the order book
          */
-        void send_snapshot_to_client(ClientId client_id, bool use_test_broadcast = true);
+        void send_snapshot_by_client_id(ClientId client_id, bool use_test_broadcast = true);
 
         /**
          * @brief Schedules the next broadcast by restarting the timer

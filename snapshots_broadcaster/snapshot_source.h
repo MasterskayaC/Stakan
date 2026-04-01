@@ -2,11 +2,12 @@
 
 #include "bid_ask_interface.h"
 #include <memory>
+#include <optional>
 
 class ISnapshotSource {
 public:
 	virtual ~ISnapshotSource() = default;
-	virtual common::Snapshot get_snapshot() = 0;
+	virtual std::optional<common::Snapshot> get_snapshot() = 0;
 };
 
 /**

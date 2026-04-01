@@ -2,6 +2,7 @@
 
 #include <boost/asio/post.hpp>
 #include <iostream>
+#include <optional>
 
 namespace server {
     constexpr uint8_t TMP_NUM_OF_SNAPSHOTS = 5;
@@ -9,7 +10,7 @@ namespace server {
     DOMManager::DOMManager(boost::asio::io_context& io_context)
                     : client_list_(makeClientList())
                     , snapshot_source_(makeTmpSnapshotCreator(false, TMP_NUM_OF_SNAPSHOTS))
-                    , broadcaster_(std::make_unique<Broadcaster>(*client_list_))
+                    , broadcaster_(std::make_unique<Broadcaster>(*client_list_, io_context))
                     , broadcast_timer_(io_context)
                     , io_context_(io_context) {
         broadcaster_->start();
@@ -46,23 +47,47 @@ namespace server {
                                         if (ec || !broadcasting_) {
                                             return;
                                         }
-                                        send_snapshots(use_test_broadcast);
-                                        schedule_next_broadcast(interval_ms, use_test_broadcast);
+                                        try {
+                                            send_snapshot(use_test_broadcast);
+                                            schedule_next_broadcast(interval_ms, use_test_broadcast);
+                                        } catch (const std::exception& e) {
+                                            std::cerr << "Error during scheduled broadcast: " << e.what() << std::endl;
+                                            //stop_broadcasting();
+                                        }
+
                                     }
         );
     }
 
-    void DOMManager::send_snapshot_to_client(ClientId client_id, bool use_test_broadcast) {
-        common::Snapshot snapshot = snapshot_source_->get_snapshot();
-        auto cmd = std::make_unique<BroadcastSnapshotCommand>(client_id, std::move(snapshot));
-        broadcaster_->enqueue(std::move(cmd));
+    void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_broadcast) {
+        try {
+            std::optional<common::Snapshot> snapshot = snapshot_source_->get_snapshot();
+            if (!snapshot) {
+                return;
+            }
+            auto cmd = std::make_unique<BroadcastSnapshotCommand>(client_id, std::move(*snapshot));
+            broadcaster_->enqueue(std::move(cmd));
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to send snapshot to client " << client_id << ": " << e.what() << std::endl;
+            //stop_broadcasting();
+        }
     }
 
-    void DOMManager::send_snapshots(bool use_test_broadcast) {
-        common::Snapshot snapshot = snapshot_source_->get_snapshot();
-        std::cout << snapshot.topAsks[0].id << std::endl;
-        auto cmd = std::make_unique<BroadcastSnapshotCommand>(std::move(snapshot));
-        broadcaster_->enqueue(std::move(cmd));
+    void DOMManager::send_snapshot(bool use_test_broadcast) {
+        try {
+            std::optional<common::Snapshot> snapshot = snapshot_source_->get_snapshot();
+            if (!snapshot) {
+                return;
+            }
+            if (!snapshot->topAsks.empty()) {       //TMP
+                std::cout << "snapshot.topAsks[0].id = " << snapshot->topAsks[0].id << std::endl;
+            }
+            auto cmd = std::make_unique<BroadcastSnapshotCommand>(std::move(*snapshot));
+            broadcaster_->enqueue(std::move(cmd));
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to send snapshot: " << e.what() << std::endl;
+            //stop_broadcasting();
+        }
     }
 
     void DOMManager::Handle(const AddOrderCmd& cmd) {
@@ -76,7 +101,7 @@ namespace server {
         stop_broadcasting();
     }
     void DOMManager::Handle(const SendSnapshotToClientCmd& cmd) {
-        send_snapshot_to_client(cmd.client_id, cmd.use_test_broadcast);
+        send_snapshot_by_client_id(cmd.client_id, cmd.use_test_broadcast);
     }
 
     void DOMManager::Handle(const StartBroadcastCmd& cmd) {
