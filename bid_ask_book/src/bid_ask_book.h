@@ -14,18 +14,27 @@
 namespace server {
     class OrderBook {
     public:
-        // отдельный метод для каждого контейнера
+        /// @brief Добавляет новую заявку в контейнер bid-ордера.
         void NewBid(common::Order order);
+        /// @brief Добавляет новую заявку в контейнер ask-ордера.
         void NewAsk(common::Order order);
+        /// @brief Удаляет bid-заявку по её идентификатору.
         void CancelBid(common::ID order_id);
+        /// @brief Удаляет ask-заявку по её идентификатору.
         void CancelAsk(common::ID order_id);
+        /// @brief Обновляет существующую bid-заявку, сохраняя её идентификатор.
         void ReplaceBid(common::Order old_order, common::Order new_order);
+        /// @brief Обновляет существующую ask-заявку, сохраняя её идентификатор.
         void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-        // снапшот кэшируется и инвалидируется только когда успешная операция меняет topN
+        /// @brief Возвращает текущий снапшот topN bid/ask заявок.
+        /// @details Снапшот кэшируется и пересчитывается только после инвалидирования
+        /// кэша успешной операцией, изменившей topN заявок.
         [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
+        /// @brief Возвращает лучшую bid-заявку.
         [[nodiscard]] common::Order BestBid() const;
+        /// @brief Возвращает лучшую ask-заявку.
         [[nodiscard]] common::Order BestAsk() const;
 
     private:
@@ -68,10 +77,21 @@ namespace server {
         using BidContainer = OrderContainer<BidComparator>;
         using AskContainer = OrderContainer<AskComparator>;
 
+        /// @brief Проверяет, входит ли заявка в первые @p top_n элементов индекса.
+        /// @tparam Index Тип упорядоченного индекса контейнера (так как у нас два контейнера: BidContainer и AskContainer)
+        /// @param index Индекс, в котором проверяется принадлежность к topN.
+        /// @param order_id Идентификатор заявки.
+        /// @param top_n Количество верхних элементов, которые считаются значимыми.
+        /// @return true, если заявка присутствует в первых @p top_n элементах.
         template <typename Index>
         [[nodiscard]] static bool IsInTopN(const Index& index, common::ID order_id, size_t top_n);
 
+        /// @brief Сбрасывает кэш снапшота.
+        /// @details Вызывается после успешной операции, которая меняет текущий topN.
         void ResetCachedSnapshot() const;
+
+        /// @brief Строит новый снапшот topN bid/ask заявок на текущем состоянии книги.
+        /// @return Новый снапшот без использования кэша.
         [[nodiscard]] common::Snapshot BuildNewSnapshot() const;
 
         BidContainer bids_;
