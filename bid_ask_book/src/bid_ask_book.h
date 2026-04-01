@@ -27,10 +27,10 @@ namespace server {
         /// @brief Обновляет существующую ask-заявку, сохраняя её идентификатор.
         void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-        /// @brief Возвращает текущий снапшот topN bid/ask заявок.
-        /// @details Снапшот кэшируется и пересчитывается только после инвалидирования
-        /// кэша успешной операцией, изменившей topN заявок.
-        [[nodiscard]] common::Snapshot GetTopSnapshot() const;
+        /// @brief Возвращает текущий снапшот topN bid/ask заявок, если он еще не был отправлен.
+        /// @details Метод возвращает новый снапшот только после успешной операции,
+        /// изменившей topN заявок. Повторный вызов без таких изменений вернет std::nullopt.
+        [[nodiscard]] std::optional<common::Snapshot> GetTopSnapshot() const;
 
         /// @brief Возвращает лучшую bid-заявку.
         [[nodiscard]] common::Order BestBid() const;
@@ -86,17 +86,15 @@ namespace server {
         template <typename Index>
         [[nodiscard]] static bool IsInTopN(const Index& index, common::ID order_id, size_t top_n);
 
-        /// @brief Сбрасывает кэш снапшота.
-        /// @details Вызывается после успешной операции, которая меняет текущий topN.
-        void ResetCachedSnapshot() const;
-
         /// @brief Строит новый снапшот topN bid/ask заявок на текущем состоянии книги.
-        /// @return Новый снапшот без использования кэша.
+        /// @return Новый снапшот, который будет отдан вызывающему коду.
         [[nodiscard]] common::Snapshot BuildNewSnapshot() const;
+        void AllowBuildNewSnapshot();
 
         BidContainer bids_;
         AskContainer asks_;
-        mutable std::optional<common::Snapshot> cached_snapshot_;
+        
+        mutable bool is_ready_new_snapshot_ = true;
 
         // мьютексы для потокобезопасности
         mutable std::mutex snapshot_mutex_;

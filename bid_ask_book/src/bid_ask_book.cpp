@@ -35,9 +35,9 @@ bool OrderBook::IsInTopN(const Index& index, const ID order_id, const size_t top
     return false;
 }
 
-void OrderBook::ResetCachedSnapshot() const {
-    std::lock_guard snapshot_lock(snapshot_mutex_);
-    cached_snapshot_.reset();
+void OrderBook::AllowBuildNewSnapshot() {
+    std::lock_guard lg(snapshot_mutex_);
+    is_ready_new_snapshot_ = true;
 }
 
 void OrderBook::NewBid(Order order) {
@@ -50,7 +50,7 @@ void OrderBook::NewBid(Order order) {
     auto result = bids_.insert(order);
     if (result.second) {
         if (IsInTopN(bids_.get<0>(), order.id, topN)) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("New BID added, id = {}", order.id));
@@ -70,7 +70,7 @@ void OrderBook::NewAsk(Order order) {
     auto result = asks_.insert(order);
     if (result.second) {
         if (IsInTopN(asks_.get<0>(), order.id, topN)) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("New ASK added, id = {}", order.id));
@@ -89,7 +89,7 @@ void OrderBook::CancelBid(ID order_id) {
         const bool was_in_top = IsInTopN(bids_.get<0>(), order_id, topN);
         index.erase(it);
         if (was_in_top) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("Bid canceled, id = {}", order_id));
@@ -108,7 +108,7 @@ void OrderBook::CancelAsk(ID order_id) {
         const bool was_in_top = IsInTopN(asks_.get<0>(), order_id, topN);
         index.erase(it);
         if (was_in_top) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("Ask canceled, id = {}", order_id));
@@ -142,7 +142,7 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
             o.quantity = new_order.quantity;
         });
         if (was_in_top || IsInTopN(bids_.get<0>(), new_order.id, topN)) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("Replaced BID id = {}", new_order.id));
@@ -176,7 +176,7 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
             o.quantity = new_order.quantity;
         });
         if (was_in_top || IsInTopN(asks_.get<0>(), new_order.id, topN)) {
-            ResetCachedSnapshot();
+            AllowBuildNewSnapshot();
         }
         Logger::Log(LogLevel::Info,
             std::format("Replaced ASK id = {}", new_order.id));
@@ -210,15 +210,16 @@ Snapshot OrderBook::BuildNewSnapshot() const {
     return snapshot;
 }
 
-Snapshot OrderBook::GetTopSnapshot() const {
+std::optional<Snapshot> OrderBook::GetTopSnapshot() const {
     std::scoped_lock order_lock(bids_mutex_, asks_mutex_);
     std::lock_guard snapshot_lock(snapshot_mutex_);
 
-    if (!cached_snapshot_.has_value()) {
-        cached_snapshot_ = BuildNewSnapshot();
+    if (is_ready_new_snapshot_) {
+        is_ready_new_snapshot_ = false;
+        return BuildNewSnapshot();
     }
 
-    return *cached_snapshot_;
+    return std::nullopt;
 }
 
 Order OrderBook::BestBid() const {
