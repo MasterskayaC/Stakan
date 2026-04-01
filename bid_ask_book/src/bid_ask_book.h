@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <mutex>
+#include <optional>
 #include <shared_mutex>
 
 #include <boost/multi_index_container.hpp>
@@ -20,9 +22,7 @@ namespace server {
         void ReplaceBid(common::Order old_order, common::Order new_order);
         void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-        // TODO: механизм, чтобы понять, надо вообще обновлять клиентов топ-10 заявок с обеих сторон прежний и можно не напрягаться
-        // можно добавить соответствующий флаг и помечать его true когда
-        // операции New/Cancel затрагивают топ-20 и считывать его броадкастером, перед запросом GetTopSnapshot()
+        // снапшот кэшируется и инвалидируется только когда успешная операция меняет topN
         [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
         [[nodiscard]] common::Order BestBid() const;
@@ -68,10 +68,18 @@ namespace server {
         using BidContainer = OrderContainer<BidComparator>;
         using AskContainer = OrderContainer<AskComparator>;
 
+        template <typename Index>
+        [[nodiscard]] static bool IsInTopN(const Index& index, common::ID order_id, size_t top_n);
+
+        void ResetCachedSnapshot() const;
+        [[nodiscard]] common::Snapshot BuildNewSnapshot() const;
+
         BidContainer bids_;
         AskContainer asks_;
+        mutable std::optional<common::Snapshot> cached_snapshot_;
 
         // мьютексы для потокобезопасности
+        mutable std::mutex snapshot_mutex_;
         mutable std::shared_mutex bids_mutex_;
         mutable std::shared_mutex asks_mutex_;
     };
