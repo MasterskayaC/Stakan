@@ -8,7 +8,8 @@
 namespace app {
 
 Application::Application()
-    : snapshot_client_(std::make_shared<console::SnapshotConsoleClient>()) {
+    : order_book_client_(std::make_shared<client_lib::OrderBookClient>())
+    , snapshot_client_(std::make_shared<console::SnapshotConsoleClient>(order_book_client_)) {
     menu_.reset(new menu::Menu(std::cin, std::cout, snapshot_client_));
     command_handlers_.reset(new menu::CommandHandlers(*menu_, std::cout, snapshot_client_));
 
@@ -45,8 +46,8 @@ bool Application::fetch_snapshot() {
 
 void Application::on_snapshot_received(const console::Snapshot& snapshot) {
     std::cout << "=== Snapshot ===\n";
-    std::cout << "Best Bid: " << snapshot.topBids[0].price << " (" << snapshot.topBids[0].quantity << ")\n";
-    std::cout << "Best Ask: " << snapshot.topAsks[0].price << " (" << snapshot.topAsks[0].quantity << ")\n";
+    std::cout << "Best Bid: " << snapshot.bids[0].price << " (" << snapshot.bids[0].quantity << ")\n";
+    std::cout << "Best Ask: " << snapshot.asks[0].price << " (" << snapshot.asks[0].quantity << ")\n";
 }
 
 void Application::on_error(const std::string& error) {

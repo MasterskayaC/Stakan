@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "snapshot_client.h"
+#include "order_book_client.hpp"
 
 namespace menu {
 class Menu;
@@ -27,6 +28,7 @@ private:
     void on_error(const std::string& error);
 
 private:
+    std::shared_ptr<client_lib::IOrderBookClient> order_book_client_;
     std::shared_ptr<console::SnapshotConsoleClient> snapshot_client_;
     std::unique_ptr<menu::Menu> menu_;
     std::unique_ptr<menu::CommandHandlers> command_handlers_;

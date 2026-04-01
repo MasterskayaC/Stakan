@@ -10,6 +10,7 @@ add_executable(cui
     snapshot_client.cpp
     menu.cpp
     menu_action.cpp
+    ../client_lib/order_book_client.cpp
 )
 
 target_include_directories(cui

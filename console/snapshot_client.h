@@ -6,6 +6,8 @@
 #include <functional>
 #include <array>
 
+#include "client_lib_interface.hpp"
+
 namespace console {
 
 struct Order {
@@ -15,54 +17,38 @@ struct Order {
 };
 
 struct Snapshot {
-    std::array<Order, 20> topBids;
-    std::array<Order, 20> topAsks;
+    std::array<Order, 20> bids;
+    std::array<Order, 20> asks;
 };
 
-/// @brief Колбэк при получении снапшота
 using SnapshotCallback = std::function<void(const Snapshot&)>;
-/// @brief Колбэк при ошибке
 using ErrorCallback = std::function<void(const std::string&)>;
 
-/// @brief Консольный клиент для получения снапшотов и обновлений
 class SnapshotConsoleClient {
 public:
-    /// @brief Конструктор
-    SnapshotConsoleClient();
-    /// @brief Деструктор
+    explicit SnapshotConsoleClient(std::shared_ptr<client_lib::IOrderBookClient> client);
     ~SnapshotConsoleClient();
 
-    /// @brief Подключение к серверу
-    void connect_to_server(const std::string& host, uint16_t port);
-    /// @brief Запрос снапшота
-    void fetch_snapshot();
-    /// @brief Проверка соединения
-    bool is_connected() const;
-
-    /// @brief Установка колбэка снапшота
     void set_snapshot_callback(SnapshotCallback callback);
-    /// @brief Установка колбэка ошибок
     void set_error_callback(ErrorCallback callback);
 
+    void connect_to_server(const std::string& host, uint16_t port);
+    void disconnect_from_server();
+    void fetch_snapshot();
+    bool is_connected() const;
+
 private:
-    /// @brief Обработка подключения
     void on_connected();
-    /// @brief Обработка отключения
     void on_disconnected();
-    /// @brief Обработка ошибки
-    void on_error(const std::string& message);
+    void on_snapshot(const client_lib::Snapshot& snapshot);
+    void on_error(client_lib::ClientError error, std::string_view message);
 
 private:
-    /// @brief PIMPL
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
-
-    std::string host_;
-    uint16_t port_;
-    bool connected_;
-
+    std::shared_ptr<client_lib::IOrderBookClient> client_;
+    client_lib::ClientConfig config_;
     SnapshotCallback snapshot_callback_;
     ErrorCallback error_callback_;
+    bool connected_ = false;
 };
 
 } // namespace console
