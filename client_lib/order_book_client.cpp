@@ -3,8 +3,7 @@
 #include <utility>
 
 #include "client_lib_interface.hpp"
-/** @todo Разобраться с включением TCP-client */
-#include "../include/tcp_client/client.hpp"
+/** @todo разобраться с включением TCPclient */
 
 namespace client_lib {
 
@@ -143,7 +142,9 @@ public:
      *
      * @return Текущее состояние клиентской библиотеки.
      */
-    ConnectionState State() const noexcept override {};
+    ConnectionState State() const noexcept override {
+        return ConnectionState::Stopped;
+    };
 
 private:
     /**
@@ -178,9 +179,7 @@ std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
                                                        uint16_t port,
                                                        std::string name,
                                                        ClientCallbacks&& cc) {
-    tcp_client::ClientConfig config{.host = std::move(host), .port = port, .client_name = name};
-
-    return std::make_unique<OrderBookClient>(std::move(config), std::move(cc));
+    return std::make_unique<OrderBookClient>(host, port, name, std::move(cc));
 }
 
 }  // namespace client_lib
