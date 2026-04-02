@@ -28,12 +28,12 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
-        std::string operator()();
+        std::string to_string() const;
         std::vector<char> Serialize() const;
         static Snapshot Deserialize(const std::vector<char>& data);
     };
-    
-    std::string Snapshot::operator()() {
+
+    std::string Snapshot::to_string() const {
         std::string result = "Top Bids:\n";
         for (const auto& bid : topBids) {
             if(bid.id == 0) break;
@@ -56,7 +56,7 @@ namespace common
     }
 
     Snapshot Snapshot::Deserialize(const std::vector<char>& data) {
-        if (data.size() < sizeof(Snapshot)) {
+        if (data.size() != sizeof(Snapshot)) {
             throw std::runtime_error("Deserialization error: incorrect data size");
         }
         Snapshot result;
