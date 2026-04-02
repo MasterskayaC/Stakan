@@ -1,6 +1,7 @@
 ﻿#include "logger.h"
 
 #include <chrono>
+#include <format>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -8,9 +9,7 @@
 using namespace server;
 
 void Logger::Log(const LogLevel level, const std::string& msg) {
-    std::cout << "[" << Now() << "] "
-              << "[" << ToString(level) << "] "
-              << msg << std::endl;
+    std::cout << std::format("[{}] [{}] {}\n", Now(), ToString(level), msg);
 }
 
 std::string Logger::Now() {
