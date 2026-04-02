@@ -22,11 +22,9 @@ void Menu::Run() {
     running_ = true;
     while (running_) {
         output_ << "> ";
-        std::string cmd;
-        if (!(input_ >> cmd)) {
+        if (!ParseCommand(input_)) {
             break;
         }
-        ParseCommand(input_);
     }
 }
 

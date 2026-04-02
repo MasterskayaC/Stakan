@@ -31,8 +31,12 @@ void Application::Run() {
 
 bool Application::connect(const std::string& host, uint16_t port) {
     snapshot_client_->connect_to_server(host, port);
-    std::cout << "Connected to " << host << ":" << port << "\n";
-    return true;
+    if (snapshot_client_->is_connected()) {
+        std::cout << "Connected to " << host << ":" << port << "\n";
+        return true;
+    }
+    std::cerr << "Failed to connect to " << host << ":" << port << "\n";
+    return false;
 }
 
 bool Application::fetch_snapshot() {

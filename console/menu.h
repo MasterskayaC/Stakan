@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <iosfwd>
 #include <memory>
@@ -58,7 +59,7 @@ private:
     std::shared_ptr<console::SnapshotConsoleClient> client_;
 
     CommandHashTable commands_;
-    bool running_ = false;
+    std::atomic<bool> running_ = false;
 };
 
 } // namespace menu

@@ -10,6 +10,8 @@
 
 namespace console {
 
+constexpr size_t kOrderBookDepth = 20;
+
 struct Order {
     uint64_t id = 0;
     uint64_t price = 0;
@@ -17,8 +19,8 @@ struct Order {
 };
 
 struct Snapshot {
-    std::array<Order, 20> bids;
-    std::array<Order, 20> asks;
+    std::array<Order, kOrderBookDepth> bids;
+    std::array<Order, kOrderBookDepth> asks;
 };
 
 using SnapshotCallback = std::function<void(const Snapshot&)>;
