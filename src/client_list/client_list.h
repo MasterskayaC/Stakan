@@ -165,6 +165,8 @@ public:
      * @param message Binary data to send
      */
     virtual void broadcast_to_certain(ClientId id, const std::vector<char>& message) = 0;
+
+private:
 };
 
 /**

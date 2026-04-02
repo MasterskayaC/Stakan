@@ -26,8 +26,8 @@ public:
     }
 
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
-    void enqueue(BroadcastCommand cmd) {
-        queue_.push(cmd);
+    void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
+        queue_.push(std::move(cmd));
     }
 
     /// @brief Запускает поток-обработчик.
@@ -48,13 +48,13 @@ private:
     void run() {
         while (running_) {
             auto cmd = queue_.pop();
-            switch (cmd.type){
+            switch (cmd->type){
                 case CommandType::SendSnapshot:
-                    if(cmd.client_id == std::nullopt){
-                        boost::asio::post(io_, [this, &cmd]{handle_send_snapshot_all(std::get<common::Snapshot>(cmd.data));}); 
+                    if(cmd->client_id == std::nullopt){
+                        boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_snapshot_all(cmd->get_data<common::Snapshot>()->get());}); 
                     }
                     else{
-                        boost::asio::post(io_, [this, &cmd]{handle_send_snapshot_to(cmd.client_id.value(), std::get<common::Snapshot>(cmd.data));}); 
+                        boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_snapshot_to(cmd->client_id.value(), cmd->get_data<common::Snapshot>()->get());}); 
                     }
                     break;
                 default:
@@ -70,13 +70,13 @@ private:
     /// @brief Отправляет snapshot конкретному клиенту.
     /// @param id Идентификатор сессии клиента.
     void handle_send_snapshot_to(SessionId id, common::Snapshot s) {
-        std::vector<char> bytes = common::SerializeSnapshot(s);
+        std::vector<char> bytes = s.Serialize();
         clients_.broadcast_to_certain(id, bytes);
     }
 
     /// @brief Отправляет snapshot всем подключённым клиентам.
     void handle_send_snapshot_all(common::Snapshot s) {
-        std::vector<char> bytes = common::SerializeSnapshot(s);
+        std::vector<char> bytes = s.Serialize();
         clients_.broadcast_to_subscribed(bytes);
     }
 
