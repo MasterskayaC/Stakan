@@ -58,7 +58,7 @@ private:
                     }
                     break;
                 default:
-                    boost::asio::post(io_, [this, &cmd]{handle_send_md_update();}); 
+                    boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_md_update();}); 
                     break;
                     
             }
