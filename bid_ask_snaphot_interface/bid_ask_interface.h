@@ -64,4 +64,6 @@ namespace common
         std::memcpy(&result.topAsks, data.data() + sizeof(topBids), sizeof(topAsks));
         return result;
     }
+
+    //TODO (simanov artem): add tests;
 }
