@@ -17,7 +17,7 @@ ${Boost_INCLUDE_DIRS})
 target_link_libraries(TCPServer PUBLIC ${Boost_LIBRARIES})
 
 if(WIN32)
-    target_link_libraries(TCPServer ws2_32 wsock32)
+    target_link_libraries(TCPServer PUBLIC ws2_32 wsock32)
 endif()
 
 
