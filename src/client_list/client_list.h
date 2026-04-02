@@ -83,14 +83,14 @@ public:
      * @param id Client identifier
      * @param bid_id Identifier of the bid order
      */
-    virtual void remove_bid(ClientId id, OrderId bid_id) = 0;
+    virtual void remove_bid(ClientId id) = 0;
 
     /**
      * @brief Adds an ask order to a client's list
      * @param id Client identifier
      * @param ask_id Identifier of the ask order
      */
-    virtual void remove_ask(ClientId id, OrderId ask_id) = 0;
+    virtual void remove_ask(ClientId id) = 0;
 
     /**
      * @brief Retrieves all bid orders of a client
@@ -166,6 +166,8 @@ public:
      */
     virtual void broadcast_to_certain(ClientId id, const std::vector<char>& message) = 0;
 
+    
+    virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
 private:
 };
 

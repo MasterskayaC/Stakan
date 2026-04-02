@@ -15,16 +15,28 @@ private:
         bool subscribed = false;
     };
     std::unordered_map<ClientId, ClientContext> clients_;
+    std::unordered_map<const Session*, ClientId> session_to_client_;
     mutable std::mutex mutex_;
 
 public:
     void add_session(ClientId id, SessionPtr session) override {
         std::lock_guard<std::mutex> lock(mutex_);
+        const auto it = clients_.find(id);
+        if (it != clients_.end() && it->second.session) {
+            session_to_client_.erase(it->second.session.get());
+        }
         clients_[id].session = std::move(session);
+        if (clients_[id].session) {
+            session_to_client_[clients_[id].session.get()] = id;
+        }
     }
 
     void remove_session(ClientId id) override {
         std::lock_guard<std::mutex> lock(mutex_);
+        const auto it = clients_.find(id);
+        if (it != clients_.end() && it->second.session) {
+            session_to_client_.erase(it->second.session.get());
+        }
         clients_.erase(id);
     }
 
@@ -62,15 +74,23 @@ public:
 
     void add_bid(ClientId id, std::shared_ptr<common::Order> bid) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        clients_[id].bids.push_back(std::move(bid));
+        const auto it = clients_.find(id);
+        if (it == clients_.end()) {
+            return;
+        }
+        it->second.bids.push_back(std::move(bid));
     }
 
     void add_ask(ClientId id, std::shared_ptr<common::Order> ask) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        clients_[id].asks.push_back(std::move(ask));
+        const auto it = clients_.find(id);
+        if (it == clients_.end()) {
+            return;
+        }
+        it->second.asks.push_back(std::move(ask));
     }
 
-    void remove_bid(ClientId id, OrderId /*bid_id*/) override {
+    void remove_bid(ClientId id) override {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = clients_.find(id);
         if (it != clients_.end() && !it->second.bids.empty()) {
@@ -78,7 +98,7 @@ public:
         }
     }
 
-    void remove_ask(ClientId id, OrderId /*ask_id*/) override {
+    void remove_ask(ClientId id) override {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = clients_.find(id);
         if (it != clients_.end() && !it->second.asks.empty()) {
@@ -132,7 +152,11 @@ public:
 
     void subscribe(ClientId id) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        clients_[id].subscribed = true;
+        const auto it = clients_.find(id);
+        if (it == clients_.end()) {
+            return;
+        }
+        it->second.subscribed = true;
     }
 
     void unsubscribe(ClientId id) override {
@@ -178,4 +202,17 @@ public:
         SessionPtr s = get_session(id);
         s->SendMsg(message);
     }
+
+    std::optional<ClientId> find_client_id_by_session(const Session* session) const override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const auto it = session_to_client_.find(session);
+        if (it == session_to_client_.end()) {
+            return std::nullopt;
+        }
+        return it->second;
+    }
 };
+
+std::unique_ptr<IClientList> makeClientList() {
+    return std::make_unique<ClientList>();
+}
