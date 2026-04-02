@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -35,5 +36,6 @@ public:
     virtual std::vector<ClientId> get_subscribed_clients() const = 0;
     virtual std::vector<SessionPtr> get_subscribed_sessions() const = 0;
     virtual void broadcast_to_subscribed(const std::vector<char>& message) = 0;
+    virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
 };
 std::unique_ptr<IClientList> makeClientList();

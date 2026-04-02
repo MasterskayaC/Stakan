@@ -71,14 +71,9 @@ void TCPServer::HandleMessage(const std::string& line, const std::shared_ptr<Ses
         return;
     }
 
-    std::shared_ptr<Session> old_session;
-    {
-        std::lock_guard<std::mutex> lock(sessions_mutex_);
-        old_session = client_list_->get_session(client_id);
-        client_list_->add_session(client_id, session);
-        client_list_->subscribe(client_id);
-        session_to_client_[session.get()] = client_id;
-    }
+    auto old_session = client_list_->get_session(client_id);
+    client_list_->add_session(client_id, session);
+    client_list_->subscribe(client_id);
 
     if (old_session && old_session.get() != session.get()) {
         const std::string response = "INFO disconnected: reconnected from another socket\n";
@@ -91,17 +86,14 @@ void TCPServer::HandleMessage(const std::string& line, const std::shared_ptr<Ses
 }
 
 void TCPServer::HandleDisconnect(const std::shared_ptr<Session>& session) {
-    std::lock_guard<std::mutex> lock(sessions_mutex_);
-    const auto it = session_to_client_.find(session.get());
-    if (it == session_to_client_.end()) {
+    const auto client_id = client_list_->find_client_id_by_session(session.get());
+    if (!client_id.has_value()) {
         return;
     }
 
-    const ClientId client_id = it->second;
-    session_to_client_.erase(it);
-    auto current = client_list_->get_session(client_id);
+    auto current = client_list_->get_session(*client_id);
     if (current && current.get() == session.get()) {
-        client_list_->remove_session(client_id);
+        client_list_->remove_session(*client_id);
     }
 }
 

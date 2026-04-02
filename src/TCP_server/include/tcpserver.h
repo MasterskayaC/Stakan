@@ -4,8 +4,6 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
-#include <mutex>
-#include <unordered_map>
 
 using boost::asio::ip::tcp;
 
@@ -31,6 +29,4 @@ private:
     tcp::acceptor acceptor_;
     boost::asio::steady_timer snapshot_timer_;
     std::unique_ptr<IClientList> client_list_;
-    mutable std::mutex sessions_mutex_;
-    std::unordered_map<Session*, ClientId> session_to_client_;
 };
