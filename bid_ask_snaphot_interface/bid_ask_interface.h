@@ -28,24 +28,9 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
-        std::string to_string() const;
         std::vector<char> Serialize() const;
         static Snapshot Deserialize(const std::vector<char>& data);
-    };
-
-    std::string Snapshot::to_string() const {
-        std::string result = "Top Bids:\n";
-        for (const auto& bid : topBids) {
-            if(bid.id == 0) break;
-            result += std::format("Price: {}, Quantity: {}\n", bid.price, bid.quantity);
-        }
-        result += "Top Asks:\n";
-        for (const auto& ask : topAsks) {
-            if(ask.id == 0) break;
-            result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
-        }
-        return result;
-    }
+    };    
 
     std::vector<char> Snapshot::Serialize() const {
         size_t size = sizeof(Snapshot);
@@ -62,6 +47,20 @@ namespace common
         Snapshot result;
         std::memcpy(&result.topBids, data.data(), sizeof(topBids));
         std::memcpy(&result.topAsks, data.data() + sizeof(topBids), sizeof(topAsks));
+        return result;
+    }
+
+    std::string to_string(const Snapshot& snapshot) {
+        std::string result = "Top Bids:\n";
+        for (const auto& bid : snapshot.topBids) {
+            if(bid.id == 0) break;
+            result += std::format("Price: {}, Quantity: {}\n", bid.price, bid.quantity);
+        }
+        result += "Top Asks:\n";
+        for (const auto& ask : snapshot.topAsks) {
+            if(ask.id == 0) break;
+            result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
+        }
         return result;
     }
 
