@@ -24,7 +24,7 @@ public:
     bool fetch_snapshot();
 
 private:
-    void on_snapshot_received(const console::Snapshot& snapshot);
+    void on_snapshot_received(const client_lib::Snapshot& snapshot);
     void on_error(const std::string& error);
 
 private:

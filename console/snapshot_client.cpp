@@ -65,16 +65,7 @@ void SnapshotConsoleClient::on_disconnected() {
 
 void SnapshotConsoleClient::on_snapshot(const client_lib::Snapshot& snapshot) {
     if (snapshot_callback_) {
-        Snapshot converted;
-        for (size_t i = 0; i < 20; ++i) {
-            converted.bids[i].id = snapshot.bids[i].id;
-            converted.bids[i].price = snapshot.bids[i].price;
-            converted.bids[i].quantity = snapshot.bids[i].quantity;
-            converted.asks[i].id = snapshot.asks[i].id;
-            converted.asks[i].price = snapshot.asks[i].price;
-            converted.asks[i].quantity = snapshot.asks[i].quantity;
-        }
-        snapshot_callback_(converted);
+        snapshot_callback_(snapshot);
     }
 }
 

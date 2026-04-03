@@ -4,26 +4,12 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include <array>
 
 #include "client_lib_interface.hpp"
 
 namespace console {
 
-constexpr size_t kOrderBookDepth = 20;
-
-struct Order {
-    uint64_t id = 0;
-    uint64_t price = 0;
-    int quantity = 0;
-};
-
-struct Snapshot {
-    std::array<Order, kOrderBookDepth> bids;
-    std::array<Order, kOrderBookDepth> asks;
-};
-
-using SnapshotCallback = std::function<void(const Snapshot&)>;
+using SnapshotCallback = std::function<void(const client_lib::Snapshot&)>;
 using ErrorCallback = std::function<void(const std::string&)>;
 
 class SnapshotConsoleClient {

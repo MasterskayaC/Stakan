@@ -13,7 +13,7 @@ Application::Application()
     menu_.reset(new menu::Menu(std::cin, std::cout, snapshot_client_));
     command_handlers_.reset(new menu::CommandHandlers(*menu_, std::cout, snapshot_client_));
 
-    snapshot_client_->set_snapshot_callback([this](const console::Snapshot& snap) {
+    snapshot_client_->set_snapshot_callback([this](const client_lib::Snapshot& snap) {
         on_snapshot_received(snap);
     });
     snapshot_client_->set_error_callback([this](const std::string& err) {
@@ -48,7 +48,7 @@ bool Application::fetch_snapshot() {
     return true;
 }
 
-void Application::on_snapshot_received(const console::Snapshot& snapshot) {
+void Application::on_snapshot_received(const client_lib::Snapshot& snapshot) {
     std::cout << "=== Snapshot ===\n";
     std::cout << "Best Bid: " << snapshot.bids[0].price << " (" << snapshot.bids[0].quantity << ")\n";
     std::cout << "Best Ask: " << snapshot.asks[0].price << " (" << snapshot.asks[0].quantity << ")\n";

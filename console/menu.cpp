@@ -45,7 +45,7 @@ bool Menu::ParseCommand(std::istream& input) {
             return true;
         }
         output_ << "Unknown command: " << cmd << "\n";
-        return false;
+        return true;
     }
 
     CommandArgs args{std::in_place_type<NoArgs>};
