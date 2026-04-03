@@ -48,7 +48,7 @@ void SnapshotConsoleClient::fetch_snapshot() {
     if (!connected_) {
         return;
     }
-    client_->RequestSmapshot();
+    client_->RequestSnapshot();
 }
 
 bool SnapshotConsoleClient::is_connected() const {
