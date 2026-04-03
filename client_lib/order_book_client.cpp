@@ -1,29 +1,37 @@
+#include <chrono>
 #include <memory>
 #include <set>
+#include <tcp_client/client.hpp>
 #include <utility>
+#include <vector>
 
 #include "client_lib_interface.hpp"
-/** @todo разобраться с включением TCPclient */
 
 namespace client_lib {
 
 /**
  * @brief Преобразует TopOfBook в формат Snapshot для UI.
  */
-Snapshot ToSnapshot(const tcp_client::TopOfBook& top) {
-    Snapshot snapshot;
+Snapshot ToSnapshot(const common::Snapshot& snapshot) {
+    Snapshot result;
 
-    snapshot.bids.reserve(1);
-    snapshot.asks.reserve(1);
+    result.exchange_timestamp_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
 
-    snapshot.bids.push_back(
-        {.price = static_cast<double>(top.best_bid.price), .quantity = static_cast<double>(top.best_bid.quantity)});
-    snapshot.asks.push_back(
-        {.price = static_cast<double>(top.best_ask.price), .quantity = static_cast<double>(top.best_ask.quantity)});
+    result.bids.reserve(snapshot.topBids.size());
+    for (const auto& ord : snapshot.topBids) {
+        result.bids.push_back(client_lib::Order{.price = static_cast<double>(ord.price) / 100.0,
+                                                .quantity = static_cast<double>(ord.quantity)});
+    }
 
-    snapshot.exchange_timestamp_ns = top.exchange_timestamp_ns;
+    result.asks.reserve(snapshot.topAsks.size());
+    for (const auto& ord : snapshot.topAsks) {
+        result.asks.push_back(client_lib::Order{.price = static_cast<double>(ord.price) / 100.0,
+                                                .quantity = static_cast<double>(ord.quantity)});
+    }
 
-    return snapshot;
+    return result;
 }
 
 /**
