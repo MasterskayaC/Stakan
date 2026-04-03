@@ -19,7 +19,13 @@ namespace common
         ID id = 0;
         Price price = 0;
         Quantity quantity = 0;
+
+        double get_price() const;
     };
+
+    double Order::get_price() const {
+        return static_cast<double>(price);
+    }
 
     struct Snapshot
     {
@@ -28,11 +34,13 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
-        std::vector<char> Serialize() const;
-        static Snapshot Deserialize(const std::vector<char>& data);
+        std::array<double, topN> get_bid_prices() const;
+        std::array<double, topN> get_ask_prices() const;
+        std::vector<char> serialize() const;
+        static Snapshot deserialize(const std::vector<char>& data);
     };    
 
-    std::vector<char> Snapshot::Serialize() const {
+    std::vector<char> Snapshot::serialize() const {
         size_t size = sizeof(Snapshot);
         std::vector<char> buffer(size);
         std::memcpy(buffer.data(), &topBids, sizeof (topBids));
@@ -40,7 +48,7 @@ namespace common
         return buffer;
     }
 
-    Snapshot Snapshot::Deserialize(const std::vector<char>& data) {
+    Snapshot Snapshot::deserialize(const std::vector<char>& data) {
         if (data.size() != sizeof(Snapshot)) {
             throw std::runtime_error("Deserialization error: incorrect data size");
         }
@@ -60,6 +68,22 @@ namespace common
         for (const auto& ask : snapshot.topAsks) {
             if(ask.id == 0) break;
             result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
+        }
+        return result;
+    }
+
+    std::array<double, topN> Snapshot::get_bid_prices() const {
+        std::array<double, topN> result;
+        for (size_t i = 0; i < topN; i++) {
+            result[i] = static_cast<double>(topBids[i].price);
+        }
+        return result;
+    }
+
+    std::array<double, topN> Snapshot::get_ask_prices() const {
+        std::array<double, topN> result;
+        for (size_t i = 0; i < topN; i++) {
+            result[i] = static_cast<double>(topAsks[i].price);
         }
         return result;
     }
