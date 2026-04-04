@@ -11,26 +11,26 @@ public:
      * @brief Generates a vector of static (deterministic) snapshots
      * @param count Number of snapshots to generate
      * @return Vector of snapshots
-    */
+     */
     static std::vector<common::Snapshot> generate_static_snapshots(int count);
     /**
      * @brief Generates a vector of random snapshots
      * @param count Number of snapshots to generate
      * @return Vector of snapshots
-    */
+     */
     static std::vector<common::Snapshot> generate_random_snapshots(int count);
 
     /**
      * @brief Constructs a TmpSnapshotCreator
      * @param random If true, random snapshots are generated; otherwise static
      * @param count  Number of snapshots to generate
-    */
+     */
     TmpSnapshotCreator(bool random, uint8_t count);
 
     /**
      * @brief Returns the next snapshot in the cyclic list
      * @return A snapshot
-    */
+     */
     std::optional<common::Snapshot> get_snapshot() override;
 
 private:
@@ -77,16 +77,17 @@ std::vector<common::Snapshot> TmpSnapshotCreator::generate_random_snapshots(int 
             snap.topAsks[j].price = price_dist(gen);
             snap.topAsks[j].quantity = qty_dist(gen);
         }
-        std::sort(snap.topBids.begin(), snap.topBids.end(),
-            [](const common::Order& a, const common::Order& b) { return a.price > b.price; });
-        std::sort(snap.topAsks.begin(), snap.topAsks.end(),
-            [](const common::Order& a, const common::Order& b) { return a.price < b.price; });
+        std::sort(snap.topBids.begin(), snap.topBids.end(), [](const common::Order& a, const common::Order& b) {
+            return a.price > b.price;
+        });
+        std::sort(snap.topAsks.begin(), snap.topAsks.end(), [](const common::Order& a, const common::Order& b) {
+            return a.price < b.price;
+        });
     }
     return snapshots;
 }
 
-TmpSnapshotCreator::TmpSnapshotCreator(bool random, uint8_t count)
-    : random_(random) {
+TmpSnapshotCreator::TmpSnapshotCreator(bool random, uint8_t count) : random_(random) {
     if (random) {
         snapshots_ = generate_random_snapshots(count);
     } else {

@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include "dom_manager.h"
 
 int main() {
@@ -13,13 +14,13 @@ int main() {
     // Run io_context in a separate thread
     std::thread io_thread([&io_context]() {
         io_context.run();
-        });
+    });
 
     // Send command to start broadcasting
     int broadcast_interval_ms = 3000;
     bool use_test_broadcast = true;
-    server::StartBroadcastCmd br{ broadcast_interval_ms, use_test_broadcast };
-    dom(br);   // operator() passes the command to io_context
+    server::StartBroadcastCmd br{broadcast_interval_ms, use_test_broadcast};
+    dom(br);  // operator() passes the command to io_context
 
     // Simulate application work (10 seconds)
     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
@@ -30,7 +31,8 @@ int main() {
 
     // Stop io_context and wait for thread to finish
     io_context.stop();
-    if (io_thread.joinable()) io_thread.join();
+    if (io_thread.joinable())
+        io_thread.join();
 
     std::cout << "Eto birjevoy stakan end!" << std::endl;
     return 0;

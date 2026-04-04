@@ -1,24 +1,20 @@
 #pragma once
 
-#include <cstdint>
-#include <optional>
-#include <deque>
-#include <mutex>
 #include <condition_variable>
-#include <variant>
+#include <cstdint>
+#include <deque>
 #include <functional>  // для std::reference_wrapper
+#include <mutex>
+#include <optional>
 #include <typeinfo>
+#include <variant>
 
 #include "bid_ask_interface.h"
 
 using SessionId = std::size_t;
 
-struct MDUpdate {       //TMP structure for std::variant
-    enum class UpdateType : uint8_t {
-        Add,
-        Modify,
-        Delete
-    };
+struct MDUpdate {  // TMP structure for std::variant
+    enum class UpdateType : uint8_t { Add, Modify, Delete };
 
     UpdateType type;
     bool is_bid = true;
@@ -27,23 +23,22 @@ struct MDUpdate {       //TMP structure for std::variant
 
 /// @brief Типы команд — что broadcaster должен делать.
 enum class CommandType : uint8_t {
-    SendSnapshot,     ///< Отправить snapshot
-    SendMDUpdate,     ///< Отправить MD Update
+    SendSnapshot,  ///< Отправить snapshot
+    SendMDUpdate,  ///< Отправить MD Update
 };
 
-/// @brief Команда для broadcaster'а — тип + кому слать (если кому-то конкретному).
+/// @brief Команда для broadcaster'а — тип + кому слать (если кому-то
+/// конкретному).
 struct BroadcastCommand {
     CommandType type;
     std::optional<SessionId> client_id;
 
-    BroadcastCommand(CommandType t, std::optional<SessionId> id = std::nullopt)
-                            : type(t), client_id(id) 
-    {}
+    BroadcastCommand(CommandType t, std::optional<SessionId> id = std::nullopt) : type(t), client_id(id) {}
 
     virtual ~BroadcastCommand() = default;
 
     // Возвращает ссылку на данные, если тип совпадает, иначе nullopt
-    template<typename T>
+    template <typename T>
     std::optional<std::reference_wrapper<const T>> get_data() const {
         if (get_data_type() == typeid(T)) {
             return std::cref(*static_cast<const T*>(get_data_ptr()));
@@ -60,17 +55,15 @@ struct BroadcastSnapshotCommand : BroadcastCommand {
 public:
     common::Snapshot data;
 
-    explicit BroadcastSnapshotCommand(common::Snapshot snapshot)
-                        : BroadcastCommand(CommandType::SendSnapshot)
-                        , data(std::move(snapshot)) 
-    {}
+    explicit BroadcastSnapshotCommand(common::Snapshot snapshot) :
+        BroadcastCommand(CommandType::SendSnapshot), data(std::move(snapshot)) {}
 
-    BroadcastSnapshotCommand(std::optional<SessionId> id, common::Snapshot snapshot)
-                        : BroadcastCommand(CommandType::SendSnapshot, id)
-                        , data(std::move(snapshot))
-    {}
+    BroadcastSnapshotCommand(std::optional<SessionId> id, common::Snapshot snapshot) :
+        BroadcastCommand(CommandType::SendSnapshot, id), data(std::move(snapshot)) {}
 
-    const common::Snapshot& get_snapshot() const { return data; }
+    const common::Snapshot& get_snapshot() const {
+        return data;
+    }
 
 protected:
     const std::type_info& get_data_type() const override {
@@ -86,17 +79,15 @@ struct BroadcastMDUpdateCommand : BroadcastCommand {
 public:
     MDUpdate data;
 
-    explicit BroadcastMDUpdateCommand(MDUpdate update)
-                        : BroadcastCommand(CommandType::SendMDUpdate)
-                        , data(std::move(update))
-    {}
+    explicit BroadcastMDUpdateCommand(MDUpdate update) :
+        BroadcastCommand(CommandType::SendMDUpdate), data(std::move(update)) {}
 
-    BroadcastMDUpdateCommand(std::optional<SessionId> id, MDUpdate update)
-                        : BroadcastCommand(CommandType::SendMDUpdate, id)
-                        , data(std::move(update))
-    {}
+    BroadcastMDUpdateCommand(std::optional<SessionId> id, MDUpdate update) :
+        BroadcastCommand(CommandType::SendMDUpdate, id), data(std::move(update)) {}
 
-    const MDUpdate& get_update() const { return data; }
+    const MDUpdate& get_update() const {
+        return data;
+    }
 
 protected:
     const std::type_info& get_data_type() const override {
@@ -110,8 +101,8 @@ protected:
 
 /// @brief MPSC очередь команд с логикой поглощения.
 ///
-/// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до него.
-/// SendMDUpdate не участвует в поглощении.
+/// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до
+/// него. SendMDUpdate не участвует в поглощении.
 class CommandQueue {
 public:
     /// @brief Добавляет команду в очередь.
@@ -120,7 +111,8 @@ public:
     void push(std::unique_ptr<BroadcastCommand> cmd) {
         // заглушка
         // 1. lock mutex_
-        // 2. если cmd.type == SendSnapshotAll — удалить все SendSnapshotTo из очереди
+        // 2. если cmd.type == SendSnapshotAll — удалить все SendSnapshotTo из
+        // очереди
         // 3. добавить cmd в очереди
         // 4. notify_one на cv_
         return;
@@ -146,7 +138,7 @@ public:
     }
 
 private:
-    std::deque<std::unique_ptr<BroadcastCommand>>  queue_;
-    std::mutex                    mutex_;
-    std::condition_variable       cv_;
+    std::deque<std::unique_ptr<BroadcastCommand>> queue_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
 };

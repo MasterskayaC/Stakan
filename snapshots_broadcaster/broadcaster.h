@@ -1,9 +1,9 @@
 #pragma once
 
-#include "command_queue.h"
-
-#include <thread>
 #include <atomic>
+#include <thread>
+
+#include "command_queue.h"
 
 // Forward declarations — реализация в других модулях
 class IClientList;
@@ -27,7 +27,7 @@ public:
 
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
     void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
-        //заглушка
+        // заглушка
     }
 
     /// @brief Запускает поток-обработчик.
@@ -77,11 +77,10 @@ private:
         return;
     }
 
-
 private:
     CommandQueue queue_;                ///< MPSC-очередь команд.
     IClientList& clients_;              ///< Интерфейс реестра клиентов.
     std::thread thread_;                ///< Рабочий поток broadcaster'а.
-    std::atomic<bool> running_{ false };  ///< Флаг работы потока.
+    std::atomic<bool> running_{false};  ///< Флаг работы потока.
     boost::asio::io_context& io_;
 };
