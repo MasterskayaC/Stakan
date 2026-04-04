@@ -18,9 +18,7 @@ class Broadcaster {
 public:
     /// @brief Конструктор.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
-    Broadcaster(IClientList& clients)
-        : clients_(clients) {
-    }
+    Broadcaster(IClientList& clients, boost::asio::io_context& io) : clients_(clients), io_(io) {}
 
     /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
@@ -81,8 +79,9 @@ private:
 
 
 private:
-    CommandQueue        queue_;           ///< MPSC-очередь команд.
-    IClientList&        clients_;         ///< Интерфейс реестра клиентов.
-    std::thread         thread_;          ///< Рабочий поток broadcaster'а.
-    std::atomic<bool>   running_{false};  ///< Флаг работы потока.
+    CommandQueue queue_;                ///< MPSC-очередь команд.
+    IClientList& clients_;              ///< Интерфейс реестра клиентов.
+    std::thread thread_;                ///< Рабочий поток broadcaster'а.
+    std::atomic<bool> running_{ false };  ///< Флаг работы потока.
+    boost::asio::io_context& io_;
 };
