@@ -1,14 +1,47 @@
-#include "bid_ask_book.h"
+﻿#include "bid_ask_book.h"
+
 #include <format>
 #include <mutex>
 
 using namespace server;
 using namespace common;
 
-void OrderBook::NewBid(Order order) {
+namespace {
+bool validate(const Order& order, const char* operation) {
     if (order.price == 0 || order.quantity == 0) {
         Logger::Log(LogLevel::Error,
-            std::format("NewBid: Invalid order, id = {}", order.id));
+            std::format("{}: Invalid order, id = {}", operation, order.id));
+        return false;
+    }
+
+    return true;
+}
+}
+
+// Index, так как работаем с двумя контейнерами: BidContainer и AskContainer
+template <typename Index>
+bool OrderBook::IsInTopN(const Index& index, const ID order_id, const size_t top_n) {
+    size_t count = 0;
+    for (const auto& order : index) {
+        if (count >= top_n) {
+            break;
+        }
+        if (order.id == order_id) {
+            return true;
+        }
+        ++count;
+    }
+
+    return false;
+}
+
+void OrderBook::AllowBuildNewSnapshot() {
+    std::lock_guard lg(snapshot_mutex_);
+    is_ready_new_snapshot_ = true;
+}
+
+void OrderBook::NewBid(Order order) {
+    if (!validate(order, "NewBid")) {
         return;
     }
 
@@ -16,6 +49,9 @@ void OrderBook::NewBid(Order order) {
 
     auto result = bids_.insert(order);
     if (result.second) {
+        if (IsInTopN(bids_.get<0>(), order.id, topN)) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("New BID added, id = {}", order.id));
     } else {
@@ -25,9 +61,7 @@ void OrderBook::NewBid(Order order) {
 }
 
 void OrderBook::NewAsk(Order order) {
-    if (order.price == 0 || order.quantity == 0) {
-        Logger::Log(LogLevel::Error,
-            std::format("NewAsk: Invalid order, id = {}", order.id));
+    if (!validate(order, "NewAsk")) {
         return;
     }
 
@@ -35,6 +69,9 @@ void OrderBook::NewAsk(Order order) {
 
     auto result = asks_.insert(order);
     if (result.second) {
+        if (IsInTopN(asks_.get<0>(), order.id, topN)) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("New ASK added, id = {}", order.id));
     } else {
@@ -49,7 +86,11 @@ void OrderBook::CancelBid(ID order_id) {
     auto& index = bids_.get<1>();
     auto it = index.find(order_id);
     if (it != index.end()) {
+        const bool was_in_top = IsInTopN(bids_.get<0>(), order_id, topN);
         index.erase(it);
+        if (was_in_top) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("Bid canceled, id = {}", order_id));
     } else {
@@ -64,7 +105,11 @@ void OrderBook::CancelAsk(ID order_id) {
     auto& index = asks_.get<1>();
     auto it = index.find(order_id);
     if (it != index.end()) {
+        const bool was_in_top = IsInTopN(asks_.get<0>(), order_id, topN);
         index.erase(it);
+        if (was_in_top) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("Ask canceled, id = {}", order_id));
     } else {
@@ -81,8 +126,8 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+            std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
+                        old_order.id, new_order.id));
         return;
     }
 
@@ -91,10 +136,14 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     auto& index = bids_.get<1>();
     auto it = index.find(old_order.id);
     if (it != index.end()) {
+        const bool was_in_top = IsInTopN(bids_.get<0>(), old_order.id, topN);
         index.modify(it, [&](Order& o) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
         });
+        if (was_in_top || IsInTopN(bids_.get<0>(), new_order.id, topN)) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("Replaced BID id = {}", new_order.id));
     } else {
@@ -111,8 +160,8 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+            std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
+                        old_order.id, new_order.id));
         return;
     }
 
@@ -121,10 +170,14 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     auto& index = asks_.get<1>();
     auto it = index.find(old_order.id);
     if (it != index.end()) {
+        const bool was_in_top = IsInTopN(asks_.get<0>(), old_order.id, topN);
         index.modify(it, [&](Order& o) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
         });
+        if (was_in_top || IsInTopN(asks_.get<0>(), new_order.id, topN)) {
+            AllowBuildNewSnapshot();
+        }
         Logger::Log(LogLevel::Info,
             std::format("Replaced ASK id = {}", new_order.id));
     } else {
@@ -133,38 +186,40 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     }
 }
 
-Snapshot OrderBook::GetTopSnapshot() const {
+Snapshot OrderBook::BuildNewSnapshot() const {
     Snapshot snapshot{};
 
-    std::scoped_lock lock(bids_mutex_, asks_mutex_);
+    const auto fill_top_orders = [](const auto& index, auto& target, const char* side) {
+        if (index.empty()) {
+            Logger::Log(LogLevel::Warning, std::format("GetTopSnapshot: No {} available", side));
+        } else if (index.size() < topN) {
+            Logger::Log(LogLevel::Warning,
+                std::format("GetTopSnapshot: not enough {}, {} available", side, index.size()));
+        }
 
-    const auto& bid_index = bids_.get<0>();
-    if (bid_index.empty()) {
-        Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Bids available");
-    } else if (bid_index.size() < topN) {
-        Logger::Log(LogLevel::Warning,
-            std::format("GetTopSnapshot: not enough Bids, {} available", bid_index.size()));
-    }
-    size_t count = 0;
-    for (const auto& bid : bid_index) {
-        if (count >= topN) break;
-        snapshot.topBids[count++] = bid;
-    }
+        size_t count = 0;
+        for (const auto& order : index) {
+            if (count >= topN) break;
+            target[count++] = order;
+        }
+    };
 
-    const auto& ask_index = asks_.get<0>();
-    if (ask_index.empty()) {
-        Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Asks available");
-    } else if (ask_index.size() < topN) {
-        Logger::Log(LogLevel::Warning,
-            std::format("GetTopSnapshot: not enough Asks, {} available", ask_index.size()));
-    }
-    count = 0;
-    for (const auto& ask : ask_index) {
-        if (count >= topN) break;
-        snapshot.topAsks[count++] = ask;
-    }
+    fill_top_orders(bids_.get<0>(), snapshot.topBids, "Bids");
+    fill_top_orders(asks_.get<0>(), snapshot.topAsks, "Asks");
 
     return snapshot;
+}
+
+std::optional<Snapshot> OrderBook::GetTopSnapshot() const {
+    std::scoped_lock order_lock(bids_mutex_, asks_mutex_);
+    std::lock_guard snapshot_lock(snapshot_mutex_);
+
+    if (is_ready_new_snapshot_) {
+        is_ready_new_snapshot_ = false;
+        return BuildNewSnapshot();
+    }
+
+    return std::nullopt;
 }
 
 Order OrderBook::BestBid() const {
