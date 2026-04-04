@@ -9,6 +9,8 @@
 #include <functional>  // для std::reference_wrapper
 #include <typeinfo>
 
+#include "bid_ask_interface.h"
+
 using SessionId = std::size_t;
 
 struct MDUpdate {       //TMP structure for std::variant

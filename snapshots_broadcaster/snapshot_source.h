@@ -14,4 +14,5 @@ public:
  * @brief Creates a new instance of ISnapshotSource.
  * @return A unique pointer owning the newly created ISnapshotSource object TmpSnapshotCreator.
  */
-std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, uint8_t snapshot_count = 5);
+constexpr uint8_t TMP_NUM_OF_SNAPSHOTS = 5;
+std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, uint8_t snapshot_count = TMP_NUM_OF_SNAPSHOTS);

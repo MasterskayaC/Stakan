@@ -4,12 +4,13 @@
 #include <iostream>
 #include <optional>
 
-namespace server {
-    constexpr uint8_t TMP_NUM_OF_SNAPSHOTS = 5;
+#include "snapshot_source.h"
 
-    DOMManager::DOMManager(boost::asio::io_context& io_context)
+namespace server {
+
+    DOMManager::DOMManager(boost::asio::io_context& io_context, std::unique_ptr<ISnapshotSource> snapshot_source)
                     : client_list_(makeClientList())
-                    , snapshot_source_(makeTmpSnapshotCreator(false, TMP_NUM_OF_SNAPSHOTS))
+                    , snapshot_source_(std::move(snapshot_source))
                     , broadcaster_(std::make_unique<Broadcaster>(*client_list_, io_context))
                     , broadcast_timer_(io_context)
                     , io_context_(io_context) {

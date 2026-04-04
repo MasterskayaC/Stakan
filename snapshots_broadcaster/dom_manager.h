@@ -1,21 +1,13 @@
 #pragma once
 
-#include <algorithm>
 #include <atomic>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
-#include <optional>
-#include <random>
-#include <thread>
 #include <variant>
-#include <vector>
 
-#include "bid_ask_book.h"
-#include "bid_ask_interface.h"
 #include "broadcaster.h"
 #include "client_list.h"
-#include "command_queue.h"
 #include "snapshot_source.h"
 
 namespace server {
@@ -54,7 +46,7 @@ namespace server {
          * @brief Constructs a DOMManager instance
          * @param io_context The Boost.Asio io_context used for asynchronous operations
          */
-        explicit DOMManager(boost::asio::io_context& io_context);
+        explicit DOMManager(boost::asio::io_context& io_context, std::unique_ptr<ISnapshotSource> snapshot_source);
 
         /**
          * @brief Destroys the DOMManager, stops broadcasting and cleans up resources
