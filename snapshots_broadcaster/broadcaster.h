@@ -39,7 +39,8 @@ public:
     /// @brief Останавливает поток-обработчик.
     void stop() {
         running_ = false;
-        if (thread_.joinable()) thread_.join();
+        if (thread_.joinable())
+            thread_.join();
         return;
     }
 
@@ -48,21 +49,27 @@ private:
     void run() {
         while (running_) {
             auto cmd = queue_.pop();
-            switch (cmd->type){
+            switch (cmd->type) {
                 case CommandType::SendSnapshot:
-                    if(cmd->client_id == std::nullopt){
-                        boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_snapshot_all(cmd->get_data<common::Snapshot>()->get());}); 
+                    if (cmd->client_id == std::nullopt) {
+                        boost::asio::post(io_, [this, cmd = std::move(cmd)] {
+                            handle_send_snapshot_all(cmd->get_data<common::Snapshot>()->get());
+                        });
+                    } else {
+                        boost::asio::post(io_, [this, cmd = std::move(cmd)] {
+                            handle_send_snapshot_to(cmd->client_id.value(), cmd->get_data<common::Snapshot>()->get());
+                        });
                     }
-                    else{
-                        boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_snapshot_to(cmd->client_id.value(), cmd->get_data<common::Snapshot>()->get());}); 
-                    }
+                    break;
+                case CommandType::SendMDUpdate:
+                    boost::asio::post(io_, [this, cmd = std::move(cmd)] {
+                        handle_send_md_update();
+                    });
                     break;
                 default:
-                    boost::asio::post(io_, [this, cmd = std::move(cmd)]{handle_send_md_update();}); 
+                    std::cout << "Error: either pass a snapshot or MDUpdate!\n";
                     break;
-                    
             }
-
         }
         return;
     }
