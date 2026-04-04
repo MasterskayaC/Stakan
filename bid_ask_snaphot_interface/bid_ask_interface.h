@@ -3,6 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <format>
+#include <array>
 
 namespace common
 {
@@ -34,6 +35,7 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
+        static std::array<double, topN> get_prices(const std::array<common::Order, topN>& arr);
         std::array<double, topN> get_bid_prices() const;
         std::array<double, topN> get_ask_prices() const;
         std::vector<char> serialize() const;
@@ -72,20 +74,23 @@ namespace common
         return result;
     }
 
-    std::array<double, topN> Snapshot::get_bid_prices() const {
+    std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, topN>& arr) {
         std::array<double, topN> result;
+
+        //TODO (simanov artem): rework if need another delimiter;
+
         for (size_t i = 0; i < topN; i++) {
-            result[i] = static_cast<double>(topBids[i].price);
+            result[i] = static_cast<double>(arr[i].price);
         }
         return result;
     }
 
+    std::array<double, topN> Snapshot::get_bid_prices() const {
+        return get_prices(topBids);
+    }
+
     std::array<double, topN> Snapshot::get_ask_prices() const {
-        std::array<double, topN> result;
-        for (size_t i = 0; i < topN; i++) {
-            result[i] = static_cast<double>(topAsks[i].price);
-        }
-        return result;
+        return get_prices(topAsks);
     }
 
     //TODO (simanov artem): add tests;
