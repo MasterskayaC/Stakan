@@ -13,9 +13,9 @@ target_include_directories(bid_ask_book PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
-#target_link_libraries(bid_ask_book PRIVATE
-#    ${Boost_LIBRARIES}
-#)
+target_link_libraries(bid_ask_book PUBLIC
+    interface_bid_ask
+)
 
 add_executable(bid_ask_book_tests
     src/tests.cpp
