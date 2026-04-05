@@ -4,6 +4,7 @@
 #include <boost/serialization/vector.hpp>
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
 
 namespace common
