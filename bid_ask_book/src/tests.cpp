@@ -15,11 +15,11 @@ TEST_CASE("NewBid and NewAsk add orders correctly") {
 
     auto snapshot = book.GetTopSnapshot();
 
-    CHECK(snapshot.topBids[0].id == 1);
-    CHECK(snapshot.topBids[0].price == 100);
+    CHECK(snapshot->topBids[0].id == 1);
+    CHECK(snapshot->topBids[0].price == 100);
 
-    CHECK(snapshot.topAsks[0].id == 2);
-    CHECK(snapshot.topAsks[0].price == 105);
+    CHECK(snapshot->topAsks[0].id == 2);
+    CHECK(snapshot->topAsks[0].price == 105);
 }
 
 TEST_CASE("CancelBid and CancelAsk remove correctly") {
@@ -37,8 +37,8 @@ TEST_CASE("CancelBid and CancelAsk remove correctly") {
     auto snapshot = book.GetTopSnapshot();
 
     // после удаления массив остаётся, но элементы дефолтные
-    CHECK(snapshot.topBids[0].id == 0);
-    CHECK(snapshot.topAsks[0].id == 0);
+    CHECK(snapshot->topBids[0].id == 0);
+    CHECK(snapshot->topAsks[0].id == 0);
 }
 
 TEST_CASE("ReplaceBid and ReplaceAsk update price and quantity") {
@@ -58,11 +58,11 @@ TEST_CASE("ReplaceBid and ReplaceAsk update price and quantity") {
 
     auto snapshot = book.GetTopSnapshot();
 
-    CHECK(snapshot.topBids[0].price == 110);
-    CHECK(snapshot.topBids[0].quantity == 15);
+    CHECK(snapshot->topBids[0].price == 110);
+    CHECK(snapshot->topBids[0].quantity == 15);
 
-    CHECK(snapshot.topAsks[0].price == 102);
-    CHECK(snapshot.topAsks[0].quantity == 7);
+    CHECK(snapshot->topAsks[0].price == 102);
+    CHECK(snapshot->topAsks[0].quantity == 7);
 }
 
 TEST_CASE("BestBid and BestAsk return correct orders") {
@@ -76,25 +76,24 @@ TEST_CASE("BestBid and BestAsk return correct orders") {
     Order bestBid = book.BestBid();
     Order bestAsk = book.BestAsk();
 
-    CHECK(bestBid.price == 105); // max price
-    CHECK(bestAsk.price == 108); // min price
+    CHECK(bestBid.price == 105);  // max price
+    CHECK(bestAsk.price == 108);  // min price
 }
-
 
 TEST_CASE("Ordering works correctly for bids and asks") {
     OrderBook book;
 
     // одинаковые цены → проверяем quantity и id
     book.NewBid(Order(1, 100, 10));
-    book.NewBid(Order(2, 100, 20)); // должен быть выше (quantity больше)
+    book.NewBid(Order(2, 100, 20));  // должен быть выше (quantity больше)
 
     book.NewAsk(Order(3, 105, 10));
-    book.NewAsk(Order(4, 103, 10)); // должен быть выше (цена меньше)
+    book.NewAsk(Order(4, 103, 10));  // должен быть выше (цена меньше)
 
     auto snapshot = book.GetTopSnapshot();
 
-    CHECK(snapshot.topBids[0].id == 2); // больше quantity
-    CHECK(snapshot.topAsks[0].id == 4); // меньше price
+    CHECK(snapshot->topBids[0].id == 2);  // больше quantity
+    CHECK(snapshot->topAsks[0].id == 4);  // меньше price
 }
 
 TEST_CASE("Replace with different id does nothing") {
@@ -109,6 +108,18 @@ TEST_CASE("Replace with different id does nothing") {
     auto snapshot = book.GetTopSnapshot();
 
     // ордер не изменился
-    CHECK(snapshot.topBids[0].id == 1);
-    CHECK(snapshot.topBids[0].price == 100);
+    CHECK(snapshot->topBids[0].id == 1);
+    CHECK(snapshot->topBids[0].price == 100);
+}
+
+TEST_CASE("GetTopSnapshot returns nullopt if topN did not change") {
+    OrderBook book;
+
+    book.NewBid(Order(1, 100, 10));
+
+    auto first_snapshot = book.GetTopSnapshot();
+    REQUIRE(first_snapshot.has_value());
+
+    auto second_snapshot = book.GetTopSnapshot();
+    CHECK_FALSE(second_snapshot.has_value());
 }
