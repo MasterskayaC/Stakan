@@ -5,55 +5,21 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
+#include <tcp_client/client.hpp>
 
 namespace client_lib {
-
-/**
- * @brief Данные отдельного уровня цен в стакане.
- */
-struct Order {
-    double price{0.0};
-    double quantity{0.0};
-};
-
-/**
- * @brief Снимок состояния рынка для отображения.
- */
-struct Snapshot {
-    std::vector<Order> bids;
-    std::vector<Order> asks;
-    uint64_t exchange_timestamp_ns{0};
-};
 
 /**
  * @brief Состояние клиентской библиотеки.
  */
 enum class ConnectionState {
-    Stopped,       ///< Клиент остановлен.
-    Connecting,    ///< Выполняется подключение к серверу.
-    Connected,     ///< Соединение с сервером установлено.
-    Reconnecting,  ///< Выполняется повторное подключение после разрыва.
-    Disconnected   ///< Соединение отсутствует.
+    Error,        ///< Клиент в ошибке.
+    Connected,    ///< Соединение установлено.
+    Disconnected  ///< Соединение неустановлено.
 };
 
 /**
- * @brief Типы ошибок, которые может вернуть клиентская библиотека.
- */
-enum class ClientError {
-    None,                  ///< Ошибки нет.
-    SocketOpenFailed,      ///< Не удалось открыть сокет.
-    ConnectFailed,         ///< Не удалось подключиться к серверу.
-    ReadFailed,            ///< Ошибка чтения из сокета.
-    WriteFailed,           ///< Ошибка записи в сокет.
-    ProtocolError,         ///< Ошибка формата или обработки протокола.
-    UnexpectedMessage,     ///< Получено неожиданное сообщение.
-    SnapshotRequestFailed  ///< Не удалось запросить snapshot.
-};
-
-/**
- * @brief Набор callback-функций для уведомления внешнего кода о событиях
- * клиента.
+ * @brief Набор callback-функций для уведомления внешнего кода о событиях клиента.
  */
 struct ClientCallbacks final {
     /// Вызывается после успешного подключения к серверу.
@@ -62,16 +28,16 @@ struct ClientCallbacks final {
     /// Вызывается при разрыве соединения.
     std::function<void()> on_disconnected;
 
-    /// Вызывается при получении обновления top-of-book.
-    std::function<void(const Snapshot&)> on_snapshot;
+    /// Вызывается при получении обновления Snapshot.
+    std::function<void(const common::Snapshot&)> on_snapshot;
 
     /**
      * @brief Вызывается при возникновении ошибки.
      *
-     * @param error Код ошибки.
-     * @param message Текстовое описание ошибки.
+     * @param error   - Переводит клиента в состояние ошибки.
+     * @param message - сообщение ошибки.
      */
-    std::function<void(ClientError, std::string_view)> on_error;
+    std::function<void(ConnectionState, std::string_view)> on_error;
 };
 
 /**
@@ -98,22 +64,18 @@ public:
     virtual void Disconnect() = 0;
 
     /**
-     * @brief Запускает работу клиента.
+     * @brief Подписка на обновления по инструменту.
      *
-     * Обычно здесь стартует внутренняя логика обработки,
-     * сетевой поток и приём сообщений.
+     * @param ticket - Инструмент
      */
     virtual void Subscribe(std::string ticker) = 0;
 
     /**
-     * @brief Останавливает работу клиента.
+     * @brief Отписка от обновлений по инструменту.
+     *
+     * @param ticket - Инструмент
      */
     virtual void Unsubscribe(std::string ticker) = 0;
-
-    /**
-     * @brief Запрашивает snapshot текущего состояния у сервера.
-     */
-    virtual void RequestSnapshot() = 0;
 
     /**
      * @brief Проверяет наличие активного соединения.
@@ -133,14 +95,15 @@ public:
 
 /** @brief Создает объект client lib с дефолной конфиграцией соединения.
  *
- * @param сс ClientCallbacks структура callback-ов от ui.
+ * @param cc - ClientCallbacks структура callback-ов от ui.
  */
 std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc);
 
 /** @brief Создает объект client lib с параметрами соединения из UI.
- * @param host IP адрес сервера.
- * @param port Порт.
- * @param сс ClientCallbacks структура callback-ов от ui.
+ *
+ * @param host - IP адрес сервера.
+ * @param port - Порт.
+ * @param cc   - ClientCallbacks структура callback-ов от ui.
  */
 std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
                                                        uint16_t port,

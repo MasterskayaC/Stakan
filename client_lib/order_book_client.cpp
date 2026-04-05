@@ -1,38 +1,10 @@
-#include <chrono>
 #include <memory>
 #include <set>
-#include <tcp_client/client.hpp>
 #include <utility>
-#include <vector>
 
 #include "client_lib_interface.hpp"
 
 namespace client_lib {
-
-/**
- * @brief Преобразует TopOfBook в формат Snapshot для UI.
- */
-Snapshot ToSnapshot(const common::Snapshot& snapshot) {
-    Snapshot result;
-
-    result.exchange_timestamp_ns =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch())
-            .count();
-
-    result.bids.reserve(snapshot.topBids.size());
-    for (const auto& ord : snapshot.topBids) {
-        result.bids.push_back(client_lib::Order{.price = static_cast<double>(ord.price) / 100.0,
-                                                .quantity = static_cast<double>(ord.quantity)});
-    }
-
-    result.asks.reserve(snapshot.topAsks.size());
-    for (const auto& ord : snapshot.topAsks) {
-        result.asks.push_back(client_lib::Order{.price = static_cast<double>(ord.price) / 100.0,
-                                                .quantity = static_cast<double>(ord.quantity)});
-    }
-
-    return result;
-}
 
 /**
  * @brief Реализация интерфеса IClientCallbacks
@@ -51,11 +23,13 @@ public:
         cc_.on_disconnected();
     }
 
-    void OnTopOfBook(const tcp_client::TopOfBook& update) override {
-        cc_.on_snapshot(ToSnapshot(update));
+    void OnTopOfBook(const common::Snapshot& snapshot) override {
+        cc_.on_snapshot(snapshot);
     }
 
-    void OnError(std::string_view message) override {};
+    void OnError(std::string_view message) override {
+        cc_.on_error(ConnectionState::Error, message);
+    };
 
 private:
     ClientCallbacks cc_;
@@ -95,16 +69,17 @@ public:
     OrderBookClient& operator=(OrderBookClient&&) noexcept = default;
 
     void Connect() override {
-        client_->Connect();
+        if (client_->Connect()) {
+            state_ = ConnectionState::Connected;
+        }
     }
 
     /**
      * @brief Разрывает текущее соединение.
      */
     void Disconnect() override {
-        if (IsConnected()) {
-            client_->Disconnect();
-        }
+        client_->Disconnect();
+        state_ = ConnectionState::Disconnected;
     }
 
     /**
@@ -126,14 +101,6 @@ public:
     }
 
     /**
-     * @brief Запрашивает snapshot у сервера.
-     *
-     * Залушечная реализация.
-     *
-     */
-    void RequestSnapshot() override {}
-
-    /**
      * @brief Проверяет наличие активного соединения.
      *
      * @return @c true, если внутренний транспорт считает себя подключённым.
@@ -146,37 +113,18 @@ public:
     /**
      * @brief Возвращает текущее состояние клиента.
      *
-     * Залушечная реализация.
-     *
      * @return Текущее состояние клиентской библиотеки.
      */
     ConnectionState State() const noexcept override {
-        return ConnectionState::Stopped;
+        return state_;
     };
-
-private:
-    /**
-     * @brief Изменяет внутреннее состояние и уведомляет внешний код.
-     *
-     * @param new_state Новое состояние клиента.
-     */
-    void ChangeState(ConnectionState new_state) {};
-
-    /**
-     * @brief Сообщает об ошибке через пользовательский callback.
-     *
-     * Залушечная реализация.
-     *
-     * @param error Код ошибки.
-     * @param message Текстовое описание ошибки.
-     */
-    void ReportError(ClientError error, std::string_view message) const {};
 
 private:
     std::set<std::string> tickers_;
     CallbacksAdapter callbaсks_;
     tcp_client::ClientConfig config_;
     std::unique_ptr<tcp_client::TcpClient> client_;
+    ConnectionState state_ = ConnectionState::Disconnected;
 };
 
 std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc) {
