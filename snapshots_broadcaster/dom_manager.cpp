@@ -8,9 +8,11 @@
 
 namespace server {
 
-DOMManager::DOMManager(boost::asio::io_context& io_context, std::unique_ptr<ISnapshotSource> snapshot_source) :
-    client_list_(makeClientList()), snapshot_source_(std::move(snapshot_source)),
-    broadcaster_(std::make_unique<Broadcaster>(*client_list_, io_context)), broadcast_timer_(io_context),
+DOMManager::DOMManager(boost::asio::io_context& io_context,
+                       IClientList& client_list,
+                       std::unique_ptr<ISnapshotSource> snapshot_source) :
+    client_list_(client_list), snapshot_source_(std::move(snapshot_source)),
+    broadcaster_(std::make_unique<Broadcaster>(client_list_, io_context)), broadcast_timer_(io_context),
     io_context_(io_context) {
     broadcaster_->start();
 }

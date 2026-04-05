@@ -47,7 +47,9 @@ public:
      * @param io_context The Boost.Asio io_context used for asynchronous
      * operations
      */
-    explicit DOMManager(boost::asio::io_context& io_context, std::unique_ptr<ISnapshotSource> snapshot_source);
+    explicit DOMManager(boost::asio::io_context& io_context,
+                        IClientList& client_list,
+                        std::unique_ptr<ISnapshotSource> snapshot_source);
 
     /**
      * @brief Destroys the DOMManager, stops broadcasting and cleans up resources
@@ -61,7 +63,7 @@ public:
     void operator()(Command cmd);
 
 private:
-    std::unique_ptr<IClientList> client_list_;          ///< connected clients
+    IClientList& client_list_;                          ///< connected clients
     std::unique_ptr<ISnapshotSource> snapshot_source_;  ///< Source of snapshots (order book or test generator)
     std::unique_ptr<Broadcaster> broadcaster_;          ///< Component responsible for sending data to clients
 
