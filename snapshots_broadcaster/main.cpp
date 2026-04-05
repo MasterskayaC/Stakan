@@ -6,6 +6,7 @@ int main() {
     std::cout << "Eto birjevoy stakan!" << std::endl;
 
     // Create io_context and DOMManager
+    boost::asio::io_context io_context;
     int num_of_snapshots = 5;
     bool is_random = false;
     std::unique_ptr<ISnapshotSource> snapshot_source = makeTmpSnapshotCreator(is_random, num_of_snapshots);
