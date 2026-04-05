@@ -1,32 +1,29 @@
-<<<<<<< HEAD
+enable_testing()
 
 add_library(bid_ask_book STATIC
-       src/bid_ask_book.cpp
-       src/bid_ask_book.h
+    src/bid_ask_book.cpp
+    src/bid_ask_book.h
+    src/logger.cpp
+    src/logger.h
 )
 
 target_include_directories(bid_ask_book PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-=======
-﻿cmake_minimum_required(VERSION 3.11)
-project(bid_ask_book)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(Catch2 3 CONFIG REQUIRED)
-
-set(MAIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_executable(bid_ask_book
-        ${MAIN_SOURCE_DIR}/src/bid_ask_book.cpp
-        ${MAIN_SOURCE_DIR}/src/bid_ask_book.h
-        ${MAIN_SOURCE_DIR}/src/logger.cpp
-        ${MAIN_SOURCE_DIR}/src/logger.h
-        ${MAIN_SOURCE_DIR}/src/tests.cpp
->>>>>>> 1df5525 (Вынес логгер в отдельный файл)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${Boost_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
-target_link_libraries(bid_ask_book PRIVATE
-        interface_bid_ask
+#target_link_libraries(bid_ask_book PRIVATE
+#    ${Boost_LIBRARIES}
+#)
+
+add_executable(bid_ask_book_tests
+    src/tests.cpp
 )
+
+target_link_libraries(bid_ask_book_tests PRIVATE
+    bid_ask_book
+    Catch2::Catch2WithMain
+)
+
+add_test(NAME mytest COMMAND bid_ask_book_tests)

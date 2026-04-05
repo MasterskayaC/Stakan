@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Boost REQUIRED COMPONENTS filesystem system serialization)
 find_package(Threads REQUIRED)
+find_package(Catch2 REQUIRED)
 #find_package(Qt6 REQUIRED COMPONENTS Widgets) неуверен что стоит использовать Qt6
 #заменить как примем решение
 #find_package(Qt5 REQUIRED COMPONENTS Widgets)
