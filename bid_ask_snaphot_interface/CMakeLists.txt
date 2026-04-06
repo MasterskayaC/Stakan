@@ -1,15 +1,20 @@
-find_package(Boost REQUIRED COMPONENTS serialization)
-find_package(Threads REQUIRED)
+enable_testing()
 
-add_library(interface_bid_ask INTERFACE)
-
-target_include_directories(interface_bid_ask
-    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+add_library(interface_bid_ask INTERFACE
+    bid_ask_interface.h
 )
 
-target_link_libraries(interface_bid_ask
-    INTERFACE
-        Boost::headers
-        Boost::serialization
-        Threads::Threads
+target_include_directories(interface_bid_ask INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+add_executable(interface_bid_ask_tests
+    tests.cpp
+)
+
+target_link_libraries(interface_bid_ask_tests PRIVATE
+    interface_bid_ask
+    Catch2::Catch2WithMain
+)
+
+add_test(NAME test COMMAND interface_bid_ask_tests)

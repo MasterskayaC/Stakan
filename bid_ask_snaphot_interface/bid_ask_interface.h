@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cstdint>
 #include <format>
 #include <array>
 
@@ -22,10 +23,19 @@ namespace common
         Quantity quantity = 0;
 
         double get_price() const;
+        auto list_to_compare() const;
     };
 
     double Order::get_price() const {
         return static_cast<double>(price);
+    }
+
+    auto Order::list_to_compare() const {
+        return std::tie(id, price, quantity);
+    }
+
+    bool operator== (const Order& lhs, const Order& rhs) {
+        return lhs.list_to_compare() == rhs.list_to_compare();
     }
 
     struct Snapshot
@@ -61,6 +71,7 @@ namespace common
     }
 
     std::string to_string(const Snapshot& snapshot) {
+        if (snapshot.topBids[0].id == 0 && snapshot.topAsks[0].id == 0) return "";
         std::string result = "Top Bids:\n";
         for (const auto& bid : snapshot.topBids) {
             if(bid.id == 0) break;
@@ -93,5 +104,7 @@ namespace common
         return get_prices(topAsks);
     }
 
-    //TODO (simanov artem): add tests;
+    bool operator== (const Snapshot& lhs, const Snapshot& rhs)  {
+        return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
+    }
 }
