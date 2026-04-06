@@ -22,4 +22,4 @@ std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, 
  * @return A unique pointer owning the newly created ISnapshotSource object OrderBookSnapshotSource
  * that asks OrderBook for snapshots directly.
  */
-std::unique_ptr<ISnapshotSource> makeOrderBookSnapshot(server::OrderBook* order_book);
+std::unique_ptr<ISnapshotSource> makeOrderBookSnapshotSource(server::OrderBook* order_book);

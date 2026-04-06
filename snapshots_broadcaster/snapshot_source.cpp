@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include "order_book_snapshot_source.h"
+
 /**
  * @brief Helper struct that generates and cycles through test snapshots
  */
@@ -104,4 +106,7 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
 
 std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random, uint8_t snapshot_count) {
     return std::make_unique<TmpSnapshotCreator>(is_random, snapshot_count);
+}
+std::unique_ptr<ISnapshotSource> makeOrderBookSnapshotSource(server::OrderBook* order_book) {
+    return std::make_unique<OrderBookSnapshotSource>(order_book);
 }
