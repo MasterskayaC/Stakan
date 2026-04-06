@@ -1,15 +1,13 @@
-cmake_minimum_required(VERSION 3.28)
 
-project(ClientConsole)
+set(MENU menu.hpp menu.cpp)
+set(APP app.hpp app.cpp)
+set(MENU_ACTION menu_action.hpp menu_action.cpp)
+add_library(cui STATIC
+    ${MENU}
+    ${APP}
+    ${MENU_ACTION}
+)
 
-set(CMAKE_CXX_STANDARD 20)
-
-add_executable(cui 
-    main.cpp
-    app.hpp
-    app.cpp
-    menu.hpp
-    menu.cpp
-    menu_action.hpp
-    menu_action.cpp
+target_include_directories( cui PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )

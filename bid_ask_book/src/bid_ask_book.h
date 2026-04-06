@@ -7,24 +7,11 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
-#include "bid_ask_interface.h"
+#include "bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "logger.h"
 
 namespace server {
-    enum class LogLevel {
-        Info,
-        Warning,
-        Error
-    };
     // первоначальная имплементация базового логгера, ToDo - перенести его в более подходящее место
-    class Logger {
-    public:
-        static void Log(LogLevel level, const std::string& msg);
-
-    private:
-        static std::string Now();
-        static const char* ToString(LogLevel level);
-    };
-
     class OrderBook {
     public:
         //отдельный метод для каждого контейнера
