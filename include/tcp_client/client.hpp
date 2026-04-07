@@ -19,7 +19,7 @@ namespace tcp_client {
         std::string client_name{"tcp-client"};
     };
 
-    // Колбэки для приложения или UI.
+    // интерфейс колбэков для приложения или UI.
     class IClientCallbacks {
     public:
         virtual ~IClientCallbacks() = default;
