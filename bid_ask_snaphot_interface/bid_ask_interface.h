@@ -5,7 +5,6 @@
 #include <sstream>
 #include <cstdint>
 #include <format>
-#include <array>
 
 namespace common
 {
@@ -51,8 +50,8 @@ namespace common
         std::array<double, topN> get_ask_prices() const;
         std::vector<char> serialize() const;
         static Snapshot deserialize(const std::vector<char>& data);
-    };    
-
+    };  
+  
     std::vector<char> Snapshot::serialize() const {
         size_t size = sizeof(Snapshot);
         std::vector<char> buffer(size);
