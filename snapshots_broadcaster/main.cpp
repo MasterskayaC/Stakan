@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "dom_manager.h"
+#include "memory"
+#include "../bid_ask_book/src/bid_ask_book.h"
 
 int main() {
     std::cout << "Eto birjevoy stakan!" << std::endl;
@@ -9,9 +11,10 @@ int main() {
     boost::asio::io_context io_context;
     int num_of_snapshots = 5;
     bool is_random = false;
+    std::unique_ptr<server::OrderBook> order_book = std::make_unique<server::OrderBook>();
     std::unique_ptr<ISnapshotSource> snapshot_source = makeTmpSnapshotCreator(is_random, num_of_snapshots);
     std::unique_ptr<IClientList> client_list = makeClientList();
-    server::DOMManager dom(io_context, *client_list, std::move(snapshot_source));
+    server::DOMManager dom(io_context, *client_list, std::move(order_book), std::move(snapshot_source));
 
     // Run io_context in a separate thread
     std::thread io_thread([&io_context]() {
