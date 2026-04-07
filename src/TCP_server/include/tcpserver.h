@@ -20,10 +20,10 @@ private:
     void DoAccept();
     std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
                    const boost::system::error_code& error);
-    void HandleMessage(const std::string& line, const std::shared_ptr<Session>& session);
+    void HandleMessage(const std::vector<char>& message, const std::shared_ptr<Session>& session);
     void HandleDisconnect(const std::shared_ptr<Session>& session);
     void ScheduleSnapshots();
-    ClientId ParseClientId(const std::string& line) const;
+    ClientId ParseClientId(const std::vector<char>& message) const;
 
     boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;

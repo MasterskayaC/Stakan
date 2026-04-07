@@ -5,13 +5,12 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <string>
 #include <vector>
 
 // Обертка над одним TCP-клиентом: чтение команд и отправка бинарных сообщений.
 class Session : public std::enable_shared_from_this<Session> {
 public:
-    using OnLineCallback = std::function<void(const std::string&, const std::shared_ptr<Session>&)>;
+    using OnDataCallback = std::function<void(const std::vector<char>&, const std::shared_ptr<Session>&)>;
     using OnDisconnectCallback = std::function<void(const std::shared_ptr<Session>&)>;
 
     Session(std::shared_ptr<boost::asio::ip::tcp::socket> socket);
@@ -19,7 +18,7 @@ public:
     void Stop();
     void SendMsg(const std::vector<char>& message);
     bool IsOpen() const;
-    void SetCallbacks(OnLineCallback on_line, OnDisconnectCallback on_disconnect);
+    void SetCallbacks(OnDataCallback on_data, OnDisconnectCallback on_disconnect);
 
 private:
     void Read();
@@ -31,6 +30,6 @@ private:
     boost::asio::streambuf read_buffer_;
     std::deque<std::vector<char>> messages_queue_;
     std::mutex write_mutex_;
-    OnLineCallback on_line_;
+    OnDataCallback on_data_;
     OnDisconnectCallback on_disconnect_;
 };

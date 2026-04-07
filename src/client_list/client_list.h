@@ -31,10 +31,15 @@ public:
     virtual std::vector<std::shared_ptr<Order>> get_asks(ClientId id) const = 0;
     virtual const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const = 0;
     virtual bool is_subscribed(ClientId id) const = 0;
+    /** Пометить клиента как подписанного на рассылку снэпшотов. */
     virtual void subscribe(ClientId id) = 0;
+    /** Пометить клиента как отписанного от рассылки снэпшотов. */
     virtual void unsubscribe(ClientId id) = 0;
+    /** Вернуть идентификаторы клиентов, которым надо отправлять снэпшоты. */
     virtual std::vector<ClientId> get_subscribed_clients() const = 0;
+    /** Вернуть активные сессии только подписанных клиентов. */
     virtual std::vector<SessionPtr> get_subscribed_sessions() const = 0;
+    /** Отправить бинарное сообщение всем подписанным клиентам. */
     virtual void broadcast_to_subscribed(const std::vector<char>& message) = 0;
     virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
 };

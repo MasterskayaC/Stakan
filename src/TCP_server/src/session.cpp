@@ -1,6 +1,5 @@
 #include "../include/session.h"
 
-#include <istream>
 #include <utility>
 
 using namespace boost::asio::ip;
@@ -41,11 +40,11 @@ void Session::ProcessRead(const boost::system::error_code& error, std::size_t by
         return;
     }
 
-    std::istream is(&read_buffer_);
-    std::string line;
-    std::getline(is, line);
-    if (on_line_) {
-        on_line_(line, shared_from_this());
+    std::vector<char> data(bytes_transferred);
+    boost::asio::buffer_copy(boost::asio::buffer(data), read_buffer_.data(), bytes_transferred);
+    read_buffer_.consume(bytes_transferred);
+    if (on_data_) {
+        on_data_(data, shared_from_this());
     }
     Read();
 }
@@ -58,6 +57,8 @@ void Session::SendMsg(const std::vector<char>& message) {
     bool start_writing = false;
     {
         std::lock_guard<std::mutex> lock(write_mutex_);
+        // Переход очереди из пустой в непустую защищен write_mutex_,
+        // поэтому локальному флагу не нужна атомарность.
         start_writing = messages_queue_.empty();
         messages_queue_.push_back(message);
     }
@@ -71,8 +72,8 @@ bool Session::IsOpen() const {
     return socket_ && socket_->is_open();
 }
 
-void Session::SetCallbacks(OnLineCallback on_line, OnDisconnectCallback on_disconnect) {
-    on_line_ = std::move(on_line);
+void Session::SetCallbacks(OnDataCallback on_data, OnDisconnectCallback on_disconnect) {
+    on_data_ = std::move(on_data);
     on_disconnect_ = std::move(on_disconnect);
 }
 

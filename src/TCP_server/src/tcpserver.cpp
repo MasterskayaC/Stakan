@@ -1,5 +1,6 @@
 #include "../include/tcpserver.h"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -52,7 +53,7 @@ std::shared_ptr<Session> TCPServer::OnAccept(std::shared_ptr<tcp::socket> socket
 
     auto session = std::make_shared<Session>(std::move(socket));
     session->SetCallbacks(
-        [this](const std::string& line, const std::shared_ptr<Session>& s) { HandleMessage(line, s); },
+        [this](const std::vector<char>& message, const std::shared_ptr<Session>& s) { HandleMessage(message, s); },
         [this](const std::shared_ptr<Session>& s) { HandleDisconnect(s); });
     session->Start();
     return session;
@@ -63,8 +64,8 @@ void TCPServer::SendUpdateMessage(const std::string& message) {
     client_list_->broadcast_to_subscribed(payload);
 }
 
-void TCPServer::HandleMessage(const std::string& line, const std::shared_ptr<Session>& session) {
-    const ClientId client_id = ParseClientId(line);
+void TCPServer::HandleMessage(const std::vector<char>& message, const std::shared_ptr<Session>& session) {
+    const ClientId client_id = ParseClientId(message);
     if (client_id == 0) {
         const std::string response = "ERR expected `HELLO <client_id>`\n";
         session->SendMsg(std::vector<char>(response.begin(), response.end()));
@@ -113,7 +114,11 @@ void TCPServer::ScheduleSnapshots() {
     });
 }
 
-ClientId TCPServer::ParseClientId(const std::string& line) const {
+ClientId TCPServer::ParseClientId(const std::vector<char>& message) const {
+    std::string line(message.begin(), message.end());
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+
     std::istringstream iss(line);
     std::string cmd;
     ClientId id = 0;
