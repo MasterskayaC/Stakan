@@ -1,5 +1,6 @@
-#include "inc.h"
 #include <catch2/catch_test_macros.hpp>
+
+#include "inc.h"
 
 TEST_CASE("Order") {
     SECTION("Get price empty order") {
@@ -58,11 +59,13 @@ TEST_CASE("Snapshot get prices functions") {
             snap.topAsks[i] = common::Order(i + 2, i + 4, i + 6);
         }
 
-        std::array<double, common::topN> p1{3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0};
+        std::array<double, common::topN> p1{3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 12.0,
+                                            13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0};
         auto bid_prices = snap.get_bid_prices();
         REQUIRE(p1 == bid_prices);
 
-        std::array<double, common::topN> p2{4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0};
+        std::array<double, common::topN> p2{4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 12.0, 13.0,
+                                            14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0};
         auto ask_prices = snap.get_ask_prices();
         REQUIRE(p2 == ask_prices);
     }
@@ -83,14 +86,15 @@ TEST_CASE("Snapshot to string function") {
             snap.topAsks[i] = common::Order(i + 2, i + 4, i + 6);
         }
         std::string str_snap = common::to_string(snap);
-        std::string str = "Top Bids:\n"
-                            "Price: 3, Quantity: 5\n"
-                            "Price: 4, Quantity: 6\n"
-                            "Price: 5, Quantity: 7\n"
-                            "Top Asks:\n"
-                            "Price: 4, Quantity: 6\n"
-                            "Price: 5, Quantity: 7\n"
-                            "Price: 6, Quantity: 8\n";
+        std::string str =
+            "Top Bids:\n"
+            "Price: 3, Quantity: 5\n"
+            "Price: 4, Quantity: 6\n"
+            "Price: 5, Quantity: 7\n"
+            "Top Asks:\n"
+            "Price: 4, Quantity: 6\n"
+            "Price: 5, Quantity: 7\n"
+            "Price: 6, Quantity: 8\n";
         assert(str_snap == str);
     }
 }

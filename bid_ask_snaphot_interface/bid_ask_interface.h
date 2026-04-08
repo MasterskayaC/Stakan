@@ -16,24 +16,19 @@ using Quantity = uint64_t;
 struct Order {
     Order() = default;
     Order(ID number, Price p, int qty) : id(number), price(p), quantity(qty) {}
-    ID id = 0;
+    ID id = 0;  // id must always be strictly greater than 1
     Price price = 0;
     Quantity quantity = 0;
 
     double get_price() const;
-    auto list_to_compare() const;
 };
 
 double Order::get_price() const {
     return static_cast<double>(price);
 }
 
-auto Order::list_to_compare() const {
-    return std::tie(id, price, quantity);
-}
-
 bool operator==(const Order& lhs, const Order& rhs) {
-    return lhs.list_to_compare() == rhs.list_to_compare();
+    return lhs.id == rhs.id && lhs.price == rhs.price && lhs.quantity == rhs.quantity;
 }
 
 struct Snapshot {
@@ -87,9 +82,6 @@ std::string to_string(const Snapshot& snapshot) {
 
 std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, topN>& arr) {
     std::array<double, topN> result;
-
-    // TODO (simanov artem): rework if need another delimiter;
-
     for (size_t i = 0; i < topN; i++) {
         result[i] = static_cast<double>(arr[i].price);
     }
