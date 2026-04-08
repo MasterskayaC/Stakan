@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <iostream>
 #include <optional>
 #include <thread>
 
@@ -18,13 +19,13 @@ class Broadcaster {
 public:
     /// @brief Конструктор.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
+    /// @param io_ Ссылка на io_context для распараллеливания задач
     Broadcaster(IClientList& clients, boost::asio::io_context& io) : clients_(clients), io_(io) {}
 
     /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
         stop();
     }
-
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
     void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
         queue_.push(std::move(cmd));
@@ -32,14 +33,16 @@ public:
 
     /// @brief Запускает поток-обработчик.
     void start() {
-        if(running_)return;
+        if (running_)
+            return;
         running_ = true;
         thread_ = std::thread(&Broadcaster::run, this);
     }
 
     /// @brief Останавливает поток-обработчик.
     void stop() {
-        if(!running_)return;
+        if (!running_)
+            return;
         running_ = false;
         if (thread_.joinable())
             thread_.join();
@@ -100,5 +103,5 @@ private:
     IClientList& clients_;              ///< Интерфейс реестра клиентов.
     std::thread thread_;                ///< Рабочий поток broadcaster'а.
     std::atomic<bool> running_{false};  ///< Флаг работы потока.
-    boost::asio::io_context& io_;
+    boost::asio::io_context& io_;       ///< ссылка на io_context для распараллеливания
 };
