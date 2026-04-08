@@ -49,9 +49,8 @@ bool Application::fetch_snapshot() {
 }
 
 void Application::on_snapshot_received(const client_lib::Snapshot& snapshot) {
-    std::cout << "=== Snapshot ===\n";
-    std::cout << "Best Bid: " << snapshot.bids[0].price << " (" << snapshot.bids[0].quantity << ")\n";
-    std::cout << "Best Ask: " << snapshot.asks[0].price << " (" << snapshot.asks[0].quantity << ")\n";
+    std::cout << "=== Snapshot received ===\n";
+    std::cout << "ЗАГЛУШКААААААААААААА\n";
 }
 
 void Application::on_error(const std::string& error) {
