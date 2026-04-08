@@ -1,8 +1,8 @@
 #include <iostream>
+#include <memory>
 
 #include "../bid_ask_book/src/bid_ask_book.h"
 #include "dom_manager.h"
-#include "memory"
 
 int main() {
     std::cout << "Eto birjevoy stakan!" << std::endl;
