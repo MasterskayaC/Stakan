@@ -4,15 +4,12 @@
 #include <iostream>
 #include <optional>
 
-#include "snapshot_source.h"
-
 namespace server {
 
 DOMManager::DOMManager(boost::asio::io_context& io_context,
                        IClientList& client_list,
-                       std::unique_ptr<OrderBook> order_book,
-                       std::unique_ptr<ISnapshotSource> snapshot_source) :
-    client_list_(client_list), order_book_(std::move(order_book)), snapshot_source_(std::move(snapshot_source)),
+                       std::unique_ptr<OrderBook> order_book) :
+    client_list_(client_list), order_book_(std::move(order_book)),
     broadcaster_(std::make_unique<Broadcaster>(client_list_, io_context)), broadcast_timer_(io_context),
     io_context_(io_context) {
     broadcaster_->start();
@@ -69,8 +66,9 @@ void DOMManager::schedule_next_broadcast(int interval_ms, bool use_test_broadcas
 
 void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = snapshot_source_->get_snapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
         if (!snapshot) {
+            std::cout << "there is no snapshot" << std::endl;
             return;
         }
         auto cmd = std::make_unique<BroadcastSnapshotCommand>(client_id, std::move(*snapshot));
@@ -83,8 +81,9 @@ void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_br
 
 void DOMManager::send_snapshot(bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = snapshot_source_->get_snapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
         if (!snapshot) {
+            std::cout << "there is no snapshot" << std::endl;
             return;
         }
         if (!snapshot->topAsks.empty()) {  // TMP

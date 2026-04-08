@@ -9,7 +9,6 @@
 #include "../bid_ask_book/src/bid_ask_book.h"
 #include "broadcaster.h"
 #include "client_list.h"
-#include "snapshot_source.h"
 
 namespace server {
 
@@ -50,8 +49,7 @@ public:
      */
     explicit DOMManager(boost::asio::io_context& io_context,
                         IClientList& client_list,
-                        std::unique_ptr<OrderBook> order_book,
-                        std::unique_ptr<ISnapshotSource> snapshot_source);
+                        std::unique_ptr<OrderBook> order_book);
 
     /**
      * @brief Destroys the DOMManager, stops broadcasting and cleans up resources
@@ -67,8 +65,7 @@ public:
 private:
     IClientList& client_list_;  ///< connected clients
     std::unique_ptr<OrderBook> order_book_;
-    std::unique_ptr<ISnapshotSource> snapshot_source_;  ///< Source of snapshots (order book or test generator)
-    std::unique_ptr<Broadcaster> broadcaster_;          ///< Component responsible for sending data to clients
+    std::unique_ptr<Broadcaster> broadcaster_;  ///< Component responsible for sending data to clients
 
     std::atomic<bool> broadcasting_{false};      ///< Flag indicating whether broadcasting is active
     boost::asio::steady_timer broadcast_timer_;  ///< Timer used for periodic broadcasts
