@@ -2,14 +2,17 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
+#include "../TCP_server/include/session.h"
+#include "bid_ask_interface.h"
+
 using ClientId = uint64_t;
-using OrderId = uint64_t;
-class Session;
+using OrderId = common::ID;
 using SessionPtr = std::shared_ptr<Session>;
-struct Order;
 
 /**
  * @brief Interface for managing all client-related data
@@ -67,56 +70,44 @@ public:
      * @param id Client identifier
      * @param bid Shared_ptr to the bid order
      */
-    virtual void add_bid(ClientId id, std::shared_ptr<Order> bid) = 0;
+    virtual void add_bid(ClientId id, std::shared_ptr<common::Order> bid) = 0;
 
     /**
      * @brief Adds an ask order to a client's list
      * @param id Client identifier
      * @param ask Shared_ptr to the ask order
      */
-    virtual void add_ask(ClientId id, std::shared_ptr<Order> ask) = 0;
+    virtual void add_ask(ClientId id, std::shared_ptr<common::Order> ask) = 0;
 
     /**
      * @brief Adds a bid order to a client's list
+     * @brief either remove last or certain
      * @param id Client identifier
      * @param bid_id Identifier of the bid order
      */
-    virtual void remove_bid(ClientId id, OrderId bid_id) = 0;
+    virtual void remove_bid(ClientId id, std::optional<common::ID> order_id = std::nullopt) = 0;
 
     /**
      * @brief Adds an ask order to a client's list
+     * @brief either remove last or certain
      * @param id Client identifier
      * @param ask_id Identifier of the ask order
      */
-    virtual void remove_ask(ClientId id, OrderId ask_id) = 0;
+    virtual void remove_ask(ClientId id, std::optional<common::ID> order_id = std::nullopt) = 0;
 
     /**
      * @brief Retrieves all bid orders of a client
      * @param id Client identifier
      * @return Vector of bid orders
      */
-    virtual std::vector<std::shared_ptr<Order>> get_bids(ClientId id) const = 0;
-
-    /**
-     * @brief Retrieves all bid orders of a client
-     * @param id Client identifier
-     * @return Vector of bid orders
-     */
-    virtual const std::vector<std::shared_ptr<Order>>& get_bids_ref(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<common::Order>> get_bids(ClientId id) const = 0;
 
     /**
      * @brief Retrieves all ask orders of a client
      * @param id Client identifier
      * @return Vector of ask orders
      */
-    virtual std::vector<std::shared_ptr<Order>> get_asks(ClientId id) const = 0;
-
-    /**
-     * @brief Retrieves all ask orders of a client
-     * @param id Client identifier
-     * @return Vector of ask orders
-     */
-    virtual const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<common::Order>> get_asks(ClientId id) const = 0;
 
     // ---------- Subscription Management ----------
 
@@ -156,6 +147,17 @@ public:
      * @param message Binary data to send
      */
     virtual void broadcast_to_subscribed(const std::vector<char>& message) = 0;
+
+    /**
+     * @brief Broadcasts a message to a certain client
+     * @param id of that certain client
+     * @param message Binary data to send
+     */
+    virtual void broadcast_to_certain(ClientId id, const std::vector<char>& message) = 0;
+
+    virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
+
+private:
 };
 
 /**
