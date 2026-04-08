@@ -1,8 +1,8 @@
 #include <iostream>
 
+#include "../bid_ask_book/src/bid_ask_book.h"
 #include "dom_manager.h"
 #include "memory"
-#include "../bid_ask_book/src/bid_ask_book.h"
 
 int main() {
     std::cout << "Eto birjevoy stakan!" << std::endl;
@@ -36,8 +36,9 @@ int main() {
 
     // Stop io_context and wait for thread to finish
     io_context.stop();
-    if (io_thread.joinable())
+    if (io_thread.joinable()) {
         io_thread.join();
+    }
 
     std::cout << "Eto birjevoy stakan end!" << std::endl;
     return 0;
