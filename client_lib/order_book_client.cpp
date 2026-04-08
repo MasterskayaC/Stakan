@@ -54,9 +54,8 @@ public:
      * @brief Создает клиент с кастомным хостом и портом.
      */
     OrderBookClient(const std::string& host, std::uint16_t port, std::string name, ClientCallbacks&& cc) :
-        callbaсks_(std::move(cc)), config_({.host = host, .port = port, .client_name = name}) {
-        client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
-    }
+        callbaсks_(std::move(cc)), config_({.host = host, .port = port, .client_name = name}),
+        client_(std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_)) {}
 
     /**
      * @brief Освобождает внутренние ресурсы.
@@ -92,7 +91,7 @@ public:
     }
 
     /**
-     * @brief Отписка на инсрумент.
+     * @brief Отписка от инструмента.
      */
     void Unsubscribe(std::string ticker) override {
         if (client_->Unsubscribe(ticker)) {
@@ -127,7 +126,7 @@ private:
     ConnectionState state_ = ConnectionState::Disconnected;
 };
 
-std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc) {
+std::unique_ptr<IOrderBookClient> MakeConfiguredClient(ClientCallbacks&& cc) {
     return std::make_unique<OrderBookClient>(std::move(cc));
 }
 

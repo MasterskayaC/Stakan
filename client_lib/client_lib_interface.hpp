@@ -97,12 +97,13 @@ public:
  *
  * @param cc - ClientCallbacks структура callback-ов от ui.
  */
-std::unique_ptr<IOrderBookClient> MakesDefaultNetConfiguredClient(ClientCallbacks&& cc);
+std::unique_ptr<IOrderBookClient> MakeConfiguredClient(ClientCallbacks&& cc);
 
 /** @brief Создает объект client lib с параметрами соединения из UI.
  *
  * @param host - IP адрес сервера.
  * @param port - Порт.
+ * @param name - hostname.
  * @param cc   - ClientCallbacks структура callback-ов от ui.
  */
 std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
