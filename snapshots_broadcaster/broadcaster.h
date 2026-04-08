@@ -32,12 +32,14 @@ public:
 
     /// @brief Запускает поток-обработчик.
     void start() {
+        if(running_)return;
         running_ = true;
         thread_ = std::thread(&Broadcaster::run, this);
     }
 
     /// @brief Останавливает поток-обработчик.
     void stop() {
+        if(!running_)return;
         running_ = false;
         if (thread_.joinable())
             thread_.join();
@@ -51,13 +53,13 @@ private:
             auto cmd = queue_.pop();
             switch (cmd->type) {
                 case CommandType::SendSnapshot:
-                    if (cmd->client_id == std::nullopt) {
+                    if (cmd->client_id) {
                         boost::asio::post(io_, [this, cmd = std::move(cmd)] {
-                            handle_send_snapshot_all(cmd->get_data<common::Snapshot>()->get());
+                            handle_send_snapshot_to(cmd->client_id.value(), cmd->get_data<common::Snapshot>()->get());
                         });
                     } else {
                         boost::asio::post(io_, [this, cmd = std::move(cmd)] {
-                            handle_send_snapshot_to(cmd->client_id.value(), cmd->get_data<common::Snapshot>()->get());
+                            handle_send_snapshot_all(cmd->get_data<common::Snapshot>()->get());
                         });
                     }
                     break;
