@@ -1,4 +1,3 @@
-
 set(SOURCES
     graphicalui.cpp
 )
@@ -15,7 +14,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 add_library(gui STATIC ${SOURCES} ${HEADERS} ${UI_FILES})
-
 target_link_libraries(gui Qt5::Widgets)
-
+add_executable(gui_app main.cpp)
+target_include_directories(gui_app PRIVATE
+    $<TARGET_PROPERTY:gui,INCLUDE_DIRECTORIES>
+)
+target_link_libraries(gui_app PRIVATE gui Qt5::Widgets)
 target_include_directories(gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -11,37 +11,46 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Stakan Console</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="formLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>70</y>
-      <width>181</width>
-      <height>111</height>
-     </rect>
-    </property>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QPushButton" name="pushButton1">
-       <property name="contextMenuPolicy">
-        <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="toolTipDuration">
-        <number>-3</number>
-       </property>
-       <property name="text">
-        <string>test_button</string>
-       </property>
-       <property name="autoRepeatInterval">
-        <number>99</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPlainTextEdit" name="outputArea">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="placeholderText">
+       <string>Output...</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="inputLayout">
+      <item>
+       <widget class="QLabel" name="promptLabel">
+        <property name="text">
+         <string>&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="inputLine">
+        <property name="placeholderText">
+         <string>Enter command (buy, sell, book, help, exit)...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sendButton">
+        <property name="text">
+         <string>Send</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -52,21 +61,8 @@
      <height>24</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menutest_menu">
-    <property name="title">
-     <string>test_menu</string>
-    </property>
-    <addaction name="separator"/>
-    <addaction name="actiontest_sub"/>
-   </widget>
-   <addaction name="menutest_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actiontest_sub">
-   <property name="text">
-    <string>test_sub</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

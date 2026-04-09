@@ -1,28 +1,39 @@
-#include"graphicalui.h"
+// graphicalui.cpp
+#include "graphicalui.h"
+#include <QApplication>
 
-GraphicalUI::GraphicalUI(const IOrderBookClient* client, QWidget *parent):QMainWindow(parent){
-    ui.setupUi(this);   
-    connect(ui.pushButton1,&QPushButton::clicked,this,&GraphicalUI::PushButton1Clicked);
-    connect(ui.actiontest_sub,&QAction::triggered,this,&GraphicalUI::TestSubClicked);
+GraphicalUI::GraphicalUI(QWidget* parent) : QMainWindow(parent) {
+    ui.setupUi(this);
+    connect(ui.inputLine, &QLineEdit::returnPressed, this, &GraphicalUI::OnInput);
+    connect(ui.sendButton, &QPushButton::clicked, this, &GraphicalUI::OnInput);
+
+    Print("Stakan Console. Type 'help' for available commands.");
 }
 
-int GraphicalUI::Run(int argc, char *argv[]){
+void GraphicalUI::OnInput() {
+    QString input = ui.inputLine->text().trimmed();
+    if (input.isEmpty()) return;
+
+    Print("> " + input);
+    ui.inputLine->clear();
+
+    // TODO: передать в Menu::ParseCommand
+    if (input == "help") {
+        Print("Commands: buy <qty> <price>, sell <qty> <price>, book <ms>, exit, help");
+    } else if (input == "exit") {
+        close();
+    } else {
+        Print("Unknown command: " + input);
+    }
+}
+
+void GraphicalUI::Print(const QString& text) {
+    ui.outputArea->appendPlainText(text);
+}
+
+int GraphicalUI::Run(int argc, char* argv[]) {
     QApplication a(argc, argv);
-    GraphicalUI graph(nullptr);
-    graph.show();
+    GraphicalUI w;
+    w.show();
     return a.exec();
 }
-
-void GraphicalUI::TestSubClicked(){
-    QString user_name = QInputDialog::getText(this,"","Input user name: ");
-    QString password = QInputDialog::getText(this,"","Input password : ");
-}
-
-void GraphicalUI::PushButton1Clicked(){
-    QMessageBox::information(this, "Привет", "Кнопка нажата!");
-}
-
-    void OnTopOfBook(const TopLevel&){}
-    void OnError(ClientError, std::string_view){}
-    void TestSubClicked(){}
-    void PushButton1Clicked(){}
