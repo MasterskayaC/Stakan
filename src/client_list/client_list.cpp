@@ -96,7 +96,7 @@ public:
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
         ClientContext& it = clients_.at(id);
-        it.bids_in_order.push_back(id);
+        it.bids_in_order.push_back(bid->id);
         auto last = std::prev(it.bids_in_order.end());
         it.bids[id] = {std::move(bid), last};
     }
@@ -106,7 +106,7 @@ public:
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
         ClientContext& it = clients_.at(id);
-        it.asks_in_order.push_back(id);
+        it.asks_in_order.push_back(ask->id);
         auto last = std::prev(it.asks_in_order.end());
         it.asks[id] = {std::move(ask), last};
     }
