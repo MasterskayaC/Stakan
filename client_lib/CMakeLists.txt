@@ -1,7 +1,3 @@
-add_subdirectory(
-    "../include" "tcp_client_build"
-)
-
 add_library(client_lib
     order_book_client.cpp
 )
