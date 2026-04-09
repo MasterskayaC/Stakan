@@ -1,12 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-project(gui)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(SOURCES
     graphicalui.cpp
@@ -19,6 +10,9 @@ set(HEADERS
 set(UI_FILES
     mainwindow.ui
 )
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 add_library(gui STATIC ${SOURCES} ${HEADERS} ${UI_FILES})
 
