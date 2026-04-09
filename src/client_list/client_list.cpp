@@ -98,7 +98,7 @@ public:
         ClientContext& it = clients_.at(id);
         it.bids_in_order.push_back(bid->id);
         auto last = std::prev(it.bids_in_order.end());
-        it.bids[id] = {std::move(bid), last};
+        it.bids[bid->id] = {std::move(bid), last};
     }
 
     void add_ask(ClientId id, std::shared_ptr<common::Order> ask) override {
@@ -108,7 +108,7 @@ public:
         ClientContext& it = clients_.at(id);
         it.asks_in_order.push_back(ask->id);
         auto last = std::prev(it.asks_in_order.end());
-        it.asks[id] = {std::move(ask), last};
+        it.asks[bid->id] = {std::move(ask), last};
     }
 
     void remove_bid(ClientId id, std::optional<common::ID> order_id = std::nullopt) override {
