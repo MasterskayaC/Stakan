@@ -54,7 +54,12 @@ CREATE TABLE event_types (
 enum class EventType {
     LOGIN = 1,
     LOGOUT = 2,
-    SNAPSHOT_SENT = 3,
+    SNAPSHOT_SENT_ALL = 3,
+    SNAPSHOT_SENT_TO = 4,
+    MD_UPDATED = 5,
+    START_SEVER = 6,
+    STOP_SERVER = 7,
+
     // ...
 };
 ```
