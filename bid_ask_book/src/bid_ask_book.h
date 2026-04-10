@@ -13,16 +13,24 @@
 namespace server {
 class OrderBook {
 public:
+    /// @brief Добавляет новую заявку в контейнер bid-ордера.
     void NewBid(common::Order order);
+    /// @brief Добавляет новую заявку в контейнер ask-ордера.
     void NewAsk(common::Order order);
+    /// @brief Удаляет bid-заявку по её идентификатору.
     void CancelBid(common::ID order_id);
+    /// @brief Удаляет ask-заявку по её идентификатору.
     void CancelAsk(common::ID order_id);
+    /// @brief Обновляет существующую bid-заявку, сохраняя её идентификатор.
     void ReplaceBid(common::Order old_order, common::Order new_order);
+    /// @brief Обновляет существующую ask-заявку, сохраняя её идентификатор.
     void ReplaceAsk(common::Order old_order, common::Order new_order);
 
     [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
+    /// @brief Возвращает лучшую bid-заявку.
     [[nodiscard]] common::Order BestBid() const;
+    /// @brief Возвращает лучшую ask-заявку.
     [[nodiscard]] common::Order BestAsk() const;
 
 private:
