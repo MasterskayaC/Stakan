@@ -9,6 +9,9 @@
 namespace common {
 constexpr uint8_t topN = 20;
 
+///delimetr for cast order price to double
+static const double PRICE_DELIMETR = 100;
+
 using ID = uint64_t;
 using Price = uint64_t;
 using Quantity = uint64_t;
@@ -16,15 +19,18 @@ using Quantity = uint64_t;
 struct Order {
     Order() = default;
     Order(ID number, Price p, int qty) : id(number), price(p), quantity(qty) {}
-    ID id = 0;  // id must always be strictly greater than 1
+    ID id = 0;  /// id must always be strictly greater than 1
     Price price = 0;
     Quantity quantity = 0;
-
+    /**
+     * @brief get order's price as double
+     * @return price
+     */
     double get_price() const;
 };
 
 double Order::get_price() const {
-    return static_cast<double>(price);
+    return static_cast<double>(price) / PRICE_DELIMETR;
 }
 
 bool operator==(const Order& lhs, const Order& rhs) {
@@ -37,10 +43,36 @@ struct Snapshot {
     std::array<common::Order, topN> topBids;
     std::array<common::Order, topN> topAsks;
 
+    /**
+     * @brief basic funtion is get array of double
+     * @param array of Orders
+     * @return array of double
+     */
     static std::array<double, topN> get_prices(const std::array<common::Order, topN>& arr);
+
+    /**
+     * @brief get bids prices as array of double
+     * @return array of double
+     */
     std::array<double, topN> get_bid_prices() const;
+
+    /**
+     * @brief get asks prices as array of double
+     * @return
+     */
     std::array<double, topN> get_ask_prices() const;
+
+    /**
+     * @brief serialize snapshor
+     * @return vector of char
+     */
     std::vector<char> serialize() const;
+
+    /**
+     * @brief deserialize snapshot
+     * @param binary data array
+     * @return snapshot
+     */
     static Snapshot deserialize(const std::vector<char>& data);
 };
 
@@ -83,7 +115,7 @@ std::string to_string(const Snapshot& snapshot) {
 std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, topN>& arr) {
     std::array<double, topN> result;
     for (size_t i = 0; i < topN; i++) {
-        result[i] = static_cast<double>(arr[i].price);
+        result[i] = arr[i].get_price();
     }
     return result;
 }
@@ -99,4 +131,4 @@ std::array<double, topN> Snapshot::get_ask_prices() const {
 bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
     return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
 }
-}  // namespace common
+}  /// namespace common

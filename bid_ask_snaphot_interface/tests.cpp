@@ -30,7 +30,7 @@ TEST_CASE("Snapshot serialize") {
         common::Snapshot snap;
         for (size_t i = 0; i < common::topN; i++) {
             snap.topBids[i] = common::Order(i + 1, i + 3, i + 5);
-            snap.topAsks[i] = common::Order(i + 2, i + 4, i + 6);
+            snap.topAsks[i] = common::Order(i + 100, i + 4, i + 6);
         }
         auto serialize_snap = snap.serialize();
 
@@ -56,16 +56,16 @@ TEST_CASE("Snapshot get prices functions") {
         common::Snapshot snap;
         for (size_t i = 0; i < common::topN; i++) {
             snap.topBids[i] = common::Order(i + 1, i + 3, i + 5);
-            snap.topAsks[i] = common::Order(i + 2, i + 4, i + 6);
+            snap.topAsks[i] = common::Order(i + 100, i + 4, i + 6);
         }
 
-        std::array<double, common::topN> p1{3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 12.0,
-                                            13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0};
+        std::array<double, common::topN> p1{0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12,
+                                            0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22};
         auto bid_prices = snap.get_bid_prices();
         REQUIRE(p1 == bid_prices);
 
-        std::array<double, common::topN> p2{4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 12.0, 13.0,
-                                            14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0};
+        std::array<double, common::topN> p2{0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
+                                            0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23};
         auto ask_prices = snap.get_ask_prices();
         REQUIRE(p2 == ask_prices);
     }
@@ -83,7 +83,7 @@ TEST_CASE("Snapshot to string function") {
         common::Snapshot snap;
         for (size_t i = 0; i <= 2; i++) {
             snap.topBids[i] = common::Order(i + 1, i + 3, i + 5);
-            snap.topAsks[i] = common::Order(i + 2, i + 4, i + 6);
+            snap.topAsks[i] = common::Order(i + 100, i + 4, i + 6);
         }
         std::string str_snap = common::to_string(snap);
         std::string str =
