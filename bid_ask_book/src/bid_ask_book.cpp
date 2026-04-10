@@ -36,8 +36,7 @@ bool OrderBook::IsInTopN(const Index& index, const ID order_id, const size_t top
 }
 
 void OrderBook::AllowBuildNewSnapshot() {
-    std::lock_guard lg(snapshot_mutex_);
-    is_ready_new_snapshot_ = true;
+    is_ready_new_snapshot_.store(true, std::memory_order_release);
 }
 
 void OrderBook::NewBid(Order order) {
@@ -212,10 +211,8 @@ Snapshot OrderBook::BuildNewSnapshot() const {
 
 std::optional<Snapshot> OrderBook::GetTopSnapshot() const {
     std::scoped_lock order_lock(bids_mutex_, asks_mutex_);
-    std::lock_guard snapshot_lock(snapshot_mutex_);
 
-    if (is_ready_new_snapshot_) {
-        is_ready_new_snapshot_ = false;
+    if (is_ready_new_snapshot_.exchange(false, std::memory_order_acq_rel)) {
         return BuildNewSnapshot();
     }
 

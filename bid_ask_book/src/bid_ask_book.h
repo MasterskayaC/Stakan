@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <mutex>
+#include <atomic>
 #include <optional>
 #include <shared_mutex>
 
@@ -94,10 +94,9 @@ namespace server {
         BidContainer bids_;
         AskContainer asks_;
         
-        mutable bool is_ready_new_snapshot_ = true;
+        mutable std::atomic<bool> is_ready_new_snapshot_{true};
 
         // мьютексы для потокобезопасности
-        mutable std::mutex snapshot_mutex_;
         mutable std::shared_mutex bids_mutex_;
         mutable std::shared_mutex asks_mutex_;
     };
