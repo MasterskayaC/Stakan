@@ -1,10 +1,9 @@
 #pragma once
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/vector.hpp>
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
+#include <format>
 
 namespace common
 {
@@ -12,20 +11,15 @@ namespace common
 
     using ID = uint64_t;
     using Price = uint64_t;
+    using Quantity = uint64_t;
+
     struct Order {
         Order() = default;
         Order(ID number, Price p, int qty)
             : id(number), price(p), quantity(qty) {}
         ID id = 0;
         Price price = 0;
-        int quantity = 0;
-
-        template<class Archive>
-        void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar << id;
-            ar << price;
-            ar << quantity;
-        }
+        Quantity quantity = 0;
     };
 
     struct Snapshot
@@ -35,15 +29,41 @@ namespace common
         std::array<common::Order, topN> topBids;
         std::array<common::Order, topN>  topAsks;
 
-        template<class Archive>
-        void serialize(Archive& ar, [[maybe_unused]] const unsigned int version){
-            ar << topBids;
-            ar << topAsks;
-        }
-    };
+        std::vector<char> Serialize() const;
+        static Snapshot Deserialize(const std::vector<char>& data);
+    };    
 
-    // @brief Функции для се/десериализации snapshot
-    inline std::vector<uint8_t> SerializeSnapshot(const Snapshot &snap);
-    inline Snapshot DeserializeSnapshot(const std::vector<uint8_t>& serialized_snapshot);
-    
+    std::vector<char> Snapshot::Serialize() const {
+        size_t size = sizeof(Snapshot);
+        std::vector<char> buffer(size);
+        std::memcpy(buffer.data(), &topBids, sizeof (topBids));
+        std::memcpy(buffer.data() + sizeof (topBids), &topAsks, sizeof(topAsks));
+        return buffer;
+    }
+
+    Snapshot Snapshot::Deserialize(const std::vector<char>& data) {
+        if (data.size() != sizeof(Snapshot)) {
+            throw std::runtime_error("Deserialization error: incorrect data size");
+        }
+        Snapshot result;
+        std::memcpy(&result.topBids, data.data(), sizeof(topBids));
+        std::memcpy(&result.topAsks, data.data() + sizeof(topBids), sizeof(topAsks));
+        return result;
+    }
+
+    std::string to_string(const Snapshot& snapshot) {
+        std::string result = "Top Bids:\n";
+        for (const auto& bid : snapshot.topBids) {
+            if(bid.id == 0) break;
+            result += std::format("Price: {}, Quantity: {}\n", bid.price, bid.quantity);
+        }
+        result += "Top Asks:\n";
+        for (const auto& ask : snapshot.topAsks) {
+            if(ask.id == 0) break;
+            result += std::format("Price: {}, Quantity: {}\n", ask.price, ask.quantity);
+        }
+        return result;
+    }
+
+    //TODO (simanov artem): add tests;
 }
