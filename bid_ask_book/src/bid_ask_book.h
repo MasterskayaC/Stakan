@@ -13,6 +13,9 @@
 namespace server {
 class OrderBook {
 public:
+    // TODO: Оставить публичными парные методы Bid/Ask, а общую логику добавления,
+    // отмены и замены ордеров вынести в приватные методы
+
     void NewBid(common::Order order);
     void NewAsk(common::Order order);
     void CancelBid(common::ID order_id);
