@@ -21,6 +21,9 @@ add_subdirectory(include)
 add_subdirectory(bid_ask_book)
 add_subdirectory(console)
 #add_subdirectory(CGUI) 
+add_subdirectory(src/database)
+
 
 add_executable(exc_glass main.cpp)
 
+target_link_libraries(exc_glass database_lib)
