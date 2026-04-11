@@ -121,3 +121,64 @@ WHERE id = 1;
 INSERT INTO order_events (timestamp, type, order_id, side, price, quantity)
 VALUES (1710000030, 'REPLACE', 1, 'bid', 102.0, 7);
 ```
+
+## Скрипт для создания таблицы:
+```
+-- 1. Таблица orders
+
+CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY, -- order_id
+    side TEXT NOT NULL CHECK (side IN ('bid','ask')),
+    price REAL NOT NULL,
+    quantity REAL NOT NULL,
+    created_at INTEGER NOT NULL -- Unix timestamp
+);
+
+-- Индекс для bid
+CREATE INDEX IF NOT EXISTS idx_bids
+ON orders (price DESC, quantity DESC)
+WHERE side = 'bid';
+
+-- Индекс для ask
+CREATE INDEX IF NOT EXISTS idx_asks
+ON orders (price ASC, quantity DESC)
+WHERE side = 'ask';
+
+-- 2. Таблица order_events
+
+CREATE TABLE IF NOT EXISTS order_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('NEW','CANCEL','REPLACE')),
+    order_id INTEGER,
+    side TEXT CHECK (side IN ('bid','ask')),
+    price REAL,
+    quantity REAL,
+    metadata TEXT,
+
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+-- Индексы для быстрых выборок
+
+CREATE INDEX IF NOT EXISTS idx_events_order_id
+ON order_events (order_id);
+
+CREATE INDEX IF NOT EXISTS idx_events_timestamp
+ON order_events (timestamp);
+
+-- 3. Таблица snapshots
+
+CREATE TABLE IF NOT EXISTS snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    best_bid_price REAL,
+    best_bid_quantity REAL,
+    best_ask_price REAL,
+    best_ask_quantity REAL
+);
+
+-- Индекс по времени (последние снепшоты)
+CREATE INDEX IF NOT EXISTS idx_snapshots_timestamp
+ON snapshots (timestamp);
+```
