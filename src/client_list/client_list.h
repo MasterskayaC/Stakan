@@ -31,9 +31,17 @@ public:
     virtual std::vector<std::shared_ptr<Order>> get_asks(ClientId id) const = 0;
     virtual const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const = 0;
     virtual bool is_subscribed(ClientId id) const = 0;
-    /** Пометить клиента как подписанного на рассылку снэпшотов. */
+    /**
+     * @brief Subscribes a client to snapshot broadcasts.
+     * @param id Client identifier.
+     * @note Помечает клиента как подписанного на рассылку снэпшотов (без неявного создания записи).
+     */
     virtual void subscribe(ClientId id) = 0;
-    /** Пометить клиента как отписанного от рассылки снэпшотов. */
+    /**
+     * @brief Unsubscribes a client from snapshot broadcasts.
+     * @param id Client identifier.
+     * @note Помечает клиента как отписанного от рассылки снэпшотов.
+     */
     virtual void unsubscribe(ClientId id) = 0;
     /** Вернуть идентификаторы клиентов, которым надо отправлять снэпшоты. */
     virtual std::vector<ClientId> get_subscribed_clients() const = 0;

@@ -1,10 +1,12 @@
 #include "../include/session.h"
 
+#include <memory>
 #include <utility>
 
 using namespace boost::asio::ip;
 
-// Реализация асинхронного цикла: read_until('\n') для команд и async_write для ответов/снэпшотов.
+// Чтение: async_read_until по '\n' (разделитель кадра), данные в колбэк как std::vector<std::uint8_t>.
+// Отправка: постановка в очередь под mutex, старт цепочки async_write через dispatch на executor сокета.
 Session::Session(std::shared_ptr<tcp::socket> socket)
     : socket_(std::move(socket)) {}
 
@@ -32,7 +34,6 @@ void Session::Read() {
 }
 
 void Session::ProcessRead(const boost::system::error_code& error, std::size_t bytes_transferred) {
-    (void)bytes_transferred;
     if (error) {
         if (on_disconnect_) {
             on_disconnect_(shared_from_this());
@@ -40,32 +41,39 @@ void Session::ProcessRead(const boost::system::error_code& error, std::size_t by
         return;
     }
 
-    std::vector<char> data(bytes_transferred);
-    boost::asio::buffer_copy(boost::asio::buffer(data), read_buffer_.data(), bytes_transferred);
+    std::vector<std::uint8_t> frame(bytes_transferred);
+    if (bytes_transferred > 0) {
+        boost::asio::buffer_copy(boost::asio::buffer(frame), read_buffer_.data(), bytes_transferred);
+    }
     read_buffer_.consume(bytes_transferred);
+
     if (on_data_) {
-        on_data_(data, shared_from_this());
+        on_data_(frame, shared_from_this());
     }
     Read();
 }
 
 void Session::SendMsg(const std::vector<char>& message) {
-    if (!socket_ || !socket_->is_open()) {
+    if (!socket_) {
         return;
     }
 
-    bool start_writing = false;
-    {
-        std::lock_guard<std::mutex> lock(write_mutex_);
-        // Переход очереди из пустой в непустую защищен write_mutex_,
-        // поэтому локальному флагу не нужна атомарность.
-        start_writing = messages_queue_.empty();
-        messages_queue_.push_back(message);
-    }
-
-    if (start_writing) {
-        Write();
-    }
+    auto self = shared_from_this();
+    auto payload = std::make_shared<std::vector<char>>(message);
+    boost::asio::dispatch(socket_->get_executor(), [this, self, payload]() {
+        if (!socket_ || !socket_->is_open()) {
+            return;
+        }
+        bool start_chain = false;
+        {
+            std::lock_guard<std::mutex> lock(write_mutex_);
+            start_chain = messages_queue_.empty();
+            messages_queue_.push_back(std::move(*payload));
+        }
+        if (start_chain) {
+            Write();
+        }
+    });
 }
 
 bool Session::IsOpen() const {

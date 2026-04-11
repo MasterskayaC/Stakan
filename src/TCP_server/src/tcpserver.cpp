@@ -1,9 +1,8 @@
 #include "../include/tcpserver.h"
 
-#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
-#include <sstream>
 
 // Сервер принимает HELLO <client_id>, обновляет client_list и шлет периодические snapshot.
 TCPServer::TCPServer(boost::asio::io_context& io_context, unsigned short port)
@@ -53,7 +52,9 @@ std::shared_ptr<Session> TCPServer::OnAccept(std::shared_ptr<tcp::socket> socket
 
     auto session = std::make_shared<Session>(std::move(socket));
     session->SetCallbacks(
-        [this](const std::vector<char>& message, const std::shared_ptr<Session>& s) { HandleMessage(message, s); },
+        [this](const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& s) {
+            HandleMessage(frame, s);
+        },
         [this](const std::shared_ptr<Session>& s) { HandleDisconnect(s); });
     session->Start();
     return session;
@@ -64,8 +65,8 @@ void TCPServer::SendUpdateMessage(const std::string& message) {
     client_list_->broadcast_to_subscribed(payload);
 }
 
-void TCPServer::HandleMessage(const std::vector<char>& message, const std::shared_ptr<Session>& session) {
-    const ClientId client_id = ParseClientId(message);
+void TCPServer::HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session) {
+    const ClientId client_id = ParseClientId(frame);
     if (client_id == 0) {
         const std::string response = "ERR expected `HELLO <client_id>`\n";
         session->SendMsg(std::vector<char>(response.begin(), response.end()));
@@ -114,19 +115,41 @@ void TCPServer::ScheduleSnapshots() {
     });
 }
 
-ClientId TCPServer::ParseClientId(const std::vector<char>& message) const {
-    std::string line(message.begin(), message.end());
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
-
-    std::istringstream iss(line);
-    std::string cmd;
-    ClientId id = 0;
-    if (!(iss >> cmd >> id)) {
+ClientId TCPServer::ParseClientId(const std::vector<std::uint8_t>& frame) const {
+    if (frame.empty()) {
         return 0;
     }
-    if (cmd != "HELLO") {
+    std::size_t end = frame.size();
+    while (end > 0 && (frame[end - 1] == '\n' || frame[end - 1] == '\r' || frame[end - 1] == ' ')) {
+        --end;
+    }
+    std::size_t beg = 0;
+    while (beg < end && frame[beg] == ' ') {
+        ++beg;
+    }
+    if (beg >= end) {
         return 0;
+    }
+    static constexpr char kHello[] = "HELLO";
+    constexpr std::size_t kHelloLen = sizeof(kHello) - 1;
+    if (end - beg < kHelloLen + 2) {
+        return 0;
+    }
+    for (std::size_t i = 0; i < kHelloLen; ++i) {
+        if (frame[beg + i] != static_cast<std::uint8_t>(kHello[i])) {
+            return 0;
+        }
+    }
+    if (frame[beg + kHelloLen] != ' ') {
+        return 0;
+    }
+    ClientId id = 0;
+    for (std::size_t i = beg + kHelloLen + 1; i < end; ++i) {
+        const auto c = frame[i];
+        if (c < '0' || c > '9') {
+            return 0;
+        }
+        id = id * 10 + static_cast<ClientId>(c - '0');
     }
     return id;
 }
