@@ -9,8 +9,8 @@
 namespace common {
 constexpr uint8_t topN = 20;
 
-///delimetr for cast order price to double
-static const double PRICE_DELIMETR = 100;
+///delimeter for cast order price to double
+static const double PRICE_DELIMETER = 100;
 
 using ID = uint64_t;
 using Price = uint64_t;
@@ -30,7 +30,7 @@ struct Order {
 };
 
 double Order::get_price() const {
-    return static_cast<double>(price) / PRICE_DELIMETR;
+    return static_cast<double>(price) / PRICE_DELIMETER;
 }
 
 bool operator==(const Order& lhs, const Order& rhs) {
