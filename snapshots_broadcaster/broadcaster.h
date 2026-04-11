@@ -1,9 +1,9 @@
 #pragma once
 
-#include "command_queue.h"
-
-#include <thread>
 #include <atomic>
+#include <thread>
+
+#include "command_queue.h"
 
 // Forward declarations — реализация в других модулях
 class IClientList;
@@ -17,12 +17,8 @@ struct Snapshot;
 class Broadcaster {
 public:
     /// @brief Конструктор.
-    /// @param order_book Ссылка на OrderBook для чтения текущего состояния стакана.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
-    Broadcaster(const OrderBook& order_book, IClientList& clients)
-        : order_book_(order_book)
-        , clients_(clients) {
-    }
+    Broadcaster(IClientList& clients, boost::asio::io_context& io) : clients_(clients), io_(io) {}
 
     /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
@@ -30,8 +26,8 @@ public:
     }
 
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
-    void enqueue(BroadcastCommand cmd) {
-        //заглушка
+    void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
+        // заглушка
     }
 
     /// @brief Запускает поток-обработчик.
@@ -81,11 +77,10 @@ private:
         return;
     }
 
-
 private:
-    CommandQueue        queue_;           ///< MPSC-очередь команд.
-    const OrderBook&    order_book_;      ///< Ссылка на OrderBook (только чтение).
-    IClientList&        clients_;         ///< Интерфейс реестра клиентов.
-    std::thread         thread_;          ///< Рабочий поток broadcaster'а.
-    std::atomic<bool>   running_{false};  ///< Флаг работы потока.
+    CommandQueue queue_;                ///< MPSC-очередь команд.
+    IClientList& clients_;              ///< Интерфейс реестра клиентов.
+    std::thread thread_;                ///< Рабочий поток broadcaster'а.
+    std::atomic<bool> running_{false};  ///< Флаг работы потока.
+    boost::asio::io_context& io_;
 };
