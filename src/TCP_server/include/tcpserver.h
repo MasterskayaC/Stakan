@@ -1,6 +1,9 @@
 #include "session.h"
 #include "../../client_list/client_list.h"
 
+#include <cstdint>
+#include <vector>
+
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
@@ -20,10 +23,10 @@ private:
     void DoAccept();
     std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
                    const boost::system::error_code& error);
-    void HandleMessage(const std::vector<char>& message, const std::shared_ptr<Session>& session);
+    void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
     void HandleDisconnect(const std::shared_ptr<Session>& session);
     void ScheduleSnapshots();
-    ClientId ParseClientId(const std::vector<char>& message) const;
+    ClientId ParseClientId(const std::vector<std::uint8_t>& frame) const;
 
     boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;
