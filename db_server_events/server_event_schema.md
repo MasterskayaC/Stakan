@@ -72,7 +72,7 @@ enum class EventType {
 ```sql
 CREATE TABLE event_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER)),
     module_id INTEGER NOT NULL,
     event_type_id INTEGER NOT NULL,
     user_id INTEGER,
@@ -91,7 +91,7 @@ CREATE INDEX idx_event_log_user ON event_log (user_id, id);             -- вс�
 | Колонка | Тип | Описание |
 |---------|-----|----------|
 | `id` | INTEGER | Уникальный идентификатор события |
-| `timestamp` | TIMESTAMP | Время события (по умолчанию NOW()) |
+| `timestamp` | INTEGER | кол-во секунд с 01.01.1970 до времени события (по умолчанию NOW()) |
 | `module_id` | INT | Модуль, к которому относится событие |
 | `event_type_id` | SMALLINT | Тип события |
 | `user_id` | INT | Идентификатор пользователя (если применимо) |
