@@ -71,13 +71,14 @@ enum class EventType {
 
 ```sql
 CREATE TABLE event_log (
-    id BIGSERIAL PRIMARY KEY,
-    timestamp TIMESTAMP DEFAULT NOW(),
-    module_id INT NOT NULL,
-    event_type_id SMALLINT NOT NULL,
-    user_id INT,
-    metadata JSONB
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    module_id INTEGER NOT NULL,
+    event_type_id INTEGER NOT NULL,
+    user_id INTEGER,
+    metadata TEXT
 );
+
 
 -- Индексы для быстрого поиска
 CREATE INDEX idx_event_log_module ON event_log (module_id, timestamp);  -- все события по модулю
