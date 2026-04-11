@@ -10,9 +10,10 @@ CREATE TABLE modules (
 );
 ```
 вставка в таблицу
+```sql
 INSERT INTO modules (id, name)
 VALUES (1, 'snapshots_broadcaster');
-
+```
 **Описание колонок:**
 
 | Колонка | Тип | Описание |
@@ -43,9 +44,10 @@ CREATE TABLE event_types (
 );
 ```
 вставка в таблицу
+```sql
 INSERT INTO event_types (id, module_id, name)
 VALUES (1, 1, 'user_login');
-
+```
 **Описание колонок:**
 
 | Колонка | Тип | Описание |
@@ -92,32 +94,38 @@ CREATE INDEX idx_event_log_type ON event_log (event_type_id, timestamp); -- вс
 CREATE INDEX idx_event_log_user ON event_log (user_id, id);             -- все события по пользователю
 ```
 Вставка в таблицу события с user_id
+```sql
 INSERT INTO event_log (module_id, event_type_id, user_id, metadata)
 VALUES (1, 2, 1001, '{"action":"login"}');
+```
 Вставка в таблицу события без user_id
+```sql
 INSERT INTO event_log (module_id, event_type_id, metadata)
 VALUES (1, 2, '{"action":"login"}');
-
+```
 поиск по таблице 
 все события модуля,
+```sql
 SELECT *
 FROM event_log
 WHERE module_id = 1
 ORDER BY timestamp DESC;
-
+```
 все события по типу
+```sql
 SELECT *
 FROM event_log
 WHERE event_type_id = 2
 ORDER BY timestamp DESC;
-
+```
 все события по пользователю внутри определенного интервала времени
+```sql
 SELECT *
 FROM event_log
 WHERE timestamp >= 1710000000
   AND timestamp <= 1713000000
 ORDER BY timestamp DESC;
-
+```
 
 **Описание колонок:**
 
