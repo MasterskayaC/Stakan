@@ -2,13 +2,16 @@
 
 ## 1. Таблица `modules`
 Хранит категории/модули, к которым относятся события.
-
+создание таблицы
 ```sql
 CREATE TABLE modules (
     id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL
 );
 ```
+вставка в таблицу
+INSERT INTO modules (id, name)
+VALUES (1, 'snapshots_broadcaster');
 
 **Описание колонок:**
 
@@ -31,7 +34,7 @@ enum class Module {
 
 ## 2. Таблица `event_types`
 Содержит все возможные типы событий сервера.
-
+создание таблицы
 ```sql
 CREATE TABLE event_types (
     id SMALLINT PRIMARY KEY,
@@ -39,6 +42,9 @@ CREATE TABLE event_types (
     name VARCHAR(100) NOT NULL
 );
 ```
+вставка в таблицу
+INSERT INTO event_types (id, module_id, name)
+VALUES (1, 1, 'user_login');
 
 **Описание колонок:**
 
@@ -68,7 +74,7 @@ enum class EventType {
 
 ## 3. Таблица `event_log`
 Главная таблица логов сервера — хранит все события.
-
+Создание таблицы
 ```sql
 CREATE TABLE event_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,12 +85,39 @@ CREATE TABLE event_log (
     metadata TEXT
 );
 
-
+Создание индексов
 -- Индексы для быстрого поиска
 CREATE INDEX idx_event_log_module ON event_log (module_id, timestamp);  -- все события по модулю
 CREATE INDEX idx_event_log_type ON event_log (event_type_id, timestamp); -- все события по типу
 CREATE INDEX idx_event_log_user ON event_log (user_id, id);             -- все события по пользователю
 ```
+Вставка в таблицу события с user_id
+INSERT INTO event_log (module_id, event_type_id, user_id, metadata)
+VALUES (1, 2, 1001, '{"action":"login"}');
+Вставка в таблицу события без user_id
+INSERT INTO event_log (module_id, event_type_id, metadata)
+VALUES (1, 2, '{"action":"login"}');
+
+поиск по таблице 
+все события модуля,
+SELECT *
+FROM event_log
+WHERE module_id = 1
+ORDER BY timestamp DESC;
+
+все события по типу
+SELECT *
+FROM event_log
+WHERE event_type_id = 2
+ORDER BY timestamp DESC;
+
+все события по пользователю внутри определенного интервала времени
+SELECT *
+FROM event_log
+WHERE timestamp >= 1710000000
+  AND timestamp <= 1713000000
+ORDER BY timestamp DESC;
+
 
 **Описание колонок:**
 
