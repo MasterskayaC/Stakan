@@ -13,10 +13,27 @@ class Session;
 using SessionPtr = std::shared_ptr<Session>;
 struct Order;
 
+/**
+ * @brief Interface for managing all client-related data in one place.
+ *
+ * Combines session management, order tracking (bids/asks), and subscription
+ * state used for snapshot delivery.
+ */
 class IClientList {
 public:
     virtual ~IClientList() = default;
+
+    // --------- Session management ---------
+    /**
+     * @brief Registers or replaces the active TCP session for a client.
+     * @param id Client identifier.
+     * @param session Active session handle.
+     */
     virtual void add_session(ClientId id, SessionPtr session) = 0;
+    /**
+     * @brief Drops a client and all associated state from the list.
+     * @param id Client identifier.
+     */
     virtual void remove_session(ClientId id) = 0;
     virtual SessionPtr get_session(ClientId id) const = 0;
     virtual size_t size() const = 0;
