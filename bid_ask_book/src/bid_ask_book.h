@@ -12,20 +12,24 @@
 #include "logger.h"
 
 namespace server {
-    class OrderBook {
-    public:
-        /// @brief Добавляет новую заявку в контейнер bid-ордера.
-        void NewBid(common::Order order);
-        /// @brief Добавляет новую заявку в контейнер ask-ордера.
-        void NewAsk(common::Order order);
-        /// @brief Удаляет bid-заявку по её идентификатору.
-        void CancelBid(common::ID order_id);
-        /// @brief Удаляет ask-заявку по её идентификатору.
-        void CancelAsk(common::ID order_id);
-        /// @brief Обновляет существующую bid-заявку, сохраняя её идентификатор.
-        void ReplaceBid(common::Order old_order, common::Order new_order);
-        /// @brief Обновляет существующую ask-заявку, сохраняя её идентификатор.
-        void ReplaceAsk(common::Order old_order, common::Order new_order);
+
+class OrderBook {
+public:
+    // TODO: Оставить публичными парные методы Bid/Ask, а общую логику добавления,
+    // отмены и замены ордеров вынести в приватные методы
+
+    /// @brief Добавляет новую заявку в контейнер bid-ордера.
+    void NewBid(common::Order order);
+    /// @brief Добавляет новую заявку в контейнер ask-ордера.
+    void NewAsk(common::Order order);
+    /// @brief Удаляет bid-заявку по её идентификатору.
+    void CancelBid(common::ID order_id);
+    /// @brief Удаляет ask-заявку по её идентификатору.
+    void CancelAsk(common::ID order_id);
+    /// @brief Обновляет существующую bid-заявку, сохраняя её идентификатор.
+    void ReplaceBid(common::Order old_order, common::Order new_order);
+    /// @brief Обновляет существующую ask-заявку, сохраняя её идентификатор.
+    void ReplaceAsk(common::Order old_order, common::Order new_order);
 
         /// @brief Возвращает текущий снапшот topN bid/ask заявок, если он еще не был отправлен.
         /// @details Метод возвращает новый снапшот только после успешной операции,
