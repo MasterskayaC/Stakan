@@ -103,7 +103,6 @@ public:
      * @brief Returns a const reference to asks (throws if client missing).
      */
     virtual const std::vector<std::shared_ptr<Order>>& get_asks_ref(ClientId id) const = 0;
-
     // --------- Subscriptions / broadcast ---------
     /**
      * @brief Returns whether the client is marked as subscribed to snapshots.
