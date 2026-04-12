@@ -27,7 +27,8 @@ enum class CommandType : uint8_t {
     SendMDUpdate,  ///< Отправить MD Update
 };
 
-/// @brief Команда для broadcaster'а — тип + кому слать (если кому-то конкретному).
+/// @brief Команда для broadcaster'а — тип + кому слать (если кому-то
+/// конкретному).
 struct BroadcastCommand {
     CommandType type;
     std::optional<SessionId> client_id;
@@ -106,8 +107,8 @@ protected:
 
 /// @brief MPSC очередь команд с логикой поглощения.
 ///
-/// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до него.
-/// SendMDUpdate не участвует в поглощении.
+/// SendSnapshotAll поглощает все ожидающие SendSnapshotTo, поставленные до
+/// него. SendMDUpdate не участвует в поглощении.
 class CommandQueue {
 public:
     /// @brief Добавляет команду в очередь.
