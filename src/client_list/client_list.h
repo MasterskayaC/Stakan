@@ -138,4 +138,8 @@ public:
      */
     virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
 };
+/**
+ * @brief Creates a new instance of IClientList.
+ * @return A unique pointer owning the newly created IClientList object.
+ */
 std::unique_ptr<IClientList> makeClientList();
