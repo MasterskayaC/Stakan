@@ -5,10 +5,19 @@
 using namespace server;
 using namespace common;
 
-void OrderBook::NewBid(Order order) {
+namespace {
+bool Validate(const Order& order, const char* operation) {
     if (order.price == 0 || order.quantity == 0) {
-        Logger::Log(LogLevel::Error,
-            std::format("NewBid: Invalid order, id = {}", order.id));
+        Logger::Log(LogLevel::Error, std::format("{}: Invalid order, id = {}", operation, order.id));
+        return false;
+    }
+
+    return true;
+}
+}  // namespace
+
+void OrderBook::NewBid(Order order) {
+    if (!Validate(order, "NewBid")) {
         return;
     }
 
@@ -16,18 +25,14 @@ void OrderBook::NewBid(Order order) {
 
     auto result = bids_.insert(order);
     if (result.second) {
-        Logger::Log(LogLevel::Info,
-            std::format("New BID added, id = {}", order.id));
+        Logger::Log(LogLevel::Info, std::format("New BID added, id = {}", order.id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("NewBid: BID id = {} already exists", order.id));
+        Logger::Log(LogLevel::Error, std::format("NewBid: BID id = {} already exists", order.id));
     }
 }
 
 void OrderBook::NewAsk(Order order) {
-    if (order.price == 0 || order.quantity == 0) {
-        Logger::Log(LogLevel::Error,
-            std::format("NewAsk: Invalid order, id = {}", order.id));
+    if (!Validate(order, "NewAsk")) {
         return;
     }
 
@@ -35,11 +40,9 @@ void OrderBook::NewAsk(Order order) {
 
     auto result = asks_.insert(order);
     if (result.second) {
-        Logger::Log(LogLevel::Info,
-            std::format("New ASK added, id = {}", order.id));
+        Logger::Log(LogLevel::Info, std::format("New ASK added, id = {}", order.id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("NewAsk: ASK id = {} already exists", order.id));
+        Logger::Log(LogLevel::Error, std::format("NewAsk: ASK id = {} already exists", order.id));
     }
 }
 
@@ -50,11 +53,9 @@ void OrderBook::CancelBid(ID order_id) {
     auto it = index.find(order_id);
     if (it != index.end()) {
         index.erase(it);
-        Logger::Log(LogLevel::Info,
-            std::format("Bid canceled, id = {}", order_id));
+        Logger::Log(LogLevel::Info, std::format("Bid canceled, id = {}", order_id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("CancelBid: Invalid id = {}", order_id));
+        Logger::Log(LogLevel::Error, std::format("CancelBid: Invalid id = {}", order_id));
     }
 }
 
@@ -65,24 +66,22 @@ void OrderBook::CancelAsk(ID order_id) {
     auto it = index.find(order_id);
     if (it != index.end()) {
         index.erase(it);
-        Logger::Log(LogLevel::Info,
-            std::format("Ask canceled, id = {}", order_id));
+        Logger::Log(LogLevel::Info, std::format("Ask canceled, id = {}", order_id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("CancelAsk: Invalid id = {}", order_id));
+        Logger::Log(LogLevel::Error, std::format("CancelAsk: Invalid id = {}", order_id));
     }
 }
 
 void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     if (new_order.price == 0 || new_order.quantity == 0) {
-        Logger::Log(LogLevel::Error,
-            std::format("ReplaceBid: Invalid order, id = {}", new_order.id));
+        Logger::Log(LogLevel::Error, std::format("ReplaceBid: Invalid order, id = {}", new_order.id));
         return;
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+                    std::format("ReplaceBid: Order id cannot be changed (old id = {}, new id = {})",
+                                old_order.id,
+                                new_order.id));
         return;
     }
 
@@ -95,24 +94,22 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
         });
-        Logger::Log(LogLevel::Info,
-            std::format("Replaced BID id = {}", new_order.id));
+        Logger::Log(LogLevel::Info, std::format("Replaced BID id = {}", new_order.id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("ReplaceBid:, id {} not found", old_order.id));
+        Logger::Log(LogLevel::Error, std::format("ReplaceBid:, id {} not found", old_order.id));
     }
 }
 
 void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     if (new_order.price == 0 || new_order.quantity == 0) {
-        Logger::Log(LogLevel::Error,
-            std::format("ReplaceAsk: Invalid order, id = {}", new_order.id));
+        Logger::Log(LogLevel::Error, std::format("ReplaceAsk: Invalid order, id = {}", new_order.id));
         return;
     }
     if (old_order.id != new_order.id) {
         Logger::Log(LogLevel::Error,
-        std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
-                    old_order.id, new_order.id));
+                    std::format("ReplaceAsk: Order id cannot be changed (old id = {}, new id = {})",
+                                old_order.id,
+                                new_order.id));
         return;
     }
 
@@ -125,11 +122,9 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
         });
-        Logger::Log(LogLevel::Info,
-            std::format("Replaced ASK id = {}", new_order.id));
+        Logger::Log(LogLevel::Info, std::format("Replaced ASK id = {}", new_order.id));
     } else {
-        Logger::Log(LogLevel::Error,
-            std::format("ReplaceAsk:, id {} not found", old_order.id));
+        Logger::Log(LogLevel::Error, std::format("ReplaceAsk:, id {} not found", old_order.id));
     }
 }
 
@@ -138,31 +133,24 @@ Snapshot OrderBook::GetTopSnapshot() const {
 
     std::scoped_lock lock(bids_mutex_, asks_mutex_);
 
-    const auto& bid_index = bids_.get<0>();
-    if (bid_index.empty()) {
-        Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Bids available");
-    } else if (bid_index.size() < topN) {
-        Logger::Log(LogLevel::Warning,
-            std::format("GetTopSnapshot: not enough Bids, {} available", bid_index.size()));
-    }
-    size_t count = 0;
-    for (const auto& bid : bid_index) {
-        if (count >= topN) break;
-        snapshot.topBids[count++] = bid;
-    }
+    const auto fill_top_orders = [](const auto& index, auto& target, const char* side) {
+        if (index.empty()) {
+            Logger::Log(LogLevel::Warning, std::format("GetTopSnapshot: No {} available", side));
+        } else if (index.size() < topN) {
+            Logger::Log(LogLevel::Warning,
+                        std::format("GetTopSnapshot: not enough {}, {} available", side, index.size()));
+        }
 
-    const auto& ask_index = asks_.get<0>();
-    if (ask_index.empty()) {
-        Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Asks available");
-    } else if (ask_index.size() < topN) {
-        Logger::Log(LogLevel::Warning,
-            std::format("GetTopSnapshot: not enough Asks, {} available", ask_index.size()));
-    }
-    count = 0;
-    for (const auto& ask : ask_index) {
-        if (count >= topN) break;
-        snapshot.topAsks[count++] = ask;
-    }
+        size_t count = 0;
+        for (const auto& order : index) {
+            if (count >= topN)
+                break;
+            target[count++] = order;
+        }
+    };
+
+    fill_top_orders(bids_.get<0>(), snapshot.topBids, "Bids");
+    fill_top_orders(asks_.get<0>(), snapshot.topAsks, "Asks");
 
     return snapshot;
 }
@@ -172,7 +160,7 @@ Order OrderBook::BestBid() const {
 
     if (bids_.empty()) {
         Logger::Log(LogLevel::Warning, "BestBid: bids are empty");
-        return {0,0,0};
+        return {0, 0, 0};
     }
     const auto& bid_index = bids_.get<0>();
     return *bid_index.begin();
@@ -183,7 +171,7 @@ Order OrderBook::BestAsk() const {
 
     if (asks_.empty()) {
         Logger::Log(LogLevel::Warning, "BestAsk: asks are empty");
-        return {0,0,0};
+        return {0, 0, 0};
     }
     const auto& ask_index = asks_.get<0>();
     return *ask_index.begin();
