@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 // Потокобезопасная реализация IClientList, которой пользуется TCP-сервер.
+// Все методы, трогающие clients_ / session_to_client_, берут mutex_ (кроме уже задокументированных контрактов).
 class ClientList : public IClientList {
 private:
     struct ClientContext {
@@ -19,7 +20,7 @@ private:
     std::unordered_map<const Session*, ClientId> session_to_client_;
     mutable std::mutex mutex_;
 public:
-
+    // ----- Сессии -----
     void add_session(ClientId id, SessionPtr session) override {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto it = clients_.find(id);
@@ -73,6 +74,7 @@ public:
         return clients_.find(id) != clients_.end();
     }
 
+    // ----- Заявки -----
     void add_bid(ClientId id, std::shared_ptr<Order> bid) override {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto it = clients_.find(id);
@@ -91,20 +93,32 @@ public:
         it->second.asks.push_back(std::move(ask));
     }
 
-    void remove_bid(ClientId id, OrderId /*bid_id*/) override {
+    void remove_bid(ClientId id, OrderId bid_id) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = clients_.find(id);
-        if (it != clients_.end() && !it->second.bids.empty()) {
-            it->second.bids.pop_back();
+        const auto it = clients_.find(id);
+        if (it == clients_.end() || bid_id == 0) {
+            return;
         }
+        auto& bids = it->second.bids;
+        bids.erase(std::remove_if(
+                       bids.begin(),
+                       bids.end(),
+                       [bid_id](const std::shared_ptr<Order>& o) { return o && o->id == bid_id; }),
+                   bids.end());
     }
 
-    void remove_ask(ClientId id, OrderId /*ask_id*/) override {
+    void remove_ask(ClientId id, OrderId ask_id) override {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = clients_.find(id);
-        if (it != clients_.end() && !it->second.asks.empty()) {
-            it->second.asks.pop_back();
+        const auto it = clients_.find(id);
+        if (it == clients_.end() || ask_id == 0) {
+            return;
         }
+        auto& asks = it->second.asks;
+        asks.erase(std::remove_if(
+                       asks.begin(),
+                       asks.end(),
+                       [ask_id](const std::shared_ptr<Order>& o) { return o && o->id == ask_id; }),
+                   asks.end());
     }
 
     std::vector<std::shared_ptr<Order>> get_bids(ClientId id) const override {
@@ -145,6 +159,7 @@ public:
         throw std::out_of_range("Client not found");
     }
 
+    // ----- Подписки и рассылка -----
     bool is_subscribed(ClientId id) const override {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto it = clients_.find(id);

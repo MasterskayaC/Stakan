@@ -86,20 +86,23 @@ void Session::SetCallbacks(OnDataCallback on_data, OnDisconnectCallback on_disco
 }
 
 void Session::Write() {
-    std::vector<char> data;
+    // Буфер async_write должен жить до завершения операции: держим тело сообщения в shared_ptr
+    // и снимаем его с очереди до вызова async_write, чтобы следующий SendMsg мог ставить новые кадры.
+    std::shared_ptr<std::vector<char>> chunk;
     {
         std::lock_guard<std::mutex> lock(write_mutex_);
         if (messages_queue_.empty()) {
             return;
         }
-        data = messages_queue_.front();
+        chunk = std::make_shared<std::vector<char>>(std::move(messages_queue_.front()));
+        messages_queue_.pop_front();
     }
 
     auto self = shared_from_this();
     boost::asio::async_write(
         *socket_,
-        boost::asio::buffer(data),
-        [this, self](const boost::system::error_code& error, std::size_t bytes_transferred) {
+        boost::asio::buffer(*chunk),
+        [this, self, chunk](const boost::system::error_code& error, std::size_t bytes_transferred) {
             ProcessWrite(error, bytes_transferred);
         });
 }
@@ -113,11 +116,5 @@ void Session::ProcessWrite(const boost::system::error_code& error, std::size_t b
         return;
     }
 
-    {
-        std::lock_guard<std::mutex> lock(write_mutex_);
-        if (!messages_queue_.empty()) {
-            messages_queue_.pop_front();
-        }
-    }
     Write();
 }

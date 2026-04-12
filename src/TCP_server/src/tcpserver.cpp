@@ -100,6 +100,8 @@ void TCPServer::HandleDisconnect(const std::shared_ptr<Session>& session) {
 }
 
 void TCPServer::ScheduleSnapshots() {
+    // Таймер только задаёт период; байты на сокет уходят в SendUpdateMessage ->
+    // IClientList::broadcast_to_subscribed -> Session::SendMsg -> boost::asio::async_write.
     snapshot_timer_.expires_after(std::chrono::seconds(1));
     auto self = shared_from_this();
     snapshot_timer_.async_wait([this, self](const boost::system::error_code& error) {
