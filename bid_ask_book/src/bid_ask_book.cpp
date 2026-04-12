@@ -57,6 +57,7 @@ void OrderBook::NewBid(Order order) {
         Logger::Log(LogLevel::Error,
                     std::format("NewBid: BID id = {} already exists", order.id));
     }
+    md_updates_.emplace(GenerateMDUpdate(order, MDUpdate::UpdateType::Add, true));
 }
 
 void OrderBook::NewAsk(Order order) {
@@ -77,6 +78,7 @@ void OrderBook::NewAsk(Order order) {
         Logger::Log(LogLevel::Error,
                     std::format("NewAsk: ASK id = {} already exists", order.id));
     }
+    md_updates_.emplace(GenerateMDUpdate(order, MDUpdate::UpdateType::Add, false));
 }
 
 void OrderBook::CancelBid(ID order_id) {
@@ -96,6 +98,7 @@ void OrderBook::CancelBid(ID order_id) {
         Logger::Log(LogLevel::Error,
                     std::format("CancelBid: Invalid id = {}", order_id));
     }
+    md_updates_.emplace(GenerateMDUpdate(*it, MDUpdate::UpdateType::Delete, true));
 }
 
 void OrderBook::CancelAsk(ID order_id) {
@@ -115,6 +118,7 @@ void OrderBook::CancelAsk(ID order_id) {
         Logger::Log(LogLevel::Error,
                     std::format("CancelAsk: Invalid id = {}", order_id));
     }
+    md_updates_.emplace(GenerateMDUpdate(*it, MDUpdate::UpdateType::Delete, false));
 }
 
 void OrderBook::ReplaceBid(Order old_order, Order new_order) {
@@ -149,6 +153,7 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
         Logger::Log(LogLevel::Error,
                     std::format("ReplaceBid:, id {} not found", old_order.id));
     }
+    md_updates_.emplace(GenerateMDUpdate(new_order, MDUpdate::UpdateType::Modify, true));
 }
 
 void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
@@ -183,6 +188,7 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
         Logger::Log(LogLevel::Error,
                     std::format("ReplaceAsk:, id {} not found", old_order.id));
     }
+    md_updates_.emplace(GenerateMDUpdate(new_order, MDUpdate::UpdateType::Modify, false));
 }
 
 Snapshot OrderBook::BuildNewSnapshot() const {
@@ -240,3 +246,8 @@ Order OrderBook::BestAsk() const {
     const auto& ask_index = asks_.get<0>();
     return *ask_index.begin();
 }
+
+MDUpdate OrderBook::GenerateMDUpdate (const common::Order& order, MDUpdate::UpdateType type, bool is_bid) const {
+    return {type, is_bid, order};
+}
+

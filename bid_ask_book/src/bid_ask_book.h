@@ -3,12 +3,14 @@
 #include <atomic>
 #include <optional>
 #include <shared_mutex>
+#include <queue>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include "bid_ask_interface.h"
+#include "snapshots_broadcaster/command_queue.h"
 #include "logger.h"
 
 namespace server {
@@ -91,9 +93,19 @@ namespace server {
         [[nodiscard]] common::Snapshot BuildNewSnapshot() const;
         void AllowBuildNewSnapshot();
 
+        /**
+         * @brief генерериует объект MDUpdate в зависимости от типа комманды
+         * @param order объект Order
+         * @param type объект типа команды
+         * @param is_bid флаг бид/аск
+         * @return MDUpdate obj
+         */
+        MDUpdate GenerateMDUpdate (const common::Order& order, MDUpdate::UpdateType type, bool is_bid) const;
+
         BidContainer bids_;
         AskContainer asks_;
-        
+        std::queue<MDUpdate> md_updates_;
+
         mutable std::atomic<bool> is_ready_new_snapshot_{true};
 
         // мьютексы для потокобезопасности
