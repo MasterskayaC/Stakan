@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
-// Контракт хранилища клиентов: сессии, заявки и подписки на рассылку.
+// хранилища клиентов: сессии, заявки и подписки на рассылку.
 using ClientId = uint64_t;
 using OrderId = uint64_t;
 class Session;
