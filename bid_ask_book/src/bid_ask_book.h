@@ -11,72 +11,57 @@
 #include "logger.h"
 
 namespace server {
-    // первоначальная имплементация базового логгера, ToDo - перенести его в более подходящее место
-    class OrderBook {
-    public:
-        //отдельный метод для каждого контейнера
-        void NewBid(common::Order order);
-        void NewAsk(common::Order order);
-        void CancelBid(common::ID order_id);
-        void CancelAsk(common::ID order_id);
-        void ReplaceBid(common::Order old_order, common::Order new_order);
-        void ReplaceAsk(common::Order old_order, common::Order new_order);
+class OrderBook {
+public:
+    // TODO: Оставить публичными парные методы Bid/Ask, а общую логику добавления,
+    // отмены и замены ордеров вынести в приватные методы
 
-        [[nodiscard]] common::Snapshot GetTopSnapshot() const;
+    void NewBid(common::Order order);
+    void NewAsk(common::Order order);
+    void CancelBid(common::ID order_id);
+    void CancelAsk(common::ID order_id);
+    void ReplaceBid(common::Order old_order, common::Order new_order);
+    void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-        [[nodiscard]] common::Order BestBid() const;
-        [[nodiscard]] common::Order BestAsk() const;
+    [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
-    private:
-        struct BidComparator {
-            bool operator()(const common::Order& a, const common::Order& b) const {
-                if (a.price != b.price) return a.price > b.price;
-                if (a.quantity != b.quantity) return a.quantity > b.quantity;
-                return a.id < b.id;
-            }
-        };
-        struct AskComparator {
-            bool operator()(const common::Order& a, const common::Order& b) const {
-                if (a.price != b.price) return a.price < b.price;
-                if (a.quantity != b.quantity) return a.quantity > b.quantity;
-                return a.id < b.id;
-            }
-        };
+    [[nodiscard]] common::Order BestBid() const;
+    [[nodiscard]] common::Order BestAsk() const;
 
-        // то же что set (сортировка по цене) + map <Id, it>, только атомарный + надежнее
-        using BidContainer = boost::multi_index::multi_index_container<
-            common::Order,
-            boost::multi_index::indexed_by<
-                // индекс по цене
-                boost::multi_index::ordered_non_unique<
-                    boost::multi_index::identity<common::Order>,
-                    BidComparator
-                >,
-                // индекс по id
-                boost::multi_index::hashed_unique<
-                    boost::multi_index::member<common::Order, common::ID, &common::Order::id>
-                >
-            >
-        >;
-
-        using AskContainer = boost::multi_index::multi_index_container<
-            common::Order,
-            boost::multi_index::indexed_by<
-                boost::multi_index::ordered_non_unique<
-                    boost::multi_index::identity<common::Order>,
-                    AskComparator
-                >,
-                boost::multi_index::hashed_unique<
-                    boost::multi_index::member<common::Order, common::ID, &common::Order::id>
-                >
-            >
-        >;
-
-        BidContainer bids_;
-        AskContainer asks_;
-
-        // мьютексы для потокобезопасности
-        mutable std::shared_mutex bids_mutex_;
-        mutable std::shared_mutex asks_mutex_;
+private:
+    struct BidComparator {
+        bool operator()(const common::Order& a, const common::Order& b) const {
+            return a.price > b.price || (a.price == b.price && a.quantity > b.quantity) ||
+                   (a.price == b.price && a.quantity == b.quantity && a.id < b.id);
+        }
     };
+
+    struct AskComparator {
+        bool operator()(const common::Order& a, const common::Order& b) const {
+            return a.price < b.price || (a.price == b.price && a.quantity > b.quantity) ||
+                   (a.price == b.price && a.quantity == b.quantity && a.id < b.id);
+        }
+    };
+
+    template <typename Comparator>
+    using PriceIndex = boost::multi_index::ordered_non_unique<boost::multi_index::identity<common::Order>, Comparator>;
+
+    using IdIndex =
+        boost::multi_index::hashed_unique<boost::multi_index::member<common::Order, common::ID, &common::Order::id>>;
+
+    template <typename Comparator>
+    using OrderContainer =
+        boost::multi_index::multi_index_container<common::Order,
+                                                  boost::multi_index::indexed_by<PriceIndex<Comparator>, IdIndex>>;
+
+    using BidContainer = OrderContainer<BidComparator>;
+    using AskContainer = OrderContainer<AskComparator>;
+
+    BidContainer bids_;
+    AskContainer asks_;
+
+    mutable std::shared_mutex bids_mutex_;
+    mutable std::shared_mutex asks_mutex_;
+};
+
 }
