@@ -8,6 +8,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include "bid_ask_interface.h"
+#include "../../snapshots_broadcaster/snapshot_source.h"
 
 namespace server {
     enum class LogLevel {
@@ -87,6 +88,7 @@ namespace server {
 
         BidContainer bids_;
         AskContainer asks_;
+        const std::unique_ptr<ISnapshotSource> snapshot_source_ = makeTmpSnapshotCreator();
 
         // мьютексы для потокобезопасности
         mutable std::shared_mutex bids_mutex_;
