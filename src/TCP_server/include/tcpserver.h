@@ -1,52 +1,71 @@
 #include "session.h"
+#include "../../client_list/client_list.h"
+
+#include <cstdint>
+#include <vector>
 
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <memory>
-#include <vector>
-#include <mutex>
 
 using boost::asio::ip::tcp;
 
-/**
- *  @brief Interface tcp server
-*/
+// Главный TCP-сервер: принимает подключения, отслеживает reconnect и рассылает snapshot.
 class TCPServer :public std::enable_shared_from_this<TCPServer> {
 public:
     TCPServer(boost::asio::io_context& io_context, unsigned short port);
     ~TCPServer();
-
     /**
-     *  @brief Init socket and  do_accept
-    */
+     * @brief Starts accept loop and periodic snapshot scheduling.
+     */
     void StartServer();
 
     /**
-     *  @brief Close acceptor
-    */
+     * @brief Stops accept loop and active sessions.
+     */
     void StopServer();
 
     /**
-     *  @brief Aend update msg to all client
-     *  @param Update message
-    */
+     * @brief Sends snapshot/update payload to subscribed clients.
+     * @param message Serialized update payload.
+     */
     void SendUpdateMessage(const std::string& message);
 
 private:
 
     /**
-     *  @brief Init async waiting new connection
-    */
+     * @brief Starts asynchronous accept for new TCP connections.
+     */
     void DoAccept();
 
     /**
-     *  @brief Create socket ptr, set session to sessions container
-     *  @param Socket
-     *  @param Error object
-    */
+     * @brief Builds a Session for accepted socket and binds callbacks.
+     * @param socket Accepted socket.
+     * @param error Result of async_accept.
+     */
     std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
                    const boost::system::error_code& error);
+    /**
+     * @brief Handles incoming frame from one session (HELLO handshake).
+     * TODO:Перенес обработку кадров в отдельный модуль протокола.
+     */
+    void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
+    /**
+     * @brief Handles session disconnect and cleans ownership in client_list.
+     */
+    void HandleDisconnect(const std::shared_ptr<Session>& session);
+    /**
+     * @brief Arms periodic timer and triggers SendUpdateMessage.
+     * TODO:Заменил жестко заданные значения снимков на исходные данные снимков книги ордеров.
+     */
+    void ScheduleSnapshots();
+    /**
+     * @brief Parses HELLO <client_id> from raw frame bytes.
+     */
+    ClientId ParseClientId(const std::vector<std::uint8_t>& frame) const;
 
     boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;
-    mutable std::mutex sessions_mutex_;
+    boost::asio::steady_timer snapshot_timer_;
+    std::unique_ptr<IClientList> client_list_;
 };
