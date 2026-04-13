@@ -5,7 +5,6 @@
 #include <deque>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 // Обертка над одним TCP-клиентом: чтение кадров как байтов и очередь отправки через async_write.
@@ -29,7 +28,8 @@ public:
      *  @param Message
     */
     /// Enqueues bytes; actual socket I/O is performed by @c boost::asio::async_write in Write().
-    void SendMsg(const std::vector<char>& message);
+    /// TODO: move call sites to rvalue and make this API fully move-based.
+    void SendMsg(std::vector<char> message);
     bool IsOpen() const;
     void SetCallbacks(OnDataCallback on_data, OnDisconnectCallback on_disconnect);
 
@@ -54,15 +54,14 @@ private:
      *  @param Numbers bytes to writing
     */
     void ProcessWrite(const boost::system::error_code& error, std::size_t bytes_transferred);
-/**
-     *  @brief Serialize and send msg
-     *  @param Order or update struct
-    */
+    void NotifyDisconnectOnce();
 
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     boost::asio::streambuf read_buffer_;
-    std::deque<std::vector<char>> messages_queue_;
-    std::mutex write_mutex_;
+    std::deque<std::shared_ptr<std::vector<char>>> messages_queue_;
+    bool write_in_progress_ = false;
+    bool disconnected_ = false;
     OnDataCallback on_data_;
     OnDisconnectCallback on_disconnect_;
 };

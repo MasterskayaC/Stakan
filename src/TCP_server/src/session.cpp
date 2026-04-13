@@ -5,39 +5,61 @@
 
 using namespace boost::asio::ip;
 
-// Чтение: async_read_until по '\n' (разделитель кадра), данные в колбэк как std::vector<std::uint8_t>.
-// Отправка: постановка в очередь под mutex, старт цепочки async_write через dispatch на executor сокета.
+// Чтение/запись сериализуются через strand_ (см. docs boost::asio::strand),
+// поэтому нам не нужен mutex для очереди отправки.
 Session::Session(std::shared_ptr<tcp::socket> socket)
-    : socket_(std::move(socket)) {}
+    : socket_(std::move(socket))
+    , strand_(boost::asio::make_strand(socket_->get_executor())) {}
 
 void Session::Start() {
-    Read();
+    auto weak = weak_from_this();
+    boost::asio::dispatch(strand_, [weak]() {
+        if (auto self = weak.lock()) {
+            self->Read();
+        }
+    });
 }
 
 void Session::Stop() {
-    boost::system::error_code ec;
-    if (socket_ && socket_->is_open()) {
-        socket_->shutdown(tcp::socket::shutdown_both, ec);
-        socket_->close(ec);
-    }
+    auto weak = weak_from_this();
+    boost::asio::dispatch(strand_, [weak]() {
+        auto self = weak.lock();
+        if (!self || self->disconnected_) {
+            return;
+        }
+        self->disconnected_ = true;
+        boost::system::error_code ec;
+        if (self->socket_ && self->socket_->is_open()) {
+            self->socket_->shutdown(tcp::socket::shutdown_both, ec);
+            self->socket_->close(ec);
+        }
+    });
 }
 
 void Session::Read() {
-    auto self = shared_from_this();
+    if (!socket_ || !socket_->is_open()) {
+        NotifyDisconnectOnce();
+        return;
+    }
+
+    auto weak = weak_from_this();
     boost::asio::async_read_until(
         *socket_,
         read_buffer_,
         '\n',
-        [this, self](const boost::system::error_code& error, std::size_t bytes_transferred) {
-            ProcessRead(error, bytes_transferred);
-        });
+        boost::asio::bind_executor(
+            strand_,
+            [weak](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                if (auto self = weak.lock()) {
+                    self->ProcessRead(error, bytes_transferred);
+                }
+            }));
 }
 
 void Session::ProcessRead(const boost::system::error_code& error, std::size_t bytes_transferred) {
     if (error) {
-        if (on_disconnect_) {
-            on_disconnect_(shared_from_this());
-        }
+        // TODO: выделить отдельную обработку EOF/reset/operation_aborted.
+        NotifyDisconnectOnce();
         return;
     }
 
@@ -53,25 +75,18 @@ void Session::ProcessRead(const boost::system::error_code& error, std::size_t by
     Read();
 }
 
-void Session::SendMsg(const std::vector<char>& message) {
-    if (!socket_) {
-        return;
-    }
-
-    auto self = shared_from_this();
-    auto payload = std::make_shared<std::vector<char>>(message);
-    boost::asio::dispatch(socket_->get_executor(), [this, self, payload]() {
-        if (!socket_ || !socket_->is_open()) {
+void Session::SendMsg(std::vector<char> message) {
+    auto payload = std::make_shared<std::vector<char>>(std::move(message));
+    auto weak = weak_from_this();
+    boost::asio::dispatch(strand_, [weak, payload]() {
+        auto self = weak.lock();
+        if (!self || self->disconnected_ || !self->socket_ || !self->socket_->is_open()) {
             return;
         }
-        bool start_chain = false;
-        {
-            std::lock_guard<std::mutex> lock(write_mutex_);
-            start_chain = messages_queue_.empty();
-            messages_queue_.push_back(std::move(*payload));
-        }
-        if (start_chain) {
-            Write();
+        self->messages_queue_.push_back(payload);
+        if (!self->write_in_progress_) {
+            self->write_in_progress_ = true;
+            self->Write();
         }
     });
 }
@@ -86,35 +101,58 @@ void Session::SetCallbacks(OnDataCallback on_data, OnDisconnectCallback on_disco
 }
 
 void Session::Write() {
-    // Буфер async_write должен жить до завершения операции: держим тело сообщения в shared_ptr
-    // и снимаем его с очереди до вызова async_write, чтобы следующий SendMsg мог ставить новые кадры.
-    std::shared_ptr<std::vector<char>> chunk;
-    {
-        std::lock_guard<std::mutex> lock(write_mutex_);
-        if (messages_queue_.empty()) {
-            return;
-        }
-        chunk = std::make_shared<std::vector<char>>(std::move(messages_queue_.front()));
-        messages_queue_.pop_front();
+    if (!socket_ || !socket_->is_open()) {
+        write_in_progress_ = false;
+        NotifyDisconnectOnce();
+        return;
+    }
+    if (messages_queue_.empty()) {
+        write_in_progress_ = false;
+        return;
     }
 
-    auto self = shared_from_this();
+    auto chunk = messages_queue_.front();
+    auto weak = weak_from_this();
     boost::asio::async_write(
         *socket_,
         boost::asio::buffer(*chunk),
-        [this, self, chunk](const boost::system::error_code& error, std::size_t bytes_transferred) {
-            ProcessWrite(error, bytes_transferred);
-        });
+        boost::asio::bind_executor(
+            strand_,
+            [weak, chunk](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                if (auto self = weak.lock()) {
+                    self->ProcessWrite(error, bytes_transferred);
+                }
+            }));
 }
 
 void Session::ProcessWrite(const boost::system::error_code& error, std::size_t bytes_transferred) {
     (void)bytes_transferred;
     if (error) {
-        if (on_disconnect_) {
-            on_disconnect_(shared_from_this());
-        }
+        // TODO: отдельно обрабатывать operation_aborted (локальный stop) и сетевые ошибки.
+        write_in_progress_ = false;
+        NotifyDisconnectOnce();
         return;
     }
 
+    if (!messages_queue_.empty()) {
+        messages_queue_.pop_front();
+    }
+    if (messages_queue_.empty()) {
+        write_in_progress_ = false;
+        return;
+    }
     Write();
+}
+
+void Session::NotifyDisconnectOnce() {
+    if (disconnected_) {
+        return;
+    }
+    disconnected_ = true;
+    write_in_progress_ = false;
+    messages_queue_.clear();
+
+    if (on_disconnect_) {
+        on_disconnect_(shared_from_this());
+    }
 }
