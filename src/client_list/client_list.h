@@ -79,6 +79,7 @@ public:
      */
     virtual void add_ask(ClientId id, std::shared_ptr<common::Order> ask) = 0;
 
+    // TODO (i.khomich): add remove_bid/ask functions for order_id only (w/o session)
     /**
      * @brief Adds a bid order to a client's list
      * @brief either remove last or certain

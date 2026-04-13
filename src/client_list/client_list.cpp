@@ -91,6 +91,7 @@ public:
         return clients_.find(id) != clients_.end();
     }
 
+    // TODO (i.khomich): remove code duplication for add_bid/ask functions
     void add_bid(ClientId id, std::shared_ptr<common::Order> bid) override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
@@ -111,6 +112,7 @@ public:
         it.asks[bid->id] = {std::move(ask), last};
     }
 
+    // TODO (i.khomich): remove code duplication for remove bid/ask functions
     void remove_bid(ClientId id, std::optional<common::ID> order_id = std::nullopt) override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
@@ -118,6 +120,7 @@ public:
         ClientContext& it = clients_.at(id);
         if (!it.bids.empty()) {
             if (order_id) {
+                // TODO (i.khomich): consider using extract instead of erase
                 auto order_it = it.bids.find(order_id.value());
                 if (order_it == it.bids.end()) {
                     std::cout << "Client with id: " << id << " doesn't have and order with id: " << order_id.value()
