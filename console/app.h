@@ -1,31 +1,37 @@
 #pragma once
 
-/** @todo Uncomment after client_lib is added to the repo */
-// #include <client_lib/client_lib_interface.hpp>
+#include <cstdint>
+#include <memory>
+#include <string>
+
+#include "client_lib_interface.hpp"
+#include "snapshot_client.h"
+
+namespace menu {
+class Menu;
+class CommandHandlers;
+} // namespace menu
 
 namespace app {
 
-/** @todo remove the namespace when client_lib_interface.hpp appears in the repo*/
-namespace client_lib {
-
-struct IOrderBookClient {};
-
-} // namespace client_lib
-
 class Application final {
 public:
-    /**
-     * @brief The constructor establishes a connection to the server.
-     */
-    explicit Application();
+  explicit Application();
+  ~Application();
 
-    /**
-     * @brief The method starts the application.
-     */
-    void Run();
+  void Run();
+  bool connect(const std::string &host, uint16_t port);
+  bool fetch_snapshot();
 
 private:
-    client_lib::IOrderBookClient client_;
+  void on_snapshot_received(const client_lib::Snapshot &snapshot);
+  void on_error(const std::string &error);
+
+private:
+  std::shared_ptr<client_lib::IOrderBookClient> order_book_client_;
+  std::shared_ptr<console::SnapshotConsoleClient> snapshot_client_;
+  std::unique_ptr<menu::Menu> menu_;
+  std::unique_ptr<menu::CommandHandlers> command_handlers_;
 };
 
 } // namespace app
