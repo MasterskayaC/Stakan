@@ -1,3 +1,5 @@
+#include "app.h"
+
 #include <iostream>
 #include <string>
 
@@ -59,4 +61,4 @@ void Application::on_error(const std::string &error) {
   std::cerr << "ERROR: " << error << "\n";
 }
 
-} // namespace app
+}  // namespace app
