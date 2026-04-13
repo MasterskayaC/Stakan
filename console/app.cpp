@@ -1,8 +1,9 @@
+#include "app.h"
+
 #include <iostream>
 
-#include "app.hpp"
-#include "menu.hpp"
-#include "menu_action.hpp"
+#include "menu.h"
+#include "menu_action.h"
 
 namespace app {
 
@@ -10,4 +11,4 @@ Application::Application() {}
 
 void Application::Run() {}
 
-} // namespace app
+}  // namespace app
