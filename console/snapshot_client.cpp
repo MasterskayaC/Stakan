@@ -24,15 +24,23 @@ void SnapshotConsoleClient::set_error_callback(ErrorCallback callback) {
 
 void SnapshotConsoleClient::connect_to_server(const std::string &host,
                                               uint16_t port) {
+  client_lib::ClientConfig config;
+  config.host = host;
+  config.port = port;
+  config.auto_reconnect = false;
+
   client_lib::ClientCallbacks callbacks;
+  callbacks.on_connected = [this]() { on_connected(); };
+  callbacks.on_disconnected = [this]() { on_disconnected(); };
   callbacks.on_snapshot = [this](const client_lib::Snapshot &snap) {
     on_snapshot(snap);
   };
-  callbacks.on_error = [this](client_lib::ConnectionState state,
-                              std::string_view msg) { on_error(state, msg); };
+  callbacks.on_error = [this](client_lib::ClientError,
+                              std::string_view msg) { on_error(msg); };
 
   client_->SetCallbacks(std::move(callbacks));
-  client_->Connect();
+  client_->Connect(config);
+  client_->Start();
 }
 
 void SnapshotConsoleClient::disconnect_from_server() {
@@ -44,7 +52,7 @@ void SnapshotConsoleClient::fetch_snapshot() {
   if (!connected_) {
     return;
   }
-  client_->Subscribe("DEFAULT");
+  client_->RequestSmapshot();
 }
 
 bool SnapshotConsoleClient::is_connected() const {
@@ -61,8 +69,7 @@ void SnapshotConsoleClient::on_snapshot(const client_lib::Snapshot &snapshot) {
   }
 }
 
-void SnapshotConsoleClient::on_error(client_lib::ConnectionState state,
-                                     std::string_view message) {
+void SnapshotConsoleClient::on_error(std::string_view message) {
   if (error_callback_) {
     error_callback_(std::string(message));
   }

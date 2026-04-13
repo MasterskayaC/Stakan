@@ -30,7 +30,7 @@ private:
   void on_connected();
   void on_disconnected();
   void on_snapshot(const client_lib::Snapshot &snapshot);
-  void on_error(client_lib::ConnectionState state, std::string_view message);
+  void on_error(std::string_view message);
 
 private:
   std::shared_ptr<client_lib::IOrderBookClient> client_;
