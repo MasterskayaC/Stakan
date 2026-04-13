@@ -1,133 +1,140 @@
-#include "order_book_client.hpp"
-
+#include <memory>
+#include <set>
 #include <utility>
+
+#include "client_lib_interface.hpp"
 
 namespace client_lib {
 
-
- /**
- * @brief сюда будет прикрущен адаптер IClientCallbacks из транспортного TCP модуля наверное
+/**
+ * @brief Реализация интерфеса IClientCallbacks
  */
-struct OrderBookClient::Impl {
+class CallbacksAdapter : public tcp_client::IClientCallbacks {
+public:
+    CallbacksAdapter(ClientCallbacks&& cc) : cc_(std::move(cc)) {}
 
+    ~CallbacksAdapter() = default;
+
+    void OnConnected() override {
+        cc_.on_connected();
+    }
+
+    void OnDisconnected() override {
+        cc_.on_disconnected();
+    }
+
+    void OnTopOfBook(const common::Snapshot& snapshot) override {
+        cc_.on_snapshot(snapshot);
+    }
+
+    void OnError(std::string_view message) override {
+        cc_.on_error(ConnectionState::Error, message);
+    };
+
+private:
+    ClientCallbacks cc_;
 };
 
 /**
- * @brief Создаёт объект клиентской библиотеки.
- */
-OrderBookClient::OrderBookClient() {
-     
-}
-
-/**
- * @brief Освобождает ресурсы объекта.
- */
-OrderBookClient::~OrderBookClient() = default;
-
-/**
- * @brief Перемещает объект клиентской библиотеки.
- */
-OrderBookClient::OrderBookClient(OrderBookClient&&) noexcept = default;
-
-/**
- * @brief Перемещающее присваивание для объекта клиентской библиотеки.
+ * @brief Реализация клиентской библиотеки стакана.
  *
- * @return Ссылка на текущий объект.
+ * Класс реализует интерфейс @ref IOrderBookClient и служит промежуточным
+ * адаптером между внешним кодом (CLI / GUI) и TCP-клиентом коллеги.
  */
-OrderBookClient& OrderBookClient::operator=(OrderBookClient&&) noexcept = default;
-
-/**
- * @brief Сохраняет пользовательские callback-функции.
- *
- * @param callbacks Набор обработчиков событий.
- */
-void OrderBookClient::SetCallbacks(ClientCallbacks callbacks) {
-
-}
-
-/**
- * @brief Сохраняет конфигурацию подключения.
- *
- *
- * @param config Параметры подключения к серверу.
- */
-void OrderBookClient::Connect(const ClientConfig& config) {
-
-}
-
-/**
- * @brief Разрывает текущее логическое соединение.
- *
- */
-void OrderBookClient::Disconnect() {
-    
-}
-
-/**
- * @brief Запускает клиентскую библиотеку.
- *
- */
-void OrderBookClient::Start() {
-    
-}
-
-/**
- * @brief Останавливает клиентскую библиотеку.
- *
- */
-void OrderBookClient::Stop() {
-    
-}
-
-/**
- * @brief Запрашивает snapshot текущего состояния.
- *
- */
-void OrderBookClient::RequestSmapshot() {   
+class OrderBookClient final : public IOrderBookClient {
+public:
+    /**
+     * @brief Создает клиент с дефолтными настройками.
+     */
+    OrderBookClient(ClientCallbacks&& cc) : callbaсks_(std::move(cc)) {
+        client_ = std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_);
+    }
 
     /**
-     * @todo После интеграции с транспортным слоем здесь должен появиться
-     * код отправки запроса snapshot и обработки ответа от сервера.
+     * @brief Создает клиент с кастомным хостом и портом.
      */
+    OrderBookClient(const std::string& host, std::uint16_t port, std::string name, ClientCallbacks&& cc) :
+        callbaсks_(std::move(cc)), config_({.host = host, .port = port, .client_name = name}),
+        client_(std::make_unique<tcp_client::TcpClient>(config_, &callbaсks_)) {}
+
+    /**
+     * @brief Освобождает внутренние ресурсы.
+     */
+    ~OrderBookClient() override = default;
+
+    OrderBookClient(const OrderBookClient&) = delete;
+    OrderBookClient& operator=(const OrderBookClient&) = delete;
+    OrderBookClient(OrderBookClient&&) noexcept = default;
+    OrderBookClient& operator=(OrderBookClient&&) noexcept = default;
+
+    void Connect() override {
+        if (client_->Connect()) {
+            state_ = ConnectionState::Connected;
+        }
+    }
+
+    /**
+     * @brief Разрывает текущее соединение.
+     */
+    void Disconnect() override {
+        client_->Disconnect();
+        state_ = ConnectionState::Disconnected;
+    }
+
+    /**
+     * @brief Подписка на инструмент.
+     */
+    void Subscribe(std::string ticker) override {
+        if (client_->Subscribe(ticker)) {
+            tickers_.emplace(std::move(ticker));
+        }
+    }
+
+    /**
+     * @brief Отписка от инструмента.
+     */
+    void Unsubscribe(std::string ticker) override {
+        if (client_->Unsubscribe(ticker)) {
+            tickers_.erase(std::move(ticker));
+        }
+    }
+
+    /**
+     * @brief Проверяет наличие активного соединения.
+     *
+     * @return @c true, если внутренний транспорт считает себя подключённым.
+     * @return @c false в противном случае.
+     */
+    bool IsConnected() const noexcept override {
+        return client_->IsConnected();
+    };
+
+    /**
+     * @brief Возвращает текущее состояние клиента.
+     *
+     * @return Текущее состояние клиентской библиотеки.
+     */
+    ConnectionState State() const noexcept override {
+        return state_;
+    };
+
+private:
+    std::set<std::string> tickers_;
+    CallbacksAdapter callbaсks_;
+    tcp_client::ClientConfig config_;
+    std::unique_ptr<tcp_client::TcpClient> client_;
+    ConnectionState state_ = ConnectionState::Disconnected;
+};
+
+std::unique_ptr<IOrderBookClient> MakeConfiguredClient(ClientCallbacks&& cc) {
+    return std::make_unique<OrderBookClient>(std::move(cc));
 }
 
-/**
- * @brief Проверяет, считает ли объект себя подключённым.
- *
- * @return @c true, если клиент находится в логическом подключении.
- * @return @c false в противном случае.
- */
-bool OrderBookClient::IsConnected() const noexcept {
-    return false;
+std::unique_ptr<IOrderBookClient> MakeConfiguredClient(std::string host,
+                                                       uint16_t port,
+                                                       std::string name,
+                                                       ClientCallbacks&& cc) {
+    return std::make_unique<OrderBookClient>(host, port, name, std::move(cc));
 }
 
-/**
- * @brief Возвращает текущее состояние клиента.
- *
- * @return Текущее состояние из внутреннего хранилища.
- */
-ConnectionState OrderBookClient::State() const noexcept {
-    return ConnectionState{};
-}
-
-/**
- * @brief Меняет внутреннее состояние клиента.
- *
- *
- * @param new_state Новое состояние клиента.
- */
-void OrderBookClient::ChangeState(ConnectionState new_state) {
-    
-}
-
-/**
- * @brief Сообщает об ошибке через пользовательский callback.
- *
- * @param error Код ошибки.
- * @param message Текстовое описание ошибки.
- */
-void OrderBookClient::ReportError(ClientError error, std::string_view message) const {
-    
-}
-
-} // namespace client_lib
+}  // namespace client_lib
