@@ -16,38 +16,52 @@ public:
     TCPServer(boost::asio::io_context& io_context, unsigned short port);
     ~TCPServer();
     /**
-     *  @brief Init socket and  do_accept
-    */
+     * @brief Starts accept loop and periodic snapshot scheduling.
+     */
     void StartServer();
 
     /**
-     *  @brief Close acceptor
-    */
+     * @brief Stops accept loop and active sessions.
+     */
     void StopServer();
 
     /**
-     *  @brief Aend update msg to all client
-     *  @param Update message
-    */
+     * @brief Sends snapshot/update payload to subscribed clients.
+     * @param message Serialized update payload.
+     */
     void SendUpdateMessage(const std::string& message);
 
 private:
 
     /**
-     *  @brief Init async waiting new connection
-    */
+     * @brief Starts asynchronous accept for new TCP connections.
+     */
     void DoAccept();
 
     /**
-     *  @brief Create socket ptr, set session to sessions container
-     *  @param Socket
-     *  @param Error object
-    */
+     * @brief Builds a Session for accepted socket and binds callbacks.
+     * @param socket Accepted socket.
+     * @param error Result of async_accept.
+     */
     std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
                    const boost::system::error_code& error);
+    /**
+     * @brief Handles incoming frame from one session (HELLO handshake).
+     * TODO: move frame parsing to dedicated protocol module.
+     */
     void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
+    /**
+     * @brief Handles session disconnect and cleans ownership in client_list.
+     */
     void HandleDisconnect(const std::shared_ptr<Session>& session);
+    /**
+     * @brief Arms periodic timer and triggers SendUpdateMessage.
+     * TODO: replace hardcoded snapshot values with order book snapshot source.
+     */
     void ScheduleSnapshots();
+    /**
+     * @brief Parses HELLO <client_id> from raw frame bytes.
+     */
     ClientId ParseClientId(const std::vector<std::uint8_t>& frame) const;
 
     boost::asio::io_context& io_context_;
