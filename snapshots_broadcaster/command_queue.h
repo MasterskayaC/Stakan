@@ -9,11 +9,11 @@
 #include <typeinfo>
 #include <variant>
 
-#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "bid_ask_interface.h"
 
 using SessionId = std::size_t;
 
-struct MDUpdate {  // TMP structure for std::variant
+struct MDUpdate {  // TMP for std::variant
     enum class UpdateType : uint8_t { Add, Modify, Delete };
 
     UpdateType type;
@@ -33,12 +33,14 @@ struct BroadcastCommand {
     CommandType type;
     std::optional<SessionId> client_id;
 
-    BroadcastCommand(CommandType t, std::optional<SessionId> id = std::nullopt) : type(t), client_id(id) {}
+    BroadcastCommand(CommandType t, std::optional<SessionId> id = std::nullopt)
+                            : type(t), client_id(id) 
+    {}
 
     virtual ~BroadcastCommand() = default;
 
     // Возвращает ссылку на данные, если тип совпадает, иначе nullopt
-    template <typename T>
+    template<typename T>
     std::optional<std::reference_wrapper<const T>> get_data() const {
         if (get_data_type() == typeid(T)) {
             return std::cref(*static_cast<const T*>(get_data_ptr()));
@@ -55,15 +57,17 @@ struct BroadcastSnapshotCommand : BroadcastCommand {
 public:
     common::Snapshot data;
 
-    explicit BroadcastSnapshotCommand(common::Snapshot snapshot) :
-        BroadcastCommand(CommandType::SendSnapshot), data(std::move(snapshot)) {}
+    explicit BroadcastSnapshotCommand(common::Snapshot snapshot)
+                        : BroadcastCommand(CommandType::SendSnapshot)
+                        , data(std::move(snapshot)) 
+    {}
 
-    BroadcastSnapshotCommand(std::optional<SessionId> id, common::Snapshot snapshot) :
-        BroadcastCommand(CommandType::SendSnapshot, id), data(std::move(snapshot)) {}
+    BroadcastSnapshotCommand(std::optional<SessionId> id, common::Snapshot snapshot)
+                        : BroadcastCommand(CommandType::SendSnapshot, id)
+                        , data(std::move(snapshot))
+    {}
 
-    const common::Snapshot& get_snapshot() const {
-        return data;
-    }
+    const common::Snapshot& get_snapshot() const { return data; }
 
 protected:
     const std::type_info& get_data_type() const override {
@@ -79,15 +83,17 @@ struct BroadcastMDUpdateCommand : BroadcastCommand {
 public:
     MDUpdate data;
 
-    explicit BroadcastMDUpdateCommand(MDUpdate update) :
-        BroadcastCommand(CommandType::SendMDUpdate), data(std::move(update)) {}
+    explicit BroadcastMDUpdateCommand(MDUpdate update)
+                        : BroadcastCommand(CommandType::SendMDUpdate)
+                        , data(std::move(update))
+    {}
 
-    BroadcastMDUpdateCommand(std::optional<SessionId> id, MDUpdate update) :
-        BroadcastCommand(CommandType::SendMDUpdate, id), data(std::move(update)) {}
+    BroadcastMDUpdateCommand(std::optional<SessionId> id, MDUpdate update)
+                        : BroadcastCommand(CommandType::SendMDUpdate, id)
+                        , data(std::move(update))
+    {}
 
-    const MDUpdate& get_update() const {
-        return data;
-    }
+    const MDUpdate& get_update() const { return data; }
 
 protected:
     const std::type_info& get_data_type() const override {
@@ -109,25 +115,24 @@ public:
     ///
     /// Вызывается из потоков OrderBook и сетевого потока.
     void push(std::unique_ptr<BroadcastCommand> cmd) {
-        // заглушка
-        // 1. lock mutex_
-        // 2. если cmd.type == SendSnapshotAll — удалить все SendSnapshotTo из
-        // очереди
-        // 3. добавить cmd в очереди
-        // 4. notify_one на cv_
-        return;
+        std::unique_lock<std::mutex> ulck(mutex_);
+        if (cmd->client_id == std::nullopt)
+            queue_.clear();
+        queue_.push_back(std::move(cmd));
+        cv_.notify_one();
     }
 
     /// @brief Извлекает следующую команду из очереди.
     ///
     /// Блокирует вызывающий поток, если очередь пуста.
     std::unique_ptr<BroadcastCommand> pop() {
-        // заглушка
-        // - lock mutex_
-        // - cv_.wait пока очередь пуста
-        // - забрать front, pop_front
-        // - возвращаем команду
-        return nullptr;
+        std::unique_lock<std::mutex> ulck(mutex_);
+        cv_.wait(ulck, [this] {
+            return !queue_.empty();
+        });
+        std::unique_ptr<BroadcastCommand> cmd = std::move(queue_.front());
+        queue_.pop_front();
+        return cmd;
     }
 
     /// @brief Неблокирующее извлечение.
@@ -138,7 +143,7 @@ public:
     }
 
 private:
-    std::deque<std::unique_ptr<BroadcastCommand>> queue_;
+    std::deque<std::unique_ptr<BroadcastCommand>>  queue_;
     std::mutex mutex_;
     std::condition_variable cv_;
 };
