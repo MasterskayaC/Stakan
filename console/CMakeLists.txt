@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(ClientConsole)
+set(MENU menu.hpp menu.cpp)
+set(APP app.hpp app.cpp)
+set(MENU_ACTION menu_action.hpp menu_action.cpp)
+add_library(cui STATIC
+    ${MENU}
+    ${APP}
+    ${MENU_ACTION}
+)
 
 set(CMAKE_CXX_STANDARD 20)
 
