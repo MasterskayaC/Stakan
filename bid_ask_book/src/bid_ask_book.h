@@ -60,8 +60,11 @@ private:
     BidContainer bids_;
     AskContainer asks_;
 
+  
+    const std::unique_ptr<ISnapshotSource> snapshot_source_ = makeTmpSnapshotCreator();
+
+    // мьютексы для потокобезопасности
     mutable std::shared_mutex bids_mutex_;
     mutable std::shared_mutex asks_mutex_;
-};
-
+    };
 }

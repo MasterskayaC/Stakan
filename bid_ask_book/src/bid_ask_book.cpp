@@ -129,30 +129,38 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
 }
 
 Snapshot OrderBook::GetTopSnapshot() const {
-    Snapshot snapshot{};
-
-    std::scoped_lock lock(bids_mutex_, asks_mutex_);
-
-    const auto fill_top_orders = [](const auto& index, auto& target, const char* side) {
-        if (index.empty()) {
-            Logger::Log(LogLevel::Warning, std::format("GetTopSnapshot: No {} available", side));
-        } else if (index.size() < topN) {
-            Logger::Log(LogLevel::Warning,
-                        std::format("GetTopSnapshot: not enough {}, {} available", side, index.size()));
-        }
-
-        size_t count = 0;
-        for (const auto& order : index) {
-            if (count >= topN)
-                break;
-            target[count++] = order;
-        }
-    };
-
-    fill_top_orders(bids_.get<0>(), snapshot.topBids, "Bids");
-    fill_top_orders(asks_.get<0>(), snapshot.topAsks, "Asks");
-
-    return snapshot;
+    // Snapshot snapshot{};
+    //
+    // std::scoped_lock lock(bids_mutex_, asks_mutex_);
+    //
+    // const auto& bid_index = bids_.get<0>();
+    // if (bid_index.empty()) {
+    //     Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Bids available");
+    // } else if (bid_index.size() < topN) {
+    //     Logger::Log(LogLevel::Warning,
+    //         std::format("GetTopSnapshot: not enough Bids, {} available", bid_index.size()));
+    // }
+    // size_t count = 0;
+    // for (const auto& bid : bid_index) {
+    //     if (count >= topN) break;
+    //     snapshot.topBids[count++] = bid;
+    // }
+    //
+    // const auto& ask_index = asks_.get<0>();
+    // if (ask_index.empty()) {
+    //     Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Asks available");
+    // } else if (ask_index.size() < topN) {
+    //     Logger::Log(LogLevel::Warning,
+    //         std::format("GetTopSnapshot: not enough Asks, {} available", ask_index.size()));
+    // }
+    // count = 0;
+    // for (const auto& ask : ask_index) {
+    //     if (count >= topN) break;
+    //     snapshot.topAsks[count++] = ask;
+    // }
+    //
+    // return snapshot;
+    return snapshot_source_->get_snapshot();
 }
 
 Order OrderBook::BestBid() const {
