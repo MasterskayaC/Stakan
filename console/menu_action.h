@@ -1,91 +1,42 @@
 #pragma once
 
 #include <iosfwd>
+#include <memory>
+#include <string>
 
-/** @todo Uncomment after client_lib is added to the repo*/
-// #include <client_lib/client_lib_interface.hpp>
-#include "menu.hpp"
+#include "snapshot_client.h"
+#include "menu.h"
 
 namespace menu {
 
-/** @todo remove the namespace when client_lib_interface.hpp appears in the repo*/
-namespace client_lib {
-
-struct IOrderBookClient {};
-
-} // namespace client_lib
-
-/**
- * @brief Class of console interface command handlers.
- * 
- * Creates handlers for menu commands.
- */
+/// @brief Обработчики команд
 class CommandHandlers final {
 public:
-    /**
-     * @brief The constructor initializes dependencies for command processing.
-     * 
-     * @note Registration logic example (pseudocode):
-     * @code
-     * menu_.AddCommand("Buy", "Place a buy order",
-     *                  std::bind(&CommandHandlers::Buy, this, std::placeholders::_1));
-     * @endcode
-     * 
-     * @param menu ref for registering a handler for a command.
-     * @param output ref to the output stream of the work results.
-     * @param client ref to the interface for interaction with the TСP-client.
-     */
-    CommandHandlers(Menu& menu,
-                    std::ostream& output,
-                    client_lib::IOrderBookClient& client);
+    /// @brief Конструктор
+    CommandHandlers(Menu& menu, std::ostream& output, std::shared_ptr<console::SnapshotConsoleClient> client);
 
-private:
-    /**
-     * @name Сommand handlers.
-     * A list of methods for processing the command.
-     * @return true, if the command was executed correctly; false - not correct.
-     * @{
-     */
-    bool Buy(Menu::CommandArgs&& args) const;
-    bool Sell(Menu::CommandArgs&& args) const;
-    bool Book(Menu::CommandArgs&& args) const;
-    bool Exit() const;
-    bool Help() const;
-    /** @} */
+    /// @brief Команда connect
+    bool Connect(CommandArgs&& args);
+    /// @brief Команда snapshot
+    bool Snapshot(CommandArgs&& args);
+    /// @brief Команда help
+    bool Help(CommandArgs&& args);
+    /// @brief Команда exit
+    bool Exit(CommandArgs&& args);
 
 private:
     Menu& menu_;
     std::ostream& output_;
-    client_lib::IOrderBookClient& client_;
+    std::shared_ptr<console::SnapshotConsoleClient> client_;
 };
 
+/// @brief Парсеры аргументов
 class ArgsParsers final {
 public:
-    /**
-     * @brief The constructor initializes dependencies for processing command arguments.
-     * 
-     * @note Registration logic example (pseudocode):
-     * @code
-     * menu_.AddArgsParser("Buy", {"qty", "price"},
-     *                     std::bind(&CommandParsers::ParseBuyArgs, this, std::placeholders::_1));
-     * @endcode
-     * 
-     * @param menu ref for registering a handler for a command.
-     * @param input ref to the input stream for processing command arguments.
-     */
-    ArgsParsers(menu::Menu& menu, std::istream& input);
-
-private:
-    /**
-     * @name Args Parsers.
-     * A list of methods for parsing command arguments.
-     * @return Menu::CommandArgs An object containing the extracted command arguments.
-     * @{
-     */
-    Menu::CommandArgs ParseBuyArgs(std::istream&);
-    Menu::CommandArgs ParseSellArgs(std::istream&);
-    Menu::CommandArgs ParseBookArgs(std::istream&);
-    /** @} */
+    /// @brief Конструктор
+    ArgsParsers(Menu& menu, std::istream& input);
+    /// @brief Парсинг connect
+    CommandArgs ParseConnectArgs(std::istream& input);
 
 private:
     Menu& menu_;

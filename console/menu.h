@@ -1,93 +1,65 @@
 #pragma once
 
-#include <deque>
+#include <atomic>
 #include <functional>
 #include <iosfwd>
 #include <memory>
-#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <variant>
 
-namespace menu {
-/**
- * @brief Command Line Interface (CLI) for Order Management.
- * 
- * Supporting commands:
- * - `buy  <qty> <price>`  - Place a buy order.
- * - `sell <qty> <price>`  - Place a sell order.
- * - `book <update(ms)>`   - Show best bid/ask.
- * - `exit`                - Exit application.
- * - `help`                - Show this help message.
- * 
- * @code
- * Example session:
- *     Best Bid: 10.5 (100)
- *     Best Ask: 10.5 (100)
- *   > buy qty 100 price 10.5
- *   > book update 100
- * @endcode
- */
+#include "snapshot_client.h"
 
+namespace menu {
+
+/// @brief Без аргументов
+using NoArgs = std::monostate;
+/// @brief Аргументы команды
+using CommandArgs = std::variant<NoArgs>;
+/// @brief Обработчик команды
+using CommandHandler = std::function<bool(CommandArgs&)>;
+/// @brief Парсер аргументов
+using ArgParser = std::function<CommandArgs(std::istream&)>;
+
+/// @brief Меню команд
 class Menu final {
 public:
-    using NoArgs = std::monostate;
-    using CommandArgs = std::variant<NoArgs>;
-    using CommandHandler = std::function<bool(CommandArgs&)>;
-    using ArgParser = std::function<CommandArgs(std::istream&)>;
+    /// @brief Конструктор
+    Menu(std::istream& input, std::ostream& output, std::shared_ptr<console::SnapshotConsoleClient> client);
 
-    Menu(std::istream& input, std::ostream& output);
+    /// @brief Зарегистрировать обработчик команды
+    void RegisterHandler(const std::string& command, const std::string& description, CommandHandler handler);
 
-    /**
-     * @brief The method adds a command in a minimal form
-     * @param comand      Command name.
-     * @param description Brief description of the command.
-     * @param handler     Handler function for the command.
-     */
-    void AddCommand(std::string command, 
-                    std::string description,
-                    CommandHandler handler);
-    
-    /**
-     * @brief The method adds command arguments and their parser.
-     * @param command     Command name.
-     * @param args        Set of command arguments.
-     * @param handler     Parser function for the args.
-     */
-    void AddArgsParser(std::string command, 
-                       std::set<std::string>&& args, 
-                       ArgParser parser);
-
-    /**
-     * @brief The method starts processing commands.
-     */
+    /// @brief Запуск обработки команд
     void Run();
+    /// @brief Остановка обработки команд
+    void Stop();
+    /// @brief Печать справки
+    void PrintHelp();
 
 private:
+    /// @brief Описание команды
     struct Command {
         std::string command;
-        std::set<std::string> args;
         std::string description;
-        ArgParser parser;
         CommandHandler handler;
     };
 
-    /**
-     * @brief The method adds a command and associated action.
-     * @param input Start of user input.
-     */
-    [[nodiscard]] bool ParseComand(std::istream& input);
+    using CommandPtr = std::shared_ptr<Command>;
+
+    /// @brief Парсинг и выполнение команды
+    [[nodiscard]] bool ParseCommand(std::istream& input);
 
 private:
-    using CommandPtr = std::shared_ptr<Command>;
-    using CommandDeque = std::deque<CommandPtr>;
     using CommandHashTable = std::unordered_map<std::string_view, CommandPtr>;
 
     std::istream& input_;
     std::ostream& output_;
-    CommandDeque comands_;
-    CommandHashTable name_to_commands_;
+    std::shared_ptr<console::SnapshotConsoleClient> client_;
+
+    CommandHashTable commands_;
+    std::atomic<bool> running_ = false;
 };
-    
+
 } // namespace menu
