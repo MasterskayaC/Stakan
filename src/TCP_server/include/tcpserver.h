@@ -47,7 +47,7 @@ private:
                    const boost::system::error_code& error);
     /**
      * @brief Handles incoming frame from one session (HELLO handshake).
-     * TODO: move frame parsing to dedicated protocol module.
+     * TODO:Перенес обработку кадров в отдельный модуль протокола.
      */
     void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
     /**
@@ -56,7 +56,7 @@ private:
     void HandleDisconnect(const std::shared_ptr<Session>& session);
     /**
      * @brief Arms periodic timer and triggers SendUpdateMessage.
-     * TODO: replace hardcoded snapshot values with order book snapshot source.
+     * TODO:Заменил жестко заданные значения снимков на исходные данные снимков книги ордеров.
      */
     void ScheduleSnapshots();
     /**
