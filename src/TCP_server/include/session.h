@@ -54,6 +54,11 @@ private:
      *  @param Numbers bytes to writing
     */
     void ProcessWrite(const boost::system::error_code& error, std::size_t bytes_transferred);
+
+    /**
+     *  @brief Serialize and send msg
+     *  @param Order or update struct
+    */
     void NotifyDisconnectOnce();
 
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
