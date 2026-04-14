@@ -16,7 +16,7 @@ add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 find_package(Boost REQUIRED COMPONENTS filesystem serialization)
 find_package(Threads REQUIRED)
 find_package(Catch2 REQUIRED)
-#find_package(Qt6 REQUIRED COMPONENTS Widgets) неуверен что стоит использовать Qt6
+find_package(Qt6 REQUIRED COMPONENTS Widgets) #неуверен что стоит использовать Qt6
 #заменить как примем решение
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
@@ -27,10 +27,8 @@ add_subdirectory(src/TCP_server)
 add_subdirectory(client_lib)
 add_subdirectory(include)
 add_subdirectory(bid_ask_book)
-add_subdirectory(console)
-#add_subdirectory(CGUI) 
-add_subdirectory(src/database)
-
+#add_subdirectory(console)
+add_subdirectory(CGUI) 
 
 add_executable(exc_glass main.cpp)
 
