@@ -1,7 +1,6 @@
-#include "include/session.h"
+#pragma once
+#include "session.h"
 #include "../client_list/client_list.h"
-
-#include <cstdint>
 #include <vector>
 
 #include <boost/asio.hpp>

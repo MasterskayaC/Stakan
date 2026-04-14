@@ -1,8 +1,6 @@
-#include "../include/tcpserver.h"
+#include "tcpserver.h"
 
 #include <chrono>
-#include <cstdint>
-#include <iostream>
 
 // Сервер принимает HELLO <client_id>, обновляет client_list и шлет периодические snapshot.
 TCPServer::TCPServer(boost::asio::io_context& io_context, unsigned short port)
