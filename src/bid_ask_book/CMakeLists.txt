@@ -9,7 +9,7 @@ add_library(bid_ask_book STATIC
 
 target_include_directories(bid_ask_book PUBLIC
     ${Boost_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(bid_ask_book PUBLIC
