@@ -13,6 +13,13 @@
 #include "logger.h"
 
 namespace server {
+
+        /// Структура для возврата из функции поиска заявок по цене
+struct PricesInfo {
+    std::vector<common::ID> ids_{};
+    common::Quantity quantity_ = 0;
+};
+
 class OrderBook {
 public:
     // TODO: Оставить публичными парные методы Bid/Ask, а общую логику добавления,
@@ -24,6 +31,8 @@ public:
     void CancelAsk(common::ID order_id);
     void ReplaceBid(common::Order old_order, common::Order new_order);
     void ReplaceAsk(common::Order old_order, common::Order new_order);
+
+    PricesInfo GetPricesInfo(common::Price price, bool is_bid) const;
 
     [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 
@@ -48,13 +57,16 @@ private:
     template <typename Comparator>
     using PriceIndex = boost::multi_index::ordered_non_unique<boost::multi_index::identity<common::Order>, Comparator>;
 
+    using PriceOnlyIndex = boost::multi_index::ordered_non_unique<
+        boost::multi_index::member<common::Order, common::Price, &common::Order::price>>;
+
     using IdIndex =
         boost::multi_index::hashed_unique<boost::multi_index::member<common::Order, common::ID, &common::Order::id>>;
 
     template <typename Comparator>
     using OrderContainer =
         boost::multi_index::multi_index_container<common::Order,
-                                                  boost::multi_index::indexed_by<PriceIndex<Comparator>, IdIndex>>;
+                                                  boost::multi_index::indexed_by<PriceIndex<Comparator>, IdIndex, PriceOnlyIndex>>;
 
     using BidContainer = OrderContainer<BidComparator>;
     using AskContainer = OrderContainer<AskComparator>;

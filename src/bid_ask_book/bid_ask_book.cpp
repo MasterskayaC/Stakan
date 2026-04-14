@@ -184,3 +184,42 @@ Order OrderBook::BestAsk() const {
     const auto& ask_index = asks_.get<0>();
     return *ask_index.begin();
 }
+
+/**
+ * @brief шаблонная функция для поиска по цене
+ * @param container контейнер bids_ или asks_
+ * @param price цена
+ * @param message текст ошибки
+ * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ */
+template <typename Container>
+PricesInfo GetContainerPrice(const Container& container, common::Price price, std::string message) {
+    if (container.empty()) {
+        Logger::Log(LogLevel::Warning, message);
+        return {};
+    }
+    PricesInfo info;
+    const auto& index = container.template get<2>();
+    auto range = index.equal_range(price);
+    for (auto it = range.first; it != range.second; it++) {
+        info.ids_.push_back(it->id);
+        info.quantity_ += it->quantity;
+    }
+    return info;
+}
+
+/**
+ * @brief реализация функции поиска по цене для класса OrderBook
+ * @param price цена
+ * @param is_bid true если ищем биды, false если ищем аски
+ * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ */
+PricesInfo OrderBook::GetPricesInfo(common::Price price, bool is_bid) const {
+    if (is_bid) {
+        std::shared_lock lock(bids_mutex_);
+        return GetContainerPrice<BidContainer>(bids_, price, "Not bids for this price");
+    }
+
+    std::shared_lock lock(asks_mutex_);
+    return GetContainerPrice<AskContainer>(asks_, price, "Not asks for this price");
+}
