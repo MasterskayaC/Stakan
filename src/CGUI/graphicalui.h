@@ -19,8 +19,8 @@ class GraphicalUI:public QMainWindow{
      Ui_MainWindow ui;
      IOrderBookClient* client;
 public:
-    GraphicalUI()=default;
-    GraphicalUI(const IOrderBookClient* client, QWidget *parent = nullptr);
+    //GraphicalUI()=default;
+    explicit GraphicalUI(const IOrderBookClient* client = nullptr, QWidget *parent = nullptr);
     static int Run(int argc, char* argv[]);
     
 private:
@@ -32,5 +32,8 @@ private:
     void OnError(ClientError, std::string_view);
     void TestSubClicked();
     void PushButton1Clicked();
+    void OnConnectClicked();
+    void OnPlaceOrderClicked();
+    void OnGetUpdateClicked();
 };
 

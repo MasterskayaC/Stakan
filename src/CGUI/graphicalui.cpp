@@ -1,9 +1,10 @@
-#include"graphicalui.h"
+#include "graphicalui.h"
 
 GraphicalUI::GraphicalUI(const IOrderBookClient* client, QWidget *parent):QMainWindow(parent){
-    ui.setupUi(this);   
-    connect(ui.pushButton1,&QPushButton::clicked,this,&GraphicalUI::PushButton1Clicked);
-    connect(ui.actiontest_sub,&QAction::triggered,this,&GraphicalUI::TestSubClicked);
+    ui.setupUi(this);
+    connect(ui.connectButton, &QPushButton::clicked, this, &GraphicalUI::OnConnectClicked);
+    connect(ui.placeOrderButton, &QPushButton::clicked, this, &GraphicalUI::OnPlaceOrderClicked);
+    connect(ui.getUpdateButton, &QPushButton::clicked, this, &GraphicalUI::OnGetUpdateClicked);
 }
 
 int GraphicalUI::Run(int argc, char *argv[]){
@@ -13,16 +14,14 @@ int GraphicalUI::Run(int argc, char *argv[]){
     return a.exec();
 }
 
-void GraphicalUI::TestSubClicked(){
-    QString user_name = QInputDialog::getText(this,"","Input user name: ");
-    QString password = QInputDialog::getText(this,"","Input password : ");
+void GraphicalUI::OnConnectClicked(){
+    // TODO: подключение к серверу
 }
 
-void GraphicalUI::PushButton1Clicked(){
-    QMessageBox::information(this, "Привет", "Кнопка нажата!");
+void GraphicalUI::OnPlaceOrderClicked(){
+    // TODO: считать поля и отправить ордер
 }
 
-    void OnTopOfBook(const TopLevel&){}
-    void OnError(ClientError, std::string_view){}
-    void TestSubClicked(){}
-    void PushButton1Clicked(){}
+void GraphicalUI::OnGetUpdateClicked(){
+    // TODO: запросить снапшот
+}
