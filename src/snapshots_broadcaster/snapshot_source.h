@@ -6,7 +6,7 @@
 #include"../bid_ask_book/src/bid_ask_book.h"
 
 namespace server {
-    class OrderBook;  // Если OrderBook действительно в namespace server
+    class OrderBook;  
 }
 
 class ISnapshotSource {
