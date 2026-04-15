@@ -1,5 +1,6 @@
 #include "snapshot_source.h"
-
+#include <atomic>      // Добавить для std::atomic
+#include <algorithm>   // Добавить для std::sort
 #include <random>
 
 #include "order_book_snapshot_source.h"

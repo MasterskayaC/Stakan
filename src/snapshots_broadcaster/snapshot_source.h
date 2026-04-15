@@ -3,6 +3,11 @@
 #include "bid_ask_interface.h"
 #include <memory>
 #include <optional>
+#include"../bid_ask_book/src/bid_ask_book.h"
+
+namespace server {
+    class OrderBook;  // Если OrderBook действительно в namespace server
+}
 
 class ISnapshotSource {
 public:
@@ -22,4 +27,5 @@ std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, 
  * @return A unique pointer owning the newly created ISnapshotSource object OrderBookSnapshotSource
  * that asks OrderBook for snapshots directly.
  */
+
 std::unique_ptr<ISnapshotSource> makeOrderBookSnapshotSource(server::OrderBook* order_book);
