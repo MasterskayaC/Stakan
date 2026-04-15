@@ -7,4 +7,3 @@
 - Сборка: CMake 3.15
 - Boost: filesystem, system, serialization
 - Тесты: Catch2
-- Потоки: Threads
