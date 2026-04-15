@@ -77,7 +77,7 @@ public:
         if (it != clients_.end() && it->second.session) {
             session_to_client_.erase(it->second.session.get());
             std::cout << "Client with id: " << id << " was recreated\n";
-            // Позже заменить на общий логгер.
+            // Можно заменить на общий логгер.
         }
         clients_[id].session = std::move(session);
         if (clients_[id].session) {
@@ -92,11 +92,9 @@ public:
         if (it != clients_.end() && it->second.session) {
             session_to_client_.erase(it->second.session.get());
             std::cout << "Session with id: " << id << " was deleted\n";
-            // Позже заменить на общий логгер.
         }
         clients_.erase(id);
         std::cout << "Client with id: " << id << " was deleted\n";
-        // Позже заменить на общий логгер.
     }
 
     // Возвращает сессию клиента (под мьютексом после проверки существования).
@@ -196,8 +194,7 @@ public:
         return tmp;
     }
 
-
-    // Флаг подписки клиента на обновления стакана.
+    // Флаг клиента на обновления стакана.
     bool is_subscribed(ClientId id) const override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
@@ -206,7 +203,6 @@ public:
         return it.subscribed;
     }
 
-    // Включает подписку для рассылки снимков/сообщений.
     void subscribe(ClientId id) override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
@@ -215,7 +211,6 @@ public:
         it.subscribed = true;
     }
 
-    // Выключает подписку.
     void unsubscribe(ClientId id) override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
@@ -236,7 +231,7 @@ public:
         return tmp;
     }
 
-    // Сессии подписанных клиентов (может быть nullptr, если сессии нет).
+    // Сессии клиентов (может быть nullptr, если сессии нет).
     std::vector<SessionPtr> get_subscribed_sessions() const override {
         std::lock_guard lck(mutex_);
         std::vector<SessionPtr> res;
