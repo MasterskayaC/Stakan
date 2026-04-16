@@ -98,3 +98,33 @@ TEST_CASE("Snapshot to string function") {
         assert(str_snap == str);
     }
 }
+
+TEST_CASE("MDUpdate serialization") {
+    auto areEqual = [](const common::MDUpdate& lhs, const common::MDUpdate& rhs) {
+        auto tieFields = [](const common::MDUpdate& mdup) {
+            return std::tie(mdup.best_price_,
+                            mdup.bids_nums_,
+                            mdup.bids_items_nums_,
+                            mdup.asks_nums_,
+                            mdup.askss_items_nums_,
+                            mdup.all_orders_nums_);
+        };
+        return tieFields(lhs) == tieFields(rhs);
+    };
+
+    auto [mdup, description] = GENERATE(
+        table<common::MDUpdate, std::string>({{{1, 2, 3, 4, 5, 6}, "Сonsecutive values"},
+                                              {{0, 0, 0, 0, 0, 0}, "Zero values"},
+                                              {{UINT64_MAX, 1, UINT64_MAX, 0, UINT64_MAX, 7}, "Max and mix values"}}));
+
+    DYNAMIC_SECTION("Testing case: " << description) {
+        std::vector<char> serialized = mdup.serialize();
+        common::MDUpdate deserialized = common::MDUpdate::deserialize(serialized);
+
+        const size_t expected_size = sizeof(common::MDUpdate) + common::kByteForMsgType;
+
+        REQUIRE(serialized.size() == expected_size);
+        CHECK(areEqual(mdup, deserialized));
+        CHECK(static_cast<int>(serialized[common::kPtrForMsgType]) == 1);
+    }
+}

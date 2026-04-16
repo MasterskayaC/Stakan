@@ -9,7 +9,7 @@
 namespace common {
 constexpr uint8_t topN = 20;
 
-///delimeter for cast order price to double
+/// delimeter for cast order price to double
 static const double PRICE_DELIMETER = 100;
 
 using ID = uint64_t;
@@ -92,7 +92,12 @@ struct MDUpdate {
      */
 
     std::vector<char> serialize() const {
-        return {};
+        std::vector<char> buffer(kByteForMsgType + sizeof(MDUpdate));
+        /** @todo translate to enum */
+        int msg_type = 1;
+        buffer[0] = static_cast<char>(msg_type);
+        std::memcpy(buffer.data() + kByteForMsgType, this, sizeof(MDUpdate));
+        return buffer;
     }
 
     /**
@@ -101,7 +106,12 @@ struct MDUpdate {
      * @return MDUpdate object
      */
     static MDUpdate deserialize(const std::vector<char>& data) {
-        return {};
+        if (data.size() != kByteForMsgType + sizeof(MDUpdate)) {
+            throw std::runtime_error("Deserialization error: incorrect data size");
+        }
+        MDUpdate update;
+        std::memcpy(&update, data.data() + kByteForMsgType, sizeof(MDUpdate));
+        return update;
     }
 };
 
@@ -160,4 +170,4 @@ std::array<double, topN> Snapshot::get_ask_prices() const {
 bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
     return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
 }
-}  /// namespace common
+}  // namespace common
