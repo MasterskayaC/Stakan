@@ -6,11 +6,11 @@ OrderBookSnapshotSource::OrderBookSnapshotSource(server::OrderBook *order_book) 
 }
 
 int64_t OrderBookSnapshotSource::GetNewBid() {
-    return rg.GetRandom();
+    return rg_.GetRandom();
 }
 
 int64_t OrderBookSnapshotSource::GetNewAsk() {
-    return rg.GetRandom();
+    return rg_.GetRandom();
 }
 
 std::optional<common::Snapshot> OrderBookSnapshotSource::get_snapshot() {
