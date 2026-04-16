@@ -82,9 +82,27 @@ struct MDUpdate {
     Quantity bids_items_nums_;
 
     Quantity asks_nums_;
-    Quantity asks_items_nums_;
+    Quantity askss_items_nums_;
 
     Quantity all_orders_nums_;
+
+    /**
+     * @brief serialize MDUpdate
+     * @return vector of char
+     */
+
+    std::vector<char> serialize() const {
+        return {};
+    }
+
+    /**
+     * @brief deserialize MDUpdate
+     * @param data binary data array
+     * @return MDUpdate object
+     */
+    static MDUpdate deserialize(const std::vector<char>& data) {
+        return {};
+    }
 };
 
 std::vector<char> Snapshot::serialize() const {
