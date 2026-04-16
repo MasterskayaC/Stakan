@@ -3,7 +3,7 @@
 #include "bid_ask_interface.h"
 #include <memory>
 #include <optional>
-#include<random>
+#include <random>
 #include"../bid_ask_book/src/bid_ask_book.h"
 
 namespace server {
