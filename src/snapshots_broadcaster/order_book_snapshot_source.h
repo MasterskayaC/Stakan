@@ -1,5 +1,5 @@
 #pragma once
-#include<random>
+#include <random>
 #include "snapshot_source.h"
 
 #include "../bid_ask_book/src/bid_ask_book.h"
