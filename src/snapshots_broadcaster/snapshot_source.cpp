@@ -116,11 +116,11 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
     return snapshots_[idx];
 }
 
-double TmpSnapshotCreator::GetNewBid() {
+int64_t TmpSnapshotCreator::GetNewBid() {
     return rg_.GetRandom();
 }
 
-double TmpSnapshotCreator::GetNewAsk() {
+int64_t TmpSnapshotCreator::GetNewAsk() {
     return rg_.GetRandom();
 }
 
