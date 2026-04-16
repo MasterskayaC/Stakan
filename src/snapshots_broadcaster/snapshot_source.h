@@ -3,11 +3,22 @@
 #include "bid_ask_interface.h"
 #include <memory>
 #include <optional>
+#include<random>
 #include"../bid_ask_book/src/bid_ask_book.h"
 
 namespace server {
-    class OrderBook;
+    class OrderBook;  // Если OrderBook действительно в namespace server
 }
+
+class RandomGenerator{
+     std::random_device rd;
+     std::mt19937 gen;
+     std::uniform_real_distribution<double> dist;
+    public:
+         RandomGenerator();
+         double GetRandom();
+};
+
 
 class ISnapshotSource {
 public:
@@ -31,4 +42,3 @@ std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, 
  */
 
 std::unique_ptr<ISnapshotSource> makeOrderBookSnapshotSource(server::OrderBook* order_book);
-

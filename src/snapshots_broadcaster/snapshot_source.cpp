@@ -6,6 +6,12 @@
 #include "order_book_snapshot_source.h"
 
 
+RandomGenerator::RandomGenerator(): gen(rd()), dist(0, 9999){
+         } 
+
+double RandomGenerator::GetRandom() {
+        return dist(gen);
+    }
 
 /**
  * @brief Helper struct that generates and cycles through test snapshots
@@ -41,7 +47,7 @@ public:
     double GetNewAsk() override;
 
 private:
-    RandomGenerator rg;
+    RandomGenerator rg_;
     std::vector<common::Snapshot> snapshots_;
     std::atomic<size_t> current_index_ = 0;
     bool random_;
@@ -111,11 +117,11 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
 }
 
 double TmpSnapshotCreator::GetNewBid() {
-    return rg.GetRandom();
+    return rg_.GetRandom();
 }
 
 double TmpSnapshotCreator::GetNewAsk() {
-    return rg.GetRandom();
+    return rg_.GetRandom();
 }
 
 std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random, uint8_t snapshot_count) {

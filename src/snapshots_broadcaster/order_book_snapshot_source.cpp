@@ -17,11 +17,4 @@ std::optional<common::Snapshot> OrderBookSnapshotSource::get_snapshot() {
     return order_book_->GetTopSnapshot();
 }
 
-RandomGenerator::RandomGenerator(): gen(rd()), dist(0, 9999){
-         } 
-
-double RandomGenerator::GetRandom() {
-        return dist(gen);
-    }
-
 

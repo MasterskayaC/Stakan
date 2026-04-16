@@ -6,14 +6,6 @@
 #include "../bid_ask_snaphot_interface/bid_ask_interface.h"
 
 
-class RandomGenerator{
-     std::random_device rd_;
-     std::mt19937 gen;
-     std::uniform_real_distribution<double> dist;
-    public:
-         RandomGenerator();
-         double GetRandom();
-};
 
 class OrderBookSnapshotSource : public ISnapshotSource {
     public:
@@ -27,7 +19,7 @@ class OrderBookSnapshotSource : public ISnapshotSource {
 
     std::optional<common::Snapshot> get_snapshot() override;
 private:
-    RandomGenerator rg_;
+    RandomGenerator rg;
     server::OrderBook *order_book_;
 };
 
