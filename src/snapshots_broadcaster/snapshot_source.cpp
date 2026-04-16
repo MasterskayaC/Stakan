@@ -1,9 +1,11 @@
 #include "snapshot_source.h"
-#include <atomic>      
-#include <algorithm>   
+#include <atomic>      // Добавить для std::atomic
+#include <algorithm>   // Добавить для std::sort
 #include <random>
 
 #include "order_book_snapshot_source.h"
+
+
 
 /**
  * @brief Helper struct that generates and cycles through test snapshots
@@ -35,8 +37,11 @@ public:
      * @return A snapshot
     */
     std::optional<common::Snapshot> get_snapshot() override;
+    double GetNewBid() override;
+    double GetNewAsk() override;
 
 private:
+    RandomGenerator rg;
     std::vector<common::Snapshot> snapshots_;
     std::atomic<size_t> current_index_ = 0;
     bool random_;
@@ -103,6 +108,14 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
     }
     size_t idx = current_index_.fetch_add(1, std::memory_order_relaxed) % snapshots_.size();
     return snapshots_[idx];
+}
+
+double TmpSnapshotCreator::GetNewBid() {
+    return rg.GetRandom();
+}
+
+double TmpSnapshotCreator::GetNewAsk() {
+    return rg.GetRandom();
 }
 
 std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random, uint8_t snapshot_count) {

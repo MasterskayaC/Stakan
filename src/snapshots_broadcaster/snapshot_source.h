@@ -6,7 +6,7 @@
 #include"../bid_ask_book/src/bid_ask_book.h"
 
 namespace server {
-    class OrderBook;  
+    class OrderBook;  // Если OrderBook действительно в namespace server
 }
 
 class ISnapshotSource {
@@ -14,6 +14,8 @@ public:
     virtual ~ISnapshotSource() = default;
 
     virtual std::optional<common::Snapshot> get_snapshot() = 0;
+    virtual double GetNewBid() = 0;
+    virtual double GetNewAsk() = 0;
 };
 
 /**
