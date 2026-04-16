@@ -1,15 +1,15 @@
 #include "order_book_snapshot_source.h"
-#include<random>
+#include <random>
 
 
 OrderBookSnapshotSource::OrderBookSnapshotSource(server::OrderBook *order_book) : order_book_(order_book) {
 }
 
-double OrderBookSnapshotSource::GetNewBid() {
+int64_t OrderBookSnapshotSource::GetNewBid() {
     return rg.GetRandom();
 }
 
-double OrderBookSnapshotSource::GetNewAsk() {
+int64_t OrderBookSnapshotSource::GetNewAsk() {
     return rg.GetRandom();
 }
 
