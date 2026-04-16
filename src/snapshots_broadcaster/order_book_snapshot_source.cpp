@@ -24,3 +24,4 @@ double RandomGenerator::GetRandom() {
         return dist(gen);
     }
 
+
