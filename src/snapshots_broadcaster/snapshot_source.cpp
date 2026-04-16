@@ -7,11 +7,11 @@
 
 
 RandomGenerator::RandomGenerator(): gen(rd()), dist(0, 9999){
-         } 
+} 
 
-double RandomGenerator::GetRandom() {
+int64_t RandomGenerator::GetRandom() {
         return dist(gen);
-    }
+}
 
 /**
  * @brief Helper struct that generates and cycles through test snapshots
