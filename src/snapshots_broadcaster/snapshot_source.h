@@ -13,10 +13,10 @@ namespace server {
 class RandomGenerator{
      std::random_device rd;
      std::mt19937 gen;
-     std::uniform_real_distribution<double> dist;
+     std::uniform_int_distribution<int64_t> dist;
     public:
          RandomGenerator();
-         double GetRandom();
+         int64_t GetRandom();
 };
 
 
