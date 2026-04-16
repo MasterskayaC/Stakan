@@ -25,8 +25,8 @@ public:
     virtual ~ISnapshotSource() = default;
 
     virtual std::optional<common::Snapshot> get_snapshot() = 0;
-    virtual double GetNewBid() = 0;
-    virtual double GetNewAsk() = 0;
+    virtual int64_t GetNewBid() = 0;
+    virtual int64_t GetNewAsk() = 0;
 };
 
 /**
