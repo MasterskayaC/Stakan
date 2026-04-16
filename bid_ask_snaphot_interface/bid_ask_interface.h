@@ -76,6 +76,17 @@ struct Snapshot {
     static Snapshot deserialize(const std::vector<char>& data);
 };
 
+struct MDUpdate {
+    Price best_price_;
+    Quantity bids_nums_;
+    Quantity bids_items_nums_;
+
+    Quantity asks_nums_;
+    Quantity asks_items_nums_;
+
+    Quantity all_orders_nums_;
+};
+
 std::vector<char> Snapshot::serialize() const {
     size_t size = sizeof(Snapshot);
     std::vector<char> buffer(size);
