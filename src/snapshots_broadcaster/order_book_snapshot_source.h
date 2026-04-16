@@ -7,7 +7,7 @@
 
 
 class RandomGenerator{
-     std::random_device rd;
+     std::random_device rd_;
      std::mt19937 gen;
      std::uniform_real_distribution<double> dist;
     public:
@@ -27,7 +27,7 @@ class OrderBookSnapshotSource : public ISnapshotSource {
 
     std::optional<common::Snapshot> get_snapshot() override;
 private:
-    RandomGenerator rg;
+    RandomGenerator rg_;
     server::OrderBook *order_book_;
 };
 
