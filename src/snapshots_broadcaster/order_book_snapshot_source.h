@@ -12,14 +12,14 @@ class OrderBookSnapshotSource : public ISnapshotSource {
     //в реализацию передается сырой указатель, однако лучше поменять на умный,
     //в зависимости от принципов владения OrderBookом
     OrderBookSnapshotSource(server::OrderBook* order_book);
-    double GetNewBid() override;
-    double GetNewAsk() override;
+    int64_t GetNewBid() override;
+    int64_t GetNewAsk() override;
 
     ~OrderBookSnapshotSource() override = default;
 
     std::optional<common::Snapshot> get_snapshot() override;
 private:
-    RandomGenerator rg;
+    RandomGenerator rg_;
     server::OrderBook *order_book_;
 };
 
