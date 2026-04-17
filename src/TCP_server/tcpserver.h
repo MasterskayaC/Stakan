@@ -1,14 +1,14 @@
 #pragma once
-#include "session.h"
-#include <vector>
-
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
+#include <vector>
+
 #include "../client_list/client_list.h"
+#include "session.h"
 
 namespace server {
-    class DOMManager;
+class DOMManager;
 }
 
 class IClientList;
@@ -18,7 +18,7 @@ using boost::asio::ip::tcp;
 // Главный TCP-сервер: принимает подключения, отслеживает reconnect и рассылает snapshot.
 class TCPServer : public std::enable_shared_from_this<TCPServer> {
 public:
-    TCPServer(boost::asio::io_context &io_context, unsigned short port);
+    TCPServer(boost::asio::io_context& io_context, unsigned short port);
 
     ~TCPServer();
 
@@ -36,7 +36,7 @@ public:
      * @brief Sends snapshot/update payload to subscribed clients.
      * @param message Serialized update payload.
      */
-    void SendUpdateMessage(const std::string &message);
+    void SendUpdateMessage(const std::string& message);
 
 private:
     /**
@@ -49,19 +49,18 @@ private:
      * @param socket Accepted socket.
      * @param error Result of async_accept.
      */
-    std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
-                                      const boost::system::error_code &error);
+    std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
 
     /**
      * @brief Handles incoming frame from one session (HELLO handshake).
      * TODO:Перенес обработку кадров в отдельный модуль протокола.
      */
-    void HandleMessage(const std::vector<std::uint8_t> &frame, const std::shared_ptr<Session> &session);
+    void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
 
     /**
      * @brief Handles session disconnect and cleans ownership in client_list.
      */
-    void HandleDisconnect(const std::shared_ptr<Session> &session);
+    void HandleDisconnect(const std::shared_ptr<Session>& session);
 
     /**
      * @brief Arms periodic timer and triggers SendUpdateMessage.
@@ -72,9 +71,9 @@ private:
     /**
      * @brief Parses HELLO <client_id> from raw frame bytes.
      */
-    ClientId ParseClientId(const std::vector<std::uint8_t> &frame) const;
+    ClientId ParseClientId(const std::vector<std::uint8_t>& frame) const;
 
-    boost::asio::io_context &io_context_;
+    boost::asio::io_context& io_context_;
     tcp::acceptor acceptor_;
     boost::asio::steady_timer snapshot_timer_;
     std::unique_ptr<IClientList> client_list_;
