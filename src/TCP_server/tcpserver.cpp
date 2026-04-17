@@ -1,13 +1,19 @@
+#include <chrono>
+#include <utility>
+
+#include "../../snapshots_broadcaster/dom_manager.h"
+#include "../../bid_ask_book/src/bid_ask_book.h"
 #include "tcpserver.h"
 
-#include <chrono>
 
 // Сервер принимает HELLO <client_id>, обновляет client_list и шлет периодические snapshot.
-TCPServer::TCPServer(boost::asio::io_context& io_context, unsigned short port)
+TCPServer::TCPServer(boost::asio::io_context &io_context, unsigned short port)
     : io_context_(io_context)
-    , acceptor_(io_context, tcp::endpoint(tcp::v4(), port))
-    , snapshot_timer_(io_context)
-    , client_list_(makeClientList()) {
+      , acceptor_(io_context, tcp::endpoint(tcp::v4(), port))
+      , snapshot_timer_(io_context)
+      , client_list_(std::move(makeClientList()))
+      , dom_manager_(std::make_unique<server::DOMManager>(io_context, *client_list_,
+                                                          std::make_unique<server::OrderBook>())) {
 }
 
 TCPServer::~TCPServer() {
@@ -16,7 +22,11 @@ TCPServer::~TCPServer() {
 
 void TCPServer::StartServer() {
     DoAccept();
-    ScheduleSnapshots();
+    //TODO pass StartBroadcastCmd params in some sort of
+    // ServerCFG struct, now it`s by default
+    //       int interval_ms;
+    //       bool use_test_broadcast;
+    dom_manager_->operator()({server::StartBroadcastCmd{}});
 }
 
 void TCPServer::StopServer() {
@@ -24,7 +34,7 @@ void TCPServer::StopServer() {
     snapshot_timer_.cancel();
     acceptor_.close(ec);
 
-    for (const auto& session : client_list_->get_all_sessions()) {
+    for (const auto &session: client_list_->get_all_sessions()) {
         if (session) {
             session->Stop();
         }
@@ -34,7 +44,7 @@ void TCPServer::StopServer() {
 void TCPServer::DoAccept() {
     auto socket = std::make_shared<tcp::socket>(io_context_);
     auto self = shared_from_this();
-    acceptor_.async_accept(*socket, [this, self, socket](const boost::system::error_code& error) {
+    acceptor_.async_accept(*socket, [this, self, socket](const boost::system::error_code &error) {
         OnAccept(socket, error);
         if (acceptor_.is_open()) {
             DoAccept();
@@ -43,27 +53,27 @@ void TCPServer::DoAccept() {
 }
 
 std::shared_ptr<Session> TCPServer::OnAccept(std::shared_ptr<tcp::socket> socket,
-                          const boost::system::error_code& error) {
+                                             const boost::system::error_code &error) {
     if (error) {
         return {};
     }
 
     auto session = std::make_shared<Session>(std::move(socket));
     session->SetCallbacks(
-        [this](const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& s) {
+        [this](const std::vector<std::uint8_t> &frame, const std::shared_ptr<Session> &s) {
             HandleMessage(frame, s);
         },
-        [this](const std::shared_ptr<Session>& s) { HandleDisconnect(s); });
+        [this](const std::shared_ptr<Session> &s) { HandleDisconnect(s); });
     session->Start();
     return session;
 }
 
-void TCPServer::SendUpdateMessage(const std::string& message) {
+void TCPServer::SendUpdateMessage(const std::string &message) {
     const std::vector<char> payload(message.begin(), message.end());
     client_list_->broadcast_to_subscribed(payload);
 }
 
-void TCPServer::HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session) {
+void TCPServer::HandleMessage(const std::vector<std::uint8_t> &frame, const std::shared_ptr<Session> &session) {
     const ClientId client_id = ParseClientId(frame);
     if (client_id == 0) {
         const std::string response = "ERR expected `HELLO <client_id>`\n";
@@ -85,7 +95,7 @@ void TCPServer::HandleMessage(const std::vector<std::uint8_t>& frame, const std:
     session->SendMsg(std::vector<char>(ok_response.begin(), ok_response.end()));
 }
 
-void TCPServer::HandleDisconnect(const std::shared_ptr<Session>& session) {
+void TCPServer::HandleDisconnect(const std::shared_ptr<Session> &session) {
     const auto client_id = client_list_->find_client_id_by_session(session.get());
     if (!client_id.has_value()) {
         return;
@@ -97,12 +107,16 @@ void TCPServer::HandleDisconnect(const std::shared_ptr<Session>& session) {
     }
 }
 
+// this is the responsibility of DOMManager
 void TCPServer::ScheduleSnapshots() {
     // Таймер только задаёт период; байты на сокет уходят в SendUpdateMessage ->
     // IClientList::broadcast_to_subscribed -> Session::SendMsg -> boost::asio::async_write.
-    snapshot_timer_.expires_after(std::chrono::seconds(1));
+
+    //This function is replaced with DOMManager::start_broadcasting
+
+    /*snapshot_timer_.expires_after(std::chrono::seconds(1));
     auto self = shared_from_this();
-    snapshot_timer_.async_wait([this, self](const boost::system::error_code& error) {
+    snapshot_timer_.async_wait([this, self](const boost::system::error_code &error) {
         if (error) {
             return;
         }
@@ -112,10 +126,10 @@ void TCPServer::ScheduleSnapshots() {
         SendUpdateMessage(
             "SNAPSHOT seq=" + std::to_string(seq) + " best_bid=10100 best_ask=10105 spread=5");
         ScheduleSnapshots();
-    });
+    });*/
 }
 
-ClientId TCPServer::ParseClientId(const std::vector<std::uint8_t>& frame) const {
+ClientId TCPServer::ParseClientId(const std::vector<std::uint8_t> &frame) const {
     if (frame.empty()) {
         return 0;
     }
