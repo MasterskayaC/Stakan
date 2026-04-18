@@ -43,8 +43,8 @@ public:
      * @return A snapshot
     */
     std::optional<common::Snapshot> get_snapshot() override;
-    double GetNewBid() override;
-    double GetNewAsk() override;
+    int64_t GetNewBid() override;
+    int64_t GetNewAsk() override;
 
 private:
     RandomGenerator rg_;
