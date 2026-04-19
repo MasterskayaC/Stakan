@@ -12,7 +12,7 @@ find_package(Catch2 REQUIRED)
 #заменить как примем решение
 #find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
-add_subdirectory(snapshots_broadcaster)
+add_subdirectory(src/snapshots_broadcaster)
 add_subdirectory(bid_ask_snaphot_interface)
 add_subdirectory(src/client_list)
 add_subdirectory(src/TCP_server)
