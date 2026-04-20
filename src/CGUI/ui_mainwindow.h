@@ -10,14 +10,21 @@
 #define UI_MAINWINDOW_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
-#include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QSpinBox>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QTableView>
+#include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -25,52 +32,145 @@ QT_BEGIN_NAMESPACE
 class Ui_MainWindow
 {
 public:
-    QAction *actiontest_sub;
     QWidget *centralwidget;
-    QWidget *formLayoutWidget;
-    QFormLayout *formLayout;
-    QPushButton *pushButton1;
+    QVBoxLayout *mainLayout;
+    QHBoxLayout *buttonsLayout;
+    QPushButton *connectButton;
+    QPushButton *placeOrderButton;
+    QPushButton *getUpdateButton;
+    QHBoxLayout *mainAreaLayout;
+    QGroupBox *asksGroup;
+    QVBoxLayout *vboxLayout;
+    QTableView *asksView;
+    QGroupBox *orderGroup;
+    QVBoxLayout *vboxLayout1;
+    QLabel *sideLabel;
+    QRadioButton *askRadio;
+    QRadioButton *bidRadio;
+    QLabel *priceLabel;
+    QDoubleSpinBox *priceSpinBox;
+    QLabel *quantityLabel;
+    QSpinBox *quantitySpinBox;
+    QSpacerItem *verticalSpacer;
+    QGroupBox *bidsGroup;
+    QVBoxLayout *vboxLayout2;
+    QTableView *bidsView;
     QMenuBar *menubar;
-    QMenu *menutest_menu;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
-        MainWindow->resize(800, 600);
-        actiontest_sub = new QAction(MainWindow);
-        actiontest_sub->setObjectName("actiontest_sub");
+        MainWindow->resize(900, 600);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
-        formLayoutWidget = new QWidget(centralwidget);
-        formLayoutWidget->setObjectName("formLayoutWidget");
-        formLayoutWidget->setGeometry(QRect(60, 70, 181, 111));
-        formLayout = new QFormLayout(formLayoutWidget);
-        formLayout->setObjectName("formLayout");
-        formLayout->setContentsMargins(0, 0, 0, 0);
-        pushButton1 = new QPushButton(formLayoutWidget);
-        pushButton1->setObjectName("pushButton1");
-        pushButton1->setContextMenuPolicy(Qt::ActionsContextMenu);
-        pushButton1->setToolTipDuration(-3);
-        pushButton1->setAutoRepeatInterval(99);
+        mainLayout = new QVBoxLayout(centralwidget);
+        mainLayout->setObjectName("mainLayout");
+        buttonsLayout = new QHBoxLayout();
+        buttonsLayout->setObjectName("buttonsLayout");
+        connectButton = new QPushButton(centralwidget);
+        connectButton->setObjectName("connectButton");
 
-        formLayout->setWidget(0, QFormLayout::ItemRole::LabelRole, pushButton1);
+        buttonsLayout->addWidget(connectButton);
+
+        placeOrderButton = new QPushButton(centralwidget);
+        placeOrderButton->setObjectName("placeOrderButton");
+
+        buttonsLayout->addWidget(placeOrderButton);
+
+        getUpdateButton = new QPushButton(centralwidget);
+        getUpdateButton->setObjectName("getUpdateButton");
+
+        buttonsLayout->addWidget(getUpdateButton);
+
+
+        mainLayout->addLayout(buttonsLayout);
+
+        mainAreaLayout = new QHBoxLayout();
+        mainAreaLayout->setObjectName("mainAreaLayout");
+        asksGroup = new QGroupBox(centralwidget);
+        asksGroup->setObjectName("asksGroup");
+        vboxLayout = new QVBoxLayout(asksGroup);
+        vboxLayout->setObjectName("vboxLayout");
+        asksView = new QTableView(asksGroup);
+        asksView->setObjectName("asksView");
+
+        vboxLayout->addWidget(asksView);
+
+
+        mainAreaLayout->addWidget(asksGroup);
+
+        orderGroup = new QGroupBox(centralwidget);
+        orderGroup->setObjectName("orderGroup");
+        vboxLayout1 = new QVBoxLayout(orderGroup);
+        vboxLayout1->setObjectName("vboxLayout1");
+        sideLabel = new QLabel(orderGroup);
+        sideLabel->setObjectName("sideLabel");
+
+        vboxLayout1->addWidget(sideLabel);
+
+        askRadio = new QRadioButton(orderGroup);
+        askRadio->setObjectName("askRadio");
+
+        vboxLayout1->addWidget(askRadio);
+
+        bidRadio = new QRadioButton(orderGroup);
+        bidRadio->setObjectName("bidRadio");
+
+        vboxLayout1->addWidget(bidRadio);
+
+        priceLabel = new QLabel(orderGroup);
+        priceLabel->setObjectName("priceLabel");
+
+        vboxLayout1->addWidget(priceLabel);
+
+        priceSpinBox = new QDoubleSpinBox(orderGroup);
+        priceSpinBox->setObjectName("priceSpinBox");
+        priceSpinBox->setMaximum(999999.000000000000000);
+
+        vboxLayout1->addWidget(priceSpinBox);
+
+        quantityLabel = new QLabel(orderGroup);
+        quantityLabel->setObjectName("quantityLabel");
+
+        vboxLayout1->addWidget(quantityLabel);
+
+        quantitySpinBox = new QSpinBox(orderGroup);
+        quantitySpinBox->setObjectName("quantitySpinBox");
+        quantitySpinBox->setMaximum(999999);
+
+        vboxLayout1->addWidget(quantitySpinBox);
+
+        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Expanding);
+
+        vboxLayout1->addItem(verticalSpacer);
+
+
+        mainAreaLayout->addWidget(orderGroup);
+
+        bidsGroup = new QGroupBox(centralwidget);
+        bidsGroup->setObjectName("bidsGroup");
+        vboxLayout2 = new QVBoxLayout(bidsGroup);
+        vboxLayout2->setObjectName("vboxLayout2");
+        bidsView = new QTableView(bidsGroup);
+        bidsView->setObjectName("bidsView");
+
+        vboxLayout2->addWidget(bidsView);
+
+
+        mainAreaLayout->addWidget(bidsGroup);
+
+
+        mainLayout->addLayout(mainAreaLayout);
 
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 800, 24));
-        menutest_menu = new QMenu(menubar);
-        menutest_menu->setObjectName("menutest_menu");
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName("statusbar");
         MainWindow->setStatusBar(statusbar);
-
-        menubar->addAction(menutest_menu->menuAction());
-        menutest_menu->addSeparator();
-        menutest_menu->addAction(actiontest_sub);
 
         retranslateUi(MainWindow);
 
@@ -79,10 +179,18 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
-        actiontest_sub->setText(QCoreApplication::translate("MainWindow", "test_sub", nullptr));
-        pushButton1->setText(QCoreApplication::translate("MainWindow", "test_button", nullptr));
-        menutest_menu->setTitle(QCoreApplication::translate("MainWindow", "test_menu", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Stakan Console", nullptr));
+        connectButton->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
+        placeOrderButton->setText(QCoreApplication::translate("MainWindow", "Place an order", nullptr));
+        getUpdateButton->setText(QCoreApplication::translate("MainWindow", "Get Update", nullptr));
+        asksGroup->setTitle(QCoreApplication::translate("MainWindow", "Asks", nullptr));
+        orderGroup->setTitle(QCoreApplication::translate("MainWindow", "Order", nullptr));
+        sideLabel->setText(QCoreApplication::translate("MainWindow", "Side", nullptr));
+        askRadio->setText(QCoreApplication::translate("MainWindow", "Ask", nullptr));
+        bidRadio->setText(QCoreApplication::translate("MainWindow", "Bid", nullptr));
+        priceLabel->setText(QCoreApplication::translate("MainWindow", "Price", nullptr));
+        quantityLabel->setText(QCoreApplication::translate("MainWindow", "Quantity", nullptr));
+        bidsGroup->setTitle(QCoreApplication::translate("MainWindow", "Bids", nullptr));
     } // retranslateUi
 
 };
