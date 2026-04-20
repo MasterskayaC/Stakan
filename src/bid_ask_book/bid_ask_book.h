@@ -1,12 +1,11 @@
 #pragma once
 
-#include <chrono>
-#include <shared_mutex>
-
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <chrono>
+#include <shared_mutex>
 
 #include "../bid_ask_snaphot_interface/bid_ask_interface.h"
 #include "../snapshots_broadcaster/snapshot_source.h"
@@ -14,7 +13,7 @@
 
 namespace server {
 
-        /// Структура для возврата из функции поиска заявок по цене
+/// Структура для возврата из функции поиска заявок по цене
 struct PricesInfo {
     std::vector<common::ID> ids_{};
     common::Quantity quantity_ = 0;
@@ -65,9 +64,9 @@ private:
         boost::multi_index::hashed_unique<boost::multi_index::member<common::Order, common::ID, &common::Order::id>>;
 
     template <typename Comparator>
-    using OrderContainer =
-        boost::multi_index::multi_index_container<common::Order,
-                                                  boost::multi_index::indexed_by<PriceIndex<Comparator>, IdIndex, PriceOnlyIndex>>;
+    using OrderContainer = boost::multi_index::multi_index_container<
+        common::Order,
+        boost::multi_index::indexed_by<PriceIndex<Comparator>, IdIndex, PriceOnlyIndex>>;
 
     using BidContainer = OrderContainer<BidComparator>;
     using AskContainer = OrderContainer<AskComparator>;
@@ -75,11 +74,10 @@ private:
     BidContainer bids_;
     AskContainer asks_;
 
-  
     const std::unique_ptr<ISnapshotSource> snapshot_source_ = makeTmpSnapshotCreator();
 
     // мьютексы для потокобезопасности
     mutable std::shared_mutex bids_mutex_;
     mutable std::shared_mutex asks_mutex_;
-    };
-}
+};
+}  // namespace server
