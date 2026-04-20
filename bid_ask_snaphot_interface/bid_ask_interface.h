@@ -9,7 +9,7 @@
 namespace common {
 constexpr uint8_t topN = 20;
 
-///delimeter for cast order price to double
+/// delimeter for cast order price to double
 static const double PRICE_DELIMETER = 100;
 
 using ID = uint64_t;
@@ -76,6 +76,45 @@ struct Snapshot {
     static Snapshot deserialize(const std::vector<char>& data);
 };
 
+struct MDUpdate {
+    Price best_price_;
+    Quantity bids_nums_;
+    Quantity bids_items_nums_;
+
+    Quantity asks_nums_;
+    Quantity askss_items_nums_;
+
+    Quantity all_orders_nums_;
+
+    /**
+     * @brief serialize MDUpdate
+     * @return vector of char
+     */
+
+    std::vector<char> serialize() const {
+        std::vector<char> buffer(kByteForMsgType + sizeof(MDUpdate));
+        /** @todo translate to enum */
+        int msg_type = 1;
+        buffer[0] = static_cast<char>(msg_type);
+        std::memcpy(buffer.data() + kByteForMsgType, this, sizeof(MDUpdate));
+        return buffer;
+    }
+
+    /**
+     * @brief deserialize MDUpdate
+     * @param data binary data array
+     * @return MDUpdate object
+     */
+    static MDUpdate deserialize(const std::vector<char>& data) {
+        if (data.size() != kByteForMsgType + sizeof(MDUpdate)) {
+            throw std::runtime_error("Deserialization error: incorrect data size");
+        }
+        MDUpdate update;
+        std::memcpy(&update, data.data() + kByteForMsgType, sizeof(MDUpdate));
+        return update;
+    }
+};
+
 std::vector<char> Snapshot::serialize() const {
     size_t size = sizeof(Snapshot);
     std::vector<char> buffer(size);
@@ -131,4 +170,4 @@ std::array<double, topN> Snapshot::get_ask_prices() const {
 bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
     return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
 }
-}  /// namespace common
+}  // namespace common
