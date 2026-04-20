@@ -32,7 +32,8 @@ public:
     void ReplaceBid(common::Order old_order, common::Order new_order);
     void ReplaceAsk(common::Order old_order, common::Order new_order);
 
-    PricesInfo GetPricesInfo(common::Price price, bool is_bid) const;
+    PricesInfo GetPricesBidsInfo(common::Price price) const;
+    PricesInfo GetPricesAsksInfo(common::Price price) const;
 
     [[nodiscard]] common::Snapshot GetTopSnapshot() const;
 

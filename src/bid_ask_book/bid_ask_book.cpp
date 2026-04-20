@@ -209,17 +209,21 @@ PricesInfo GetContainerPrice(const Container& container, common::Price price, st
 }
 
 /**
- * @brief реализация функции поиска по цене для класса OrderBook
+ * @brief реализация функции поиска бидов по цене для класса OrderBook
  * @param price цена
- * @param is_bid true если ищем биды, false если ищем аски
  * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
  */
-PricesInfo OrderBook::GetPricesInfo(common::Price price, bool is_bid) const {
-    if (is_bid) {
-        std::shared_lock lock(bids_mutex_);
-        return GetContainerPrice<BidContainer>(bids_, price, "Not bids for this price");
-    }
+PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
+    std::shared_lock lock(bids_mutex_);
+    return GetContainerPrice<BidContainer>(bids_, price, "Not bids for this price");
+}
 
+/**
+ * @brief реализация функции поиска асков по цене для класса OrderBook
+ * @param price цена
+ * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ */
+PricesInfo OrderBook::GetPricesAsksInfo(common::Price price) const {
     std::shared_lock lock(asks_mutex_);
     return GetContainerPrice<AskContainer>(asks_, price, "Not asks for this price");
 }
