@@ -1,18 +1,21 @@
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "inc.h"
+#include "bid_ask_interface.h"
 
 TEST_CASE("Order") {
     SECTION("Get price empty order") {
         common::Order o1;
-        auto price1 = o1.get_price();
-        REQUIRE(price1 == 0);
+        auto price1_dispay = o1.get_price();
+        REQUIRE(o1.price == 0);
+        REQUIRE(price1_dispay == Catch::Approx(0.00 / common::PRICE_DELIMETER));
     }
 
     SECTION("Get price order") {
         common::Order o2(1, 2, 3);
-        auto price2 = o2.get_price();
-        REQUIRE(price2 == 2);
+        auto price2_dispay = o2.get_price();
+        REQUIRE(o2.price == 2);
+        REQUIRE(price2_dispay == Catch::Approx(2.00 / common::PRICE_DELIMETER));
     }
 }
 
@@ -20,7 +23,7 @@ TEST_CASE("Snapshot serialize") {
     SECTION("Empty snapshot") {
         common::Snapshot empty_snap;
         auto serialize_snap = empty_snap.serialize();
-        REQUIRE(serialize_snap.size() == sizeof(common::Snapshot));
+        REQUIRE(serialize_snap.size() == sizeof(common::Snapshot) + common::kByteForMsgType);
 
         common::Snapshot result_snap = common::Snapshot::deserialize(serialize_snap);
         REQUIRE(empty_snap == result_snap);
@@ -34,7 +37,7 @@ TEST_CASE("Snapshot serialize") {
         }
         auto serialize_snap = snap.serialize();
 
-        REQUIRE(serialize_snap.size() == sizeof(common::Snapshot));
+        REQUIRE(serialize_snap.size() == sizeof(common::Snapshot) + common::kByteForMsgType);
 
         common::Snapshot result_snap = common::Snapshot::deserialize(serialize_snap);
 
