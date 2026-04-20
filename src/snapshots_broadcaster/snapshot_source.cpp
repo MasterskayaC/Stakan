@@ -43,8 +43,8 @@ public:
      * @return A snapshot
     */
     std::optional<common::Snapshot> get_snapshot() override;
-    int64_t GetNewBid() override;
-    int64_t GetNewAsk() override;
+    common::Order GetNewBid() override;
+    common::Order GetNewAsk() override;
 
 private:
     RandomGenerator rg_;
@@ -116,12 +116,12 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
     return snapshots_[idx];
 }
 
-int64_t TmpSnapshotCreator::GetNewBid() {
-    return rg_.GetRandom();
+common::Order TmpSnapshotCreator::GetNewBid() {
+    return common::Order(rg_.GetRandom(),rg_.GetRandom(),rg_.GetRandom());
 }
 
-int64_t TmpSnapshotCreator::GetNewAsk() {
-    return rg_.GetRandom();
+common::Order TmpSnapshotCreator::GetNewAsk() {
+    return common::Order(rg_.GetRandom(),rg_.GetRandom(),rg_.GetRandom());
 }
 
 std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random, uint8_t snapshot_count) {

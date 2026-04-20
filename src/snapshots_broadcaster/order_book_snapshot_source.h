@@ -12,8 +12,8 @@ class OrderBookSnapshotSource : public ISnapshotSource {
     //в реализацию передается сырой указатель, однако лучше поменять на умный,
     //в зависимости от принципов владения OrderBookом
     OrderBookSnapshotSource(server::OrderBook* order_book);
-    int64_t GetNewBid() override;
-    int64_t GetNewAsk() override;
+    common::Order GetNewBid() override;
+    common::Order GetNewAsk() override;
 
     ~OrderBookSnapshotSource() override = default;
 

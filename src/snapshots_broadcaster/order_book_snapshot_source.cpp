@@ -5,12 +5,12 @@
 OrderBookSnapshotSource::OrderBookSnapshotSource(server::OrderBook *order_book) : order_book_(order_book) {
 }
 
-int64_t OrderBookSnapshotSource::GetNewBid() {
-    return static_cast<int64_t>(order_book_->BestBid().get_price());
+common::Order OrderBookSnapshotSource::GetNewBid() {
+    return order_book_->BestBid();
 }
 
-int64_t OrderBookSnapshotSource::GetNewAsk() {
-    return static_cast<int64_t>(order_book_->BestAsk().get_price());
+common::Order OrderBookSnapshotSource::GetNewAsk() {
+    return order_book_->BestAsk();
 }
 
 std::optional<common::Snapshot> OrderBookSnapshotSource::get_snapshot() {
