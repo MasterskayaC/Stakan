@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+
 #include "bid_ask_book.h"
 
 using namespace server;
@@ -76,10 +77,9 @@ TEST_CASE("BestBid and BestAsk return correct orders") {
     Order bestBid = book.BestBid();
     Order bestAsk = book.BestAsk();
 
-    CHECK(bestBid.price == 105); // max price
-    CHECK(bestAsk.price == 108); // min price
+    CHECK(bestBid.price == 105);  // max price
+    CHECK(bestAsk.price == 108);  // min price
 }
-
 
 TEST_CASE("Ordering works correctly for bids and asks") {
     OrderBook book;
@@ -111,4 +111,93 @@ TEST_CASE("Replace with different id does nothing") {
     // ордер не изменился
     CHECK(snapshot.topBids[0].id == 1);
     CHECK(snapshot.topBids[0].price == 100);
+}
+
+TEST_CASE("Check GetPricesInfo function"){
+    const common::Price PRICE = 4;
+    const common::Price RAND_PRICE = 444;
+
+    SECTION("Empty orderBook") {
+        server::OrderBook book;
+        auto info_bid = book.GetPricesBidsInfo(7);
+        REQUIRE(info_bid.ids_.empty());
+        REQUIRE(info_bid.quantity_ == 0);
+
+        auto info_ask = book.GetPricesAsksInfo(7);
+        REQUIRE(info_ask.ids_.empty());
+        REQUIRE(info_ask.quantity_ == 0);
+    }
+
+    SECTION ("Add 1 bid") {
+        server::OrderBook book;
+        common::Order o{ 1, PRICE, 42 };
+        book.NewBid(o);
+        auto info = book.GetPricesBidsInfo(PRICE);
+        REQUIRE(info.ids_[0] == 1);
+        REQUIRE(info.quantity_ == 42);
+    }
+
+    SECTION ("Add 3 bids with same price") {
+        server::OrderBook book;
+        common::Order o1{ 1, PRICE, 42 };
+        common::Order o2{ 2, PRICE, 5 };
+        common::Order o3{ 3, PRICE, 9 };
+        book.NewBid(o1);
+        book.NewBid(o2);
+        book.NewBid(o3);
+
+        auto info = book.GetPricesBidsInfo(PRICE);
+        REQUIRE(info.ids_.size() == 3);
+        REQUIRE(info.quantity_ == (42 + 5 + 9));
+    }
+
+    SECTION ("Add 1 bid, but check random price") {
+        server::OrderBook book;
+        common::Order o1{ 1, PRICE, 42 };
+        book.NewBid(o1);
+
+        auto info = book.GetPricesBidsInfo(RAND_PRICE);
+        REQUIRE(info.ids_.empty());
+        REQUIRE(info.quantity_ == 0);
+    }
+
+    SECTION ("Add 1 ask") {
+        server::OrderBook book;
+        common::Order o1{ 1, PRICE, 42 };
+        book.NewAsk(o1);
+        auto info2 = book.GetPricesAsksInfo(PRICE);
+        REQUIRE(info2.ids_[0] == 1);
+        REQUIRE(info2.quantity_ == 42);
+    }
+
+    SECTION ("Add 3 asks with same price") {
+        server::OrderBook book;
+        common::Order o1{ 1, PRICE, 42 };
+        common::Order o2{ 2, PRICE, 5 };
+        common::Order o3{ 3, PRICE, 9 };
+        book.NewAsk(o1);
+        book.NewAsk(o2);
+        book.NewAsk(o3);
+
+        auto info = book.GetPricesAsksInfo(PRICE);
+        REQUIRE(info.ids_.size() == 3);
+        REQUIRE(info.quantity_ == (42 + 5 + 9));
+    }
+
+    SECTION("Add bid and ask") {
+        server::OrderBook book;
+
+        const common::Price PRICE = 4;
+        common::Order o1{ 1, PRICE, 42 };
+        book.NewBid(o1);
+
+        common::Order o2{ 2, PRICE, 42 };
+        book.NewAsk(o2);
+        auto info_bid = book.GetPricesBidsInfo(PRICE);
+        auto info_ask = book.GetPricesAsksInfo(PRICE);
+        REQUIRE(info_bid.ids_.size() == 1);
+        REQUIRE(info_ask.ids_.size() == 1);
+        REQUIRE(info_bid.quantity_ == 42);
+        REQUIRE(info_ask.quantity_ == 42);
+    }
 }
