@@ -7,7 +7,9 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
-#include "bid_ask_snaphot_interface/bid_ask_interface.h"
+
+#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "../snapshots_broadcaster/snapshot_source.h"
 #include "logger.h"
 
 namespace server {

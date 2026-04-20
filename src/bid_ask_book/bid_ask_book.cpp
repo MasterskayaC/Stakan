@@ -160,7 +160,7 @@ Snapshot OrderBook::GetTopSnapshot() const {
     // }
     //
     // return snapshot;
-    return snapshot_source_->get_snapshot();
+    return *snapshot_source_->get_snapshot();
 }
 
 Order OrderBook::BestBid() const {
