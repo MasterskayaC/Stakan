@@ -86,15 +86,15 @@ TEST_CASE("Ordering works correctly for bids and asks") {
 
     // одинаковые цены → проверяем quantity и id
     book.NewBid(Order(1, 100, 10));
-    book.NewBid(Order(2, 100, 20));  // должен быть выше (quantity больше)
+    book.NewBid(Order(2, 100, 20)); // должен быть выше (quantity больше)
 
     book.NewAsk(Order(3, 105, 10));
-    book.NewAsk(Order(4, 103, 10));  // должен быть выше (цена меньше)
+    book.NewAsk(Order(4, 103, 10)); // должен быть выше (цена меньше)
 
     auto snapshot = book.GetTopSnapshot();
 
-    CHECK(snapshot.topBids[0].id == 2);  // больше quantity
-    CHECK(snapshot.topAsks[0].id == 4);  // меньше price
+    CHECK(snapshot.topBids[0].id == 2); // больше quantity
+    CHECK(snapshot.topAsks[0].id == 4); // меньше price
 }
 
 TEST_CASE("Replace with different id does nothing") {

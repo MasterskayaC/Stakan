@@ -1,15 +1,16 @@
-add_library(snapshots_broadcaster INTERFACE)
+add_library(snapshots_broadcaster INTERFACE
+broadcaster.h
+command_queue.h))
 
 target_include_directories(snapshots_broadcaster
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-find_package(Boost REQUIRED)
-find_package(Threads REQUIRED)
-
 add_library(dom_manager STATIC)
 target_sources(dom_manager PRIVATE
     dom_manager.cpp
+    snapshot_source.cpp
+    order_book_snapshot_source.cpp
 )
 
 target_include_directories(dom_manager PUBLIC

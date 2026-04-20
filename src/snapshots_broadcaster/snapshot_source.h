@@ -23,3 +23,4 @@ std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random = false, 
  * that asks OrderBook for snapshots directly.
  */
 std::unique_ptr<ISnapshotSource> makeOrderBookSnapshotSource(server::OrderBook* order_book);
+

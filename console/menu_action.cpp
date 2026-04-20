@@ -1,58 +1,53 @@
-#include "menu_action.hpp"
+#include "menu_action.h"
+
+#include <string>
+
+#include "menu.h"
 
 namespace menu {
 
-namespace detail {
-
-/** @todo Remove this forward declaration once Snapshot is in the repo */
-struct Snapshot;
-
-/** @todo Command argument parsing functions */
-
-void PrintSnapshot(std::ostream& output, Snapshot&& snapshot) {}
-    
-} // namespace detail
-
+/// @brief Конструктор
 CommandHandlers::CommandHandlers(Menu& menu,
                                  std::ostream& output,
-                                 client_lib::IOrderBookClient& client)
-    : menu_(menu),
-      output_(output),
-      client_(client) {}
+                                 std::shared_ptr<console::SnapshotConsoleClient> client)
+    : menu_(menu)
+    , output_(output)
+    , client_(std::move(client)) {
+}
 
-bool CommandHandlers::Buy(Menu::CommandArgs&& args) const {
+/// @brief Команда connect
+bool CommandHandlers::Connect(CommandArgs&& args) {
     return false;
 }
 
-bool CommandHandlers::Sell(Menu::CommandArgs&& args) const {
+/// @brief Команда snapshot
+bool CommandHandlers::Snapshot(CommandArgs&& args) {
+    if (client_) {
+        client_->fetch_snapshot();
+        return true;
+    }
     return false;
 }
 
-bool CommandHandlers::Book(Menu::CommandArgs&& args) const {
+/// @brief Команда help
+bool CommandHandlers::Help(CommandArgs&& args) {
+    return true;
+}
+
+/// @brief Команда exit
+bool CommandHandlers::Exit(CommandArgs&& args) {
     return false;
 }
 
-bool CommandHandlers::Exit() const {
-    return false;
-}
-
-bool CommandHandlers::Help() const {
-    return false;
-}
-
+/// @brief Конструктор
 ArgsParsers::ArgsParsers(Menu& menu, std::istream& input)
-    : menu_(menu), input_(input) {}
-
-Menu::CommandArgs ArgsParsers::ParseBuyArgs(std::istream&) {
-    return {};
+    : menu_(menu)
+    , input_(input) {
 }
 
-Menu::CommandArgs ArgsParsers::ParseSellArgs(std::istream&) {
-    return {};
+/// @brief Парсинг connect
+CommandArgs ArgsParsers::ParseConnectArgs(std::istream& input) {
+    return CommandArgs{std::in_place_type<NoArgs>};
 }
 
-Menu::CommandArgs ArgsParsers::ParseBookArgs(std::istream&) {
-    return {};
-}
-
-} // namespace menu
+}  // namespace menu

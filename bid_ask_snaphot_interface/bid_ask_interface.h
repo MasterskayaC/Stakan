@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <format>
 #include <sstream>
@@ -8,8 +9,10 @@
 
 namespace common {
 constexpr uint8_t topN = 20;
+constexpr size_t kPtrForMsgType = 0;
+constexpr size_t kByteForMsgType = 1;
 
-///delimeter for cast order price to double
+/// delimeter for cast order price to double
 static const double PRICE_DELIMETER = 100;
 
 using ID = uint64_t;
@@ -76,21 +79,68 @@ struct Snapshot {
     static Snapshot deserialize(const std::vector<char>& data);
 };
 
+struct MDUpdate {
+    Price best_price_;
+    Quantity bids_nums_;
+    Quantity bids_items_nums_;
+
+    Quantity asks_nums_;
+    Quantity askss_items_nums_;
+
+    Quantity all_orders_nums_;
+
+    /**
+     * @brief serialize MDUpdate
+     * @return vector of char
+     */
+
+    std::vector<char> serialize() const {
+        std::vector<char> buffer(kByteForMsgType + sizeof(MDUpdate));
+        /** @todo translate to enum */
+        int msg_type = 1;
+        buffer[0] = static_cast<char>(msg_type);
+        std::memcpy(buffer.data() + kByteForMsgType, this, sizeof(MDUpdate));
+        return buffer;
+    }
+
+    /**
+     * @brief deserialize MDUpdate
+     * @param data binary data array
+     * @return MDUpdate object
+     */
+    static MDUpdate deserialize(const std::vector<char>& data) {
+        if (data.size() != kByteForMsgType + sizeof(MDUpdate)) {
+            throw std::runtime_error("Deserialization error: incorrect data size");
+        }
+        MDUpdate update;
+        std::memcpy(&update, data.data() + kByteForMsgType, sizeof(MDUpdate));
+        return update;
+    }
+};
+
 std::vector<char> Snapshot::serialize() const {
-    size_t size = sizeof(Snapshot);
+    size_t size = sizeof(Snapshot) + kByteForMsgType;
     std::vector<char> buffer(size);
-    std::memcpy(buffer.data(), &topBids, sizeof(topBids));
-    std::memcpy(buffer.data() + sizeof(topBids), &topAsks, sizeof(topAsks));
+    /** @todo translate to enum */
+    int msg_type = 0;
+    buffer[kPtrForMsgType] = static_cast<char>(msg_type);
+
+    char* ptr_for_msg_data = buffer.data() + kByteForMsgType;
+    std::memcpy(ptr_for_msg_data, &topBids, sizeof(topBids));
+    std::memcpy(ptr_for_msg_data + sizeof(topBids), &topAsks, sizeof(topAsks));
+
     return buffer;
 }
 
+/** @todo do fn GetMassageType() when enum appears */
 Snapshot Snapshot::deserialize(const std::vector<char>& data) {
-    if (data.size() != sizeof(Snapshot)) {
+    if (data.size() != sizeof(Snapshot) + kByteForMsgType) {
         throw std::runtime_error("Deserialization error: incorrect data size");
     }
     Snapshot result;
-    std::memcpy(&result.topBids, data.data(), sizeof(topBids));
-    std::memcpy(&result.topAsks, data.data() + sizeof(topBids), sizeof(topAsks));
+    const char* ptr_for_msg_data = data.data() + kByteForMsgType;
+    std::memcpy(&result.topBids, ptr_for_msg_data, sizeof(topBids));
+    std::memcpy(&result.topAsks, ptr_for_msg_data + sizeof(topBids), sizeof(topAsks));
     return result;
 }
 
@@ -131,4 +181,4 @@ std::array<double, topN> Snapshot::get_ask_prices() const {
 bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
     return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
 }
-}  /// namespace common
+}  // namespace common
