@@ -68,7 +68,7 @@ private:
                     break;
                 case CommandType::SendMDUpdate:
                     boost::asio::post(io_, [this, cmd = std::move(cmd)] {
-                        handle_send_md_update();
+                        handle_send_md_update(cmd->get_data<common::MDUpdate>()->get());
                     });
                     break;
                 default:
@@ -93,9 +93,9 @@ private:
     }
 
     /// @brief Отправляет MD Update всем подключённым клиентам.
-    void handle_send_md_update() {
-        // заглушка
-        return;
+    void handle_send_md_update(common::MDUpdate u) {
+        std::vector<char> bytes = u.serialize();
+        clients_.broadcast_to_subscribed(bytes);
     }
 
 private:
