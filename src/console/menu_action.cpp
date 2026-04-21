@@ -50,4 +50,4 @@ CommandArgs ArgsParsers::ParseConnectArgs(std::istream& input) {
     return CommandArgs{std::in_place_type<NoArgs>};
 }
 
-}  // namespace menu
+} // namespace menu
