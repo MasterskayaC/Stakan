@@ -1,8 +1,17 @@
 #include "snapshot_source.h"
-
+#include <atomic>      
+#include <algorithm>   
 #include <random>
 
 #include "order_book_snapshot_source.h"
+
+
+RandomGenerator::RandomGenerator(): gen(rd()), dist(0, 9999){
+} 
+
+int64_t RandomGenerator::GetRandom() {
+        return dist(gen);
+}
 
 /**
  * @brief Helper struct that generates and cycles through test snapshots
@@ -34,8 +43,11 @@ public:
      * @return A snapshot
     */
     std::optional<common::Snapshot> get_snapshot() override;
+    common::Order GetNewBid() override;
+    common::Order GetNewAsk() override;
 
 private:
+    RandomGenerator rg_;
     std::vector<common::Snapshot> snapshots_;
     std::atomic<size_t> current_index_ = 0;
     bool random_;
@@ -102,6 +114,14 @@ std::optional<common::Snapshot> TmpSnapshotCreator::get_snapshot() {
     }
     size_t idx = current_index_.fetch_add(1, std::memory_order_relaxed) % snapshots_.size();
     return snapshots_[idx];
+}
+
+common::Order TmpSnapshotCreator::GetNewBid() {
+    return common::Order(rg_.GetRandom(),rg_.GetRandom(),rg_.GetRandom());
+}
+
+common::Order TmpSnapshotCreator::GetNewAsk() {
+    return common::Order(rg_.GetRandom(),rg_.GetRandom(),rg_.GetRandom());
 }
 
 std::unique_ptr<ISnapshotSource> makeTmpSnapshotCreator(bool is_random, uint8_t snapshot_count) {
