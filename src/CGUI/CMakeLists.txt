@@ -16,6 +16,6 @@ set(CMAKE_AUTOUIC ON)
 
 add_library(gui STATIC ${SOURCES} ${HEADERS} ${UI_FILES})
 
-target_link_libraries(gui Qt5::Widgets)
+target_link_libraries(gui Qt6::Widgets)
 
 target_include_directories(gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -8,3 +8,4 @@ OrderBookSnapshotSource::OrderBookSnapshotSource(server::OrderBook *order_book) 
 std::optional<common::Snapshot> OrderBookSnapshotSource::get_snapshot() {
     return order_book_->GetTopSnapshot();
 }
+
