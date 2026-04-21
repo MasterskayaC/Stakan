@@ -5,6 +5,7 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <chrono>
+#include <optional>
 #include <shared_mutex>
 
 #include "../bid_ask_snaphot_interface/bid_ask_interface.h"
@@ -38,6 +39,7 @@ public:
 
     [[nodiscard]] common::Order BestBid() const;
     [[nodiscard]] common::Order BestAsk() const;
+    [[nodiscard]] std::optional<common::MDUpdate> GenerateMDUpdate() const;
 
 private:
     struct BidComparator {
