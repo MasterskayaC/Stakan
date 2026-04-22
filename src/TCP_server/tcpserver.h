@@ -1,19 +1,27 @@
 #pragma once
-#include "session.h"
-#include "../client_list/client_list.h"
-#include <vector>
-
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
+#include <vector>
+
+#include "../client_list/client_list.h"
+#include "session.h"
+
+namespace server {
+class DOMManager;
+}
+
+class IClientList;
 
 using boost::asio::ip::tcp;
 
 // Главный TCP-сервер: принимает подключения, отслеживает reconnect и рассылает snapshot.
-class TCPServer :public std::enable_shared_from_this<TCPServer> {
+class TCPServer : public std::enable_shared_from_this<TCPServer> {
 public:
     TCPServer(boost::asio::io_context& io_context, unsigned short port);
+
     ~TCPServer();
+
     /**
      * @brief Starts accept loop and periodic snapshot scheduling.
      */
@@ -31,7 +39,6 @@ public:
     void SendUpdateMessage(const std::string& message);
 
 private:
-
     /**
      * @brief Starts asynchronous accept for new TCP connections.
      */
@@ -42,22 +49,25 @@ private:
      * @param socket Accepted socket.
      * @param error Result of async_accept.
      */
-    std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket,
-                   const boost::system::error_code& error);
+    std::shared_ptr<Session> OnAccept(std::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
+
     /**
      * @brief Handles incoming frame from one session (HELLO handshake).
      * TODO:Перенес обработку кадров в отдельный модуль протокола.
      */
     void HandleMessage(const std::vector<std::uint8_t>& frame, const std::shared_ptr<Session>& session);
+
     /**
      * @brief Handles session disconnect and cleans ownership in client_list.
      */
     void HandleDisconnect(const std::shared_ptr<Session>& session);
+
     /**
      * @brief Arms periodic timer and triggers SendUpdateMessage.
-     * TODO:Заменил жестко заданные значения снимков на исходные данные снимков книги ордеров.
+     *
      */
     void ScheduleSnapshots();
+
     /**
      * @brief Parses HELLO <client_id> from raw frame bytes.
      */
@@ -67,4 +77,5 @@ private:
     tcp::acceptor acceptor_;
     boost::asio::steady_timer snapshot_timer_;
     std::unique_ptr<IClientList> client_list_;
+    std::unique_ptr<server::DOMManager> dom_manager_;
 };
