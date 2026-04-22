@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/asio.hpp>
-#include <cstdint>
 #include <deque>
 #include <functional>
 #include <memory>
