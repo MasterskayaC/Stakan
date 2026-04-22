@@ -19,6 +19,8 @@ using ID = uint64_t;
 using Price = uint64_t;
 using Quantity = uint64_t;
 
+enum class MessageType : uint8_t { SNAPSHOT = 0, BID = 1, ASK = 2, MD_UPDATE = 3 };
+
 struct Order {
     Order() = default;
     Order(ID number, Price p, int qty) : id(number), price(p), quantity(qty) {}
@@ -96,9 +98,7 @@ struct MDUpdate {
 
     std::vector<char> serialize() const {
         std::vector<char> buffer(kByteForMsgType + sizeof(MDUpdate));
-        /** @todo translate to enum */
-        int msg_type = 1;
-        buffer[0] = static_cast<char>(msg_type);
+        buffer[0] = static_cast<char>(MessageType::MD_UPDATE);
         std::memcpy(buffer.data() + kByteForMsgType, this, sizeof(MDUpdate));
         return buffer;
     }
@@ -121,9 +121,7 @@ struct MDUpdate {
 std::vector<char> Snapshot::serialize() const {
     size_t size = sizeof(Snapshot) + kByteForMsgType;
     std::vector<char> buffer(size);
-    /** @todo translate to enum */
-    int msg_type = 0;
-    buffer[kPtrForMsgType] = static_cast<char>(msg_type);
+    buffer[kPtrForMsgType] = static_cast<char>(MessageType::SNAPSHOT);
 
     char* ptr_for_msg_data = buffer.data() + kByteForMsgType;
     std::memcpy(ptr_for_msg_data, &topBids, sizeof(topBids));
@@ -132,7 +130,6 @@ std::vector<char> Snapshot::serialize() const {
     return buffer;
 }
 
-/** @todo do fn GetMassageType() when enum appears */
 Snapshot Snapshot::deserialize(const std::vector<char>& data) {
     if (data.size() != sizeof(Snapshot) + kByteForMsgType) {
         throw std::runtime_error("Deserialization error: incorrect data size");
