@@ -3,6 +3,7 @@
 #include <boost/asio/post.hpp>
 #include <iostream>
 #include <optional>
+#include <memory>
 
 namespace server {
 
@@ -66,7 +67,7 @@ void DOMManager::schedule_next_broadcast(int interval_ms, bool use_test_broadcas
 
 void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetTopSnapshot();
         if (!snapshot) {
             std::cout << "there is no snapshot" << std::endl;
             return;
@@ -81,7 +82,7 @@ void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_br
 
 void DOMManager::send_snapshot(bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetTopSnapshot();
         if (!snapshot) {
             std::cout << "there is no snapshot" << std::endl;
             return;

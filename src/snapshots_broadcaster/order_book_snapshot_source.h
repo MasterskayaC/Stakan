@@ -2,7 +2,6 @@
 #include <random>
 #include "snapshot_source.h"
 
-#include "../bid_ask_book/src/bid_ask_book.h"
 #include "../bid_ask_snaphot_interface/bid_ask_interface.h"
 
 

@@ -1,14 +1,13 @@
 #pragma once
 
 #include <atomic>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <memory>
 #include <variant>
 
-#include "../bid_ask_book/src/bid_ask_book.h"
+#include "../bid_ask_book/bid_ask_book.h"
 #include "broadcaster.h"
-#include "client_list.h"
+#include "../client_list/client_list.h"
 
 namespace server {
 

@@ -1,14 +1,11 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <string>
-#include <unordered_set>
 #include <vector>
 
-#include "../TCP_server/include/session.h"
-#include "bid_ask_interface.h"
+#include "../TCP_server/session.h"
+#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
 
 using ClientId = uint64_t;
 using OrderId = common::ID;
@@ -101,14 +98,14 @@ public:
      * @param id Client identifier
      * @return Vector of bid orders
      */
-    virtual std::vector<std::shared_ptr<common::Order>> get_bids(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<common::Order> > get_bids(ClientId id) const = 0;
 
     /**
      * @brief Retrieves all ask orders of a client
      * @param id Client identifier
      * @return Vector of ask orders
      */
-    virtual std::vector<std::shared_ptr<common::Order>> get_asks(ClientId id) const = 0;
+    virtual std::vector<std::shared_ptr<common::Order> > get_asks(ClientId id) const = 0;
 
     // ---------- Subscription Management ----------
 
@@ -147,16 +144,16 @@ public:
      * @brief Broadcasts a message to all subscribed clients
      * @param message Binary data to send
      */
-    virtual void broadcast_to_subscribed(const std::vector<char>& message) = 0;
+    virtual void broadcast_to_subscribed(const std::vector<char> &message) = 0;
 
     /**
      * @brief Broadcasts a message to a certain client
      * @param id of that certain client
      * @param message Binary data to send
      */
-    virtual void broadcast_to_certain(ClientId id, const std::vector<char>& message) = 0;
+    virtual void broadcast_to_certain(ClientId id, const std::vector<char> &message) = 0;
 
-    virtual std::optional<ClientId> find_client_id_by_session(const Session* session) const = 0;
+    virtual std::optional<ClientId> find_client_id_by_session(const Session *session) const = 0;
 
 private:
 };
