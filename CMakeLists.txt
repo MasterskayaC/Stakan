@@ -12,17 +12,14 @@ find_package(Catch2 REQUIRED)
 #заменить как примем решение
 #find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
-add_subdirectory(snapshots_broadcaster)
+add_subdirectory(src/snapshots_broadcaster)
 add_subdirectory(bid_ask_snaphot_interface)
 add_subdirectory(src/client_list)
 add_subdirectory(src/TCP_server)
 add_subdirectory(client_lib)
 add_subdirectory(include)
 add_subdirectory(bid_ask_book)
-add_subdirectory(console)
-#add_subdirectory(CGUI) 
-add_subdirectory(src/database)
-
+add_subdirectory(src/console)
 
 add_executable(exc_glass main.cpp)
 

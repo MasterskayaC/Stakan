@@ -59,4 +59,4 @@ void Menu::PrintHelp() {
     }
 }
 
-}  // namespace menu
+} // namespace menu
