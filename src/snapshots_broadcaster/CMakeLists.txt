@@ -1,6 +1,6 @@
 add_library(snapshots_broadcaster INTERFACE
 broadcaster.h
-command_queue.h))
+command_queue.h)
 
 target_include_directories(snapshots_broadcaster
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -19,7 +19,9 @@ target_include_directories(dom_manager PUBLIC
 
 target_link_libraries(dom_manager
     PUBLIC
+        bid_ask_book
         client_list
+        interface_bid_ask
     PRIVATE
         Boost::headers
         Threads::Threads

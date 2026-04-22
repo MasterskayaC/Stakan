@@ -7,9 +7,10 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <iostream>
 
-#include "bid_ask_interface.h"
-#include "command_queue.h"
+#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "../snapshots_broadcaster/command_queue.h"
 
 // клиенты, их сессии, заявки bid/ask и подписка на рассылку.
 
@@ -33,12 +34,12 @@ private:
     };
 
     std::unordered_map<ClientId, ClientContext> clients_;
-    std::unordered_map<const Session*, ClientId> session_to_client_;
+    std::unordered_map<const Session *, ClientId> session_to_client_;
     mutable std::mutex mutex_;
 
     // Добавляет заявку на выбранную сторону (bids или asks): карта по id и список порядка.
-    static void add_order_to_side(std::unordered_map<common::ID, OrderEntry>& by_id,
-                                  std::list<common::ID>& in_order,
+    static void add_order_to_side(std::unordered_map<common::ID, OrderEntry> &by_id,
+                                  std::list<common::ID> &in_order,
                                   std::shared_ptr<common::Order> order) {
         in_order.push_back(order->id);
         auto last = std::prev(in_order.end());
@@ -47,8 +48,8 @@ private:
 
     // Удаляет заявку по order_id или последнюю в списке порядка; при отсутствии id — сообщение в консоль.
     static void remove_order_from_side(ClientId id,
-                                       std::unordered_map<common::ID, OrderEntry>& by_id,
-                                       std::list<common::ID>& in_order,
+                                       std::unordered_map<common::ID, OrderEntry> &by_id,
+                                       std::list<common::ID> &in_order,
                                        std::optional<common::ID> order_id) {
         if (by_id.empty()) {
             return;
@@ -57,7 +58,7 @@ private:
             auto order_it = by_id.find(order_id.value());
             if (order_it == by_id.end()) {
                 std::cout << "Client with id: " << id << " doesn't have and order with id: " << order_id.value()
-                          << '\n';
+                        << '\n';
                 return;
             }
             in_order.erase(order_it->second.it);
@@ -117,8 +118,8 @@ public:
         std::vector<SessionPtr> tmp;
         std::lock_guard<std::mutex> lock(mutex_);
         tmp.reserve(clients_.size());
-        for (const auto& [id, ctx] : clients_) {
-            (void)id;
+        for (const auto &[id, ctx]: clients_) {
+            (void) id;
             if (ctx.session) {
                 tmp.push_back(ctx.session);
             }
@@ -138,7 +139,7 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        ClientContext& ctx = clients_.at(id);
+        ClientContext &ctx = clients_.at(id);
         add_order_to_side(ctx.bids, ctx.bids_in_order, std::move(bid));
     }
 
@@ -147,7 +148,7 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        ClientContext& ctx = clients_.at(id);
+        ClientContext &ctx = clients_.at(id);
         add_order_to_side(ctx.asks, ctx.asks_in_order, std::move(ask));
     }
 
@@ -156,7 +157,7 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        ClientContext& ctx = clients_.at(id);
+        ClientContext &ctx = clients_.at(id);
         remove_order_from_side(id, ctx.bids, ctx.bids_in_order, order_id);
     }
 
@@ -165,30 +166,30 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        ClientContext& ctx = clients_.at(id);
+        ClientContext &ctx = clients_.at(id);
         remove_order_from_side(id, ctx.asks, ctx.asks_in_order, order_id);
     }
 
     // Заявки в порядке bids_in_order / asks_in_order.
-    std::vector<std::shared_ptr<common::Order>> get_bids(ClientId id) const override {
+    std::vector<std::shared_ptr<common::Order> > get_bids(ClientId id) const override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
-        std::vector<std::shared_ptr<common::Order>> tmp;
+        std::vector<std::shared_ptr<common::Order> > tmp;
         std::lock_guard<std::mutex> lock(mutex_);
         const auto it = clients_.at(id);
-        for (common::ID order_id : it.bids_in_order) {
+        for (common::ID order_id: it.bids_in_order) {
             tmp.push_back(it.bids.at(order_id).order);
         }
         return tmp;
     }
 
-    std::vector<std::shared_ptr<common::Order>> get_asks(ClientId id) const override {
+    std::vector<std::shared_ptr<common::Order> > get_asks(ClientId id) const override {
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
-        std::vector<std::shared_ptr<common::Order>> tmp;
+        std::vector<std::shared_ptr<common::Order> > tmp;
         std::lock_guard<std::mutex> lock(mutex_);
-        const ClientContext& it = clients_.at(id);
-        for (common::ID order_id : it.asks_in_order) {
+        const ClientContext &it = clients_.at(id);
+        for (common::ID order_id: it.asks_in_order) {
             tmp.push_back(it.asks.at(order_id).order);
         }
         return tmp;
@@ -199,7 +200,7 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        const ClientContext& it = clients_.at(id);
+        const ClientContext &it = clients_.at(id);
         return it.subscribed;
     }
 
@@ -207,7 +208,7 @@ public:
         if (!has_client(id))
             throw std::runtime_error("There is no client with id: " + std::to_string(id));
         std::lock_guard<std::mutex> lock(mutex_);
-        ClientContext& it = clients_.at(id);
+        ClientContext &it = clients_.at(id);
         it.subscribed = true;
     }
 
@@ -223,7 +224,7 @@ public:
     std::vector<ClientId> get_subscribed_clients() const override {
         std::vector<ClientId> tmp;
         std::lock_guard<std::mutex> lock(mutex_);
-        for (const auto& [id, ctx] : clients_) {
+        for (const auto &[id, ctx]: clients_) {
             if (ctx.subscribed) {
                 tmp.push_back(id);
             }
@@ -236,7 +237,7 @@ public:
         std::lock_guard lck(mutex_);
         std::vector<SessionPtr> res;
         res.reserve(clients_.size());
-        for (auto [client_id, client_context] : clients_) {
+        for (auto [client_id, client_context]: clients_) {
             if (client_context.subscribed) {
                 res.push_back(client_context.session);
             }
@@ -245,21 +246,21 @@ public:
     }
 
     // Отправляет сообщение всем подписанным сессиям.
-    void broadcast_to_subscribed(const std::vector<char>& message) override {
+    void broadcast_to_subscribed(const std::vector<char> &message) override {
         std::vector<SessionPtr> sub_sessions = get_subscribed_sessions();
-        for (SessionPtr s : sub_sessions) {
+        for (SessionPtr s: sub_sessions) {
             s->SendMsg(message);
         }
     }
 
     // Отправляет сообщение одному клиенту по id (через его сессию).
-    void broadcast_to_certain(ClientId id, const std::vector<char>& message) override {
+    void broadcast_to_certain(ClientId id, const std::vector<char> &message) override {
         SessionPtr s = get_session(id);
         s->SendMsg(message);
     }
 
     // Обратное отображение: указатель сессии -> id клиента.
-    std::optional<ClientId> find_client_id_by_session(const Session* session) const override {
+    std::optional<ClientId> find_client_id_by_session(const Session *session) const override {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto it = session_to_client_.find(session);
         if (it == session_to_client_.end()) {

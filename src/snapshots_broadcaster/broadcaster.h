@@ -5,7 +5,7 @@
 #include <optional>
 #include <thread>
 
-#include "bid_ask_interface.h"
+#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
 #include "client_list.h"
 #include "command_queue.h"
 
@@ -20,12 +20,14 @@ public:
     /// @brief Конструктор.
     /// @param clients Реестр подключённых TCP-клиентов (интерфейс IClientList).
     /// @param io_ Ссылка на io_context для распараллеливания задач
-    Broadcaster(IClientList& clients, boost::asio::io_context& io) : clients_(clients), io_(io) {}
+    Broadcaster(IClientList &clients, boost::asio::io_context &io) : clients_(clients), io_(io) {
+    }
 
     /// @brief Деструктор — останавливает поток при уничтожении.
     ~Broadcaster() {
         stop();
     }
+
     /// @brief Добавляет команду в очередь. Вызывается из других потоков.
     void enqueue(std::unique_ptr<BroadcastCommand> cmd) {
         queue_.push(std::move(cmd));
@@ -82,13 +84,13 @@ private:
     /// @brief Отправляет snapshot конкретному клиенту.
     /// @param id Идентификатор сессии клиента.
     void handle_send_snapshot_to(SessionId id, common::Snapshot s) {
-        std::vector<char> bytes = s.Serialize();
+        std::vector<char> bytes = s.serialize();
         clients_.broadcast_to_certain(id, bytes);
     }
 
     /// @brief Отправляет snapshot всем подключённым клиентам.
     void handle_send_snapshot_all(common::Snapshot s) {
-        std::vector<char> bytes = s.Serialize();
+        std::vector<char> bytes = s.serialize();
         clients_.broadcast_to_subscribed(bytes);
     }
 
@@ -99,9 +101,9 @@ private:
     }
 
 private:
-    IClientList& clients_;              ///< Интерфейс реестра клиентов.
-    boost::asio::io_context& io_;       ///< ссылка на io_context для распараллеливания
-    CommandQueue queue_;                ///< MPSC-очередь команд.
-    std::thread thread_;                ///< Рабочий поток broadcaster'а.
-    std::atomic<bool> running_{false};  ///< Флаг работы потока.
+    IClientList &clients_; ///< Интерфейс реестра клиентов.
+    boost::asio::io_context &io_; ///< ссылка на io_context для распараллеливания
+    CommandQueue queue_; ///< MPSC-очередь команд.
+    std::thread thread_; ///< Рабочий поток broadcaster'а.
+    std::atomic<bool> running_{false}; ///< Флаг работы потока.
 };
