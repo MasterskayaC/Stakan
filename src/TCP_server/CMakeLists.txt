@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.11)
 
 set(SESSION_FILES
-    include/session.h
-    src/session.cpp
+        session.h
+        session.cpp
 )
 
 set(TCPSERVER_FILES
-    include/tcpserver.h
-    src/tcpserver.cpp
+        tcpserver.h
+        tcpserver.cpp
 )
 
 add_library(TCPServer STATIC ${TCPSERVER_FILES} ${SESSION_FILES})
