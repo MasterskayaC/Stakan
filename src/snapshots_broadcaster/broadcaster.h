@@ -101,9 +101,9 @@ private:
     }
 
 private:
-    IClientList &clients_; ///< Интерфейс реестра клиентов.
-    boost::asio::io_context &io_; ///< ссылка на io_context для распараллеливания
-    CommandQueue queue_; ///< MPSC-очередь команд.
-    std::thread thread_; ///< Рабочий поток broadcaster'а.
-    std::atomic<bool> running_{false}; ///< Флаг работы потока.
+    IClientList& clients_;              ///< Интерфейс реестра клиентов.
+    boost::asio::io_context& io_;       ///< ссылка на io_context для распараллеливания
+    CommandQueue queue_;                ///< MPSC-очередь команд.
+    std::thread thread_;                ///< Рабочий поток broadcaster'а.
+    std::atomic<bool> running_{false};  ///< Флаг работы потока.
 };
