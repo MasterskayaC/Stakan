@@ -27,6 +27,12 @@ public:
         cc_.on_snapshot(snapshot);
     }
 
+    void OnMarketDataUpdate(const common::MDUpdate& update) override {
+        if (cc_.on_md_update) {
+            cc_.on_md_update(update);
+        }
+    }
+
     void OnError(std::string_view message) override {
         cc_.on_error(ConnectionState::Error, message);
     };
