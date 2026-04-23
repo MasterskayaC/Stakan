@@ -34,11 +34,11 @@ struct Order {
     double get_price() const;
 };
 
-double Order::get_price() const {
+inline double Order::get_price() const {
     return static_cast<double>(price) / PRICE_DELIMETER;
 }
 
-bool operator==(const Order& lhs, const Order& rhs) {
+inline bool operator==(const Order& lhs, const Order& rhs) {
     return lhs.id == rhs.id && lhs.price == rhs.price && lhs.quantity == rhs.quantity;
 }
 
@@ -114,7 +114,7 @@ struct MDUpdate {
     }
 };
 
-std::vector<char> Snapshot::serialize() const {
+inline std::vector<char> Snapshot::serialize() const {
     size_t size = sizeof(Snapshot) + kByteForMsgType;
     std::vector<char> buffer(size);
     buffer[kPtrForMsgType] = static_cast<char>(MessageType::SNAPSHOT);
@@ -126,7 +126,7 @@ std::vector<char> Snapshot::serialize() const {
     return buffer;
 }
 
-Snapshot Snapshot::deserialize(const std::vector<char>& data) {
+inline Snapshot Snapshot::deserialize(const std::vector<char>& data) {
     if (data.size() != sizeof(Snapshot) + kByteForMsgType) {
         throw std::runtime_error("Deserialization error: incorrect data size");
     }
@@ -137,7 +137,7 @@ Snapshot Snapshot::deserialize(const std::vector<char>& data) {
     return result;
 }
 
-std::string to_string(const Snapshot& snapshot) {
+inline std::string to_string(const Snapshot& snapshot) {
     if (snapshot.topBids[0].id == 0 && snapshot.topAsks[0].id == 0)
         return "";
     std::string result = "Top Bids:\n";
@@ -155,7 +155,22 @@ std::string to_string(const Snapshot& snapshot) {
     return result;
 }
 
-std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, topN>& arr) {
+inline std::string to_string(const MDUpdate& md_update) {
+    if (md_update.best_ask_price == 0 && md_update.best_bid_price == 0)
+        return "";
+    std::string result = std::format("Best bid price: {}\n"
+        "Bid items by this price: {}\n"
+        "Beset ask price: {}\n"
+        "Ask items by this price: {}\n",
+        md_update.best_bid_price,
+        md_update.best_bid_qty,
+        md_update.best_ask_price,
+        md_update.best_ask_qty
+        );
+    return result;
+}
+
+inline std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, topN>& arr) {
     std::array<double, topN> result;
     for (size_t i = 0; i < topN; i++) {
         result[i] = arr[i].get_price();
@@ -163,15 +178,15 @@ std::array<double, topN> Snapshot::get_prices(const std::array<common::Order, to
     return result;
 }
 
-std::array<double, topN> Snapshot::get_bid_prices() const {
+inline std::array<double, topN> Snapshot::get_bid_prices() const {
     return get_prices(topBids);
 }
 
-std::array<double, topN> Snapshot::get_ask_prices() const {
+inline std::array<double, topN> Snapshot::get_ask_prices() const {
     return get_prices(topAsks);
 }
 
-bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
+inline bool operator==(const Snapshot& lhs, const Snapshot& rhs) {
     return lhs.topBids == rhs.topBids && lhs.topAsks == rhs.topAsks;
 }
 }  // namespace common
