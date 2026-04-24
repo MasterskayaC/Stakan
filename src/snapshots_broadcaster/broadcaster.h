@@ -5,9 +5,9 @@
 #include <optional>
 #include <thread>
 
-#include "bid_ask_interface.h"
-#include "client_list.h"
-#include "command_queue.h"
+#include "../../bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "../client_list/client_list.h"
+#include "../snapshots_broadcaster/command_queue.h"
 
 // Forward declarations — реализация в других модулях
 
@@ -68,7 +68,7 @@ private:
                     break;
                 case CommandType::SendMDUpdate:
                     boost::asio::post(io_, [this, cmd = std::move(cmd)] {
-                        handle_send_md_update();
+                        handle_send_md_update(cmd->get_data<common::MDUpdate>()->get());
                     });
                     break;
                 default:
@@ -82,20 +82,20 @@ private:
     /// @brief Отправляет snapshot конкретному клиенту.
     /// @param id Идентификатор сессии клиента.
     void handle_send_snapshot_to(SessionId id, common::Snapshot s) {
-        std::vector<char> bytes = s.Serialize();
+        std::vector<char> bytes = s.serialize();
         clients_.broadcast_to_certain(id, bytes);
     }
 
     /// @brief Отправляет snapshot всем подключённым клиентам.
     void handle_send_snapshot_all(common::Snapshot s) {
-        std::vector<char> bytes = s.Serialize();
+        std::vector<char> bytes = s.serialize();
         clients_.broadcast_to_subscribed(bytes);
     }
 
     /// @brief Отправляет MD Update всем подключённым клиентам.
-    void handle_send_md_update() {
-        // заглушка
-        return;
+    void handle_send_md_update(common::MDUpdate u) {
+        std::vector<char> bytes = u.serialize();
+        clients_.broadcast_to_subscribed(bytes);
     }
 
 private:
