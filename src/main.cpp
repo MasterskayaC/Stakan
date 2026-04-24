@@ -36,6 +36,15 @@ namespace {
             std::cout << "========================\n";
         }
 
+        void OnMarketDataUpdate(const common::MDUpdate& update) override {
+            std::cout << "*** MD update received ***\n"
+                      << "Best bid: Price=" << update.best_bid_price
+                      << " Qty=" << update.best_bid_qty << '\n'
+                      << "Best ask: Price=" << update.best_ask_price
+                      << " Qty=" << update.best_ask_qty << '\n'
+                      << "**************************\n";
+        }
+
         void OnError(std::string_view message) override {
             std::cerr << "Error: " << message << '\n';
         }

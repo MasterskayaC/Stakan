@@ -2,15 +2,56 @@
 #include "../../bid_ask_snaphot_interface/bid_ask_interface.h"
 
 #include <boost/asio.hpp>
+#include <cstring>
+#include <format>
+#include <stdexcept>
 #include <thread>
 #include <vector>
-#include <cstring>
 
-#include ".././bid_ask_book/src/logger.hpp"
+#include "bid_ask_book/logger.h"
 
 namespace tcp_client {
 
 using boost::asio::ip::tcp;
+
+namespace {
+
+constexpr std::uint8_t kSnapshotMessageType = 0;
+constexpr std::uint8_t kMdUpdateMessageType = 1;
+
+std::vector<char> ToCharBuffer(const std::vector<std::uint8_t>& data) {
+    return {data.begin(), data.end()};
+}
+
+void DispatchPayload(const std::vector<std::uint8_t>& data, IClientCallbacks* callbacks) {
+    if (data.empty()) {
+        throw std::runtime_error("Received empty payload");
+    }
+
+    const auto message_type = data[common::kPtrForMsgType];
+    const auto payload = ToCharBuffer(data);
+
+    switch (message_type) {
+        case kSnapshotMessageType: {
+            const auto snapshot = common::Snapshot::deserialize(payload);
+            if (callbacks) {
+                callbacks->OnTopOfBook(snapshot);
+            }
+            return;
+        }
+        case kMdUpdateMessageType: {
+            const auto update = common::MDUpdate::deserialize(payload);
+            if (callbacks) {
+                callbacks->OnMarketDataUpdate(update);
+            }
+            return;
+        }
+        default:
+            throw std::runtime_error(std::format("Unknown payload type: {}", static_cast<unsigned>(message_type)));
+    }
+}
+
+}  // namespace
 
 struct TcpClient::Impl {
     explicit Impl(ClientConfig cfg, IClientCallbacks* cb)
@@ -49,31 +90,24 @@ bool TcpClient::Connect() const {
 
         if (impl_->callbacks) impl_->callbacks->OnConnected();
 
-        // Фоновый поток для чтения снепшотов
         impl_->io_thread = std::thread([this]() {
             try {
                 while (impl_->connected) {
-                    // сначала читаем размер снапшота
                     std::vector<uint8_t> size_buf(sizeof(uint32_t));
                     boost::asio::read(impl_->socket, boost::asio::buffer(size_buf));
 
-                    uint32_t snapshot_size;
-                    std::memcpy(&snapshot_size, size_buf.data(), sizeof(snapshot_size));
-                    snapshot_size = ntohl(snapshot_size); // если сервер отправляет в network order
+                    uint32_t payload_size;
+                    std::memcpy(&payload_size, size_buf.data(), sizeof(payload_size));
+                    payload_size = ntohl(payload_size);
 
-                    // Читаем бинарный снапшот
-                    std::vector<uint8_t> data(snapshot_size);
+                    std::vector<uint8_t> data(payload_size);
                     boost::asio::read(impl_->socket, boost::asio::buffer(data));
 
-                    // Десериализация и вызов колбэка
-                    common::Snapshot snapshot = common::DeserializeSnapshot(data);
-                    if (impl_->callbacks) {
-                        impl_->callbacks->OnTopOfBook(snapshot);
-                    }
+                    DispatchPayload(data, impl_->callbacks);
                 }
             } catch (const std::exception& e) {
                 server::Logger::Log(server::LogLevel::Error,
-                                    std::format("Snapshot read error: {}", e.what()));
+                                    std::format("Payload read error: {}", e.what()));
                 impl_->connected = false;
                 if (impl_->callbacks) impl_->callbacks->OnDisconnected();
             }
@@ -89,13 +123,12 @@ bool TcpClient::Connect() const {
     }
 }
 
-    void TcpClient::Disconnect() const {
+void TcpClient::Disconnect() const {
     if (!impl_->connected) return;
 
     try {
         impl_->connected = false;
 
-        // закрываем сокет
         boost::system::error_code ec;
         impl_->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
         if (ec) {
@@ -108,7 +141,6 @@ bool TcpClient::Connect() const {
                                 std::format("Socket close warning: {}", ec.message()));
         }
 
-        // Ждём завершения фонового потока
         if (impl_->io_thread.joinable()) {
             impl_->io_thread.join();
         }
@@ -127,7 +159,6 @@ bool TcpClient::Connect() const {
     }
 }
 
-    // !draft!
 bool TcpClient::Subscribe(std::string symbol) const {
     if (!impl_->connected) return false;
     try {
@@ -160,4 +191,4 @@ bool TcpClient::IsConnected() const {
     return impl_->connected;
 }
 
-} // namespace tcp_client
+}  // namespace tcp_client

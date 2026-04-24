@@ -5,7 +5,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <tcp_client/client.hpp>
+#include "../include/tcp_client/client.hpp"
+//#include <tcp_client/client.hpp>
 
 namespace client_lib {
 
@@ -30,6 +31,7 @@ struct ClientCallbacks final {
 
     /// Вызывается при получении обновления Snapshot.
     std::function<void(const common::Snapshot&)> on_snapshot;
+    std::function<void(const common::MDUpdate&)> on_md_update;
 
     /**
      * @brief Вызывается при возникновении ошибки.

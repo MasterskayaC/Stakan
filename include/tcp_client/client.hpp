@@ -30,6 +30,7 @@ namespace tcp_client {
         virtual void OnDisconnected() = 0;
         // Вызывается при обновлении снапшота топ-бид/аск.
         virtual void OnTopOfBook(const common::Snapshot& snapshot) = 0;
+        virtual void OnMarketDataUpdate(const common::MDUpdate& update) = 0;
         // Вызывается при ошибках транспорта/протокола.
         virtual void OnError(std::string_view message) = 0;
     };
