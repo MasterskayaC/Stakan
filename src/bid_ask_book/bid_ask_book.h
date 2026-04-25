@@ -16,7 +16,7 @@
 
 namespace server {
 
-/// РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РІРѕР·РІСЂР°С‚Р° РёР· С„СѓРЅРєС†РёРё РїРѕРёСЃРєР° Р·Р°СЏРІРѕРє РїРѕ С†РµРЅРµ
+/// Структура для результата поиска заявок по уровню цены.
 struct PricesInfo {
     std::vector<common::ID> ids_{};
     common::Quantity quantity_ = 0;
@@ -27,8 +27,8 @@ public:
     explicit OrderBook(bool enable_snapshot_feed = false);
     ~OrderBook();
 
-    // TODO: РћСЃС‚Р°РІРёС‚СЊ РїСѓР±Р»РёС‡РЅС‹РјРё РїР°СЂРЅС‹Рµ РјРµС‚РѕРґС‹ Bid/Ask, Р° РѕР±С‰СѓСЋ Р»РѕРіРёРєСѓ РґРѕР±Р°РІР»РµРЅРёСЏ,
-    // РѕС‚РјРµРЅС‹ Рё Р·Р°РјРµРЅС‹ РѕСЂРґРµСЂРѕРІ РІС‹РЅРµСЃС‚Рё РІ РїСЂРёРІР°С‚РЅС‹Рµ РјРµС‚РѕРґС‹
+    // TODO: оставить публичными парные методы Bid/Ask, а общую логику
+    // добавления, отмены и замены ордеров вынести в приватные методы.
 
     void NewBid(common::Order order);
     void NewAsk(common::Order order);
@@ -92,7 +92,7 @@ private:
     std::mutex snapshot_feed_mutex_;
     std::condition_variable snapshot_feed_cv_;
 
-    // РјСЊСЋС‚РµРєСЃС‹ РґР»СЏ РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё
+    // Мьютексы для потокобезопасного доступа к контейнерам bid/ask.
     mutable std::shared_mutex bids_mutex_;
     mutable std::shared_mutex asks_mutex_;
 };

@@ -239,11 +239,11 @@ inline std::optional<common::MDUpdate> OrderBook::GenerateMDUpdate() const {
 }
 
 /**
- * @brief шаблонная функция для поиска по цене
- * @param container контейнер bids_ или asks_
- * @param price цена
- * @param message текст ошибки
- * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ * @brief Шаблонная функция для агрегации заявок по уровню цены.
+ * @param container Контейнер bids_ или asks_.
+ * @param price Цена, по которой выполняется поиск.
+ * @param message Текст предупреждения для случая пустого контейнера.
+ * @return Структура с id найденных заявок и их суммарным количеством.
  */
 template <typename Container>
 inline PricesInfo GetContainerPrice(const Container& container, common::Price price, std::string message) {
@@ -262,9 +262,9 @@ inline PricesInfo GetContainerPrice(const Container& container, common::Price pr
 }
 
 /**
- * @brief реализация функции поиска бидов по цене для класса OrderBook
- * @param price цена
- * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ * @brief Возвращает агрегированную информацию по bid-заявкам на заданной цене.
+ * @param price Цена, по которой выполняется поиск.
+ * @return Структура с id найденных bid-заявок и их суммарным количеством.
  */
 inline PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
     std::shared_lock lock(bids_mutex_);
@@ -272,9 +272,9 @@ inline PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
 }
 
 /**
- * @brief реализация функции поиска асков по цене для класса OrderBook
- * @param price цена
- * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
+ * @brief Возвращает агрегированную информацию по ask-заявкам на заданной цене.
+ * @param price Цена, по которой выполняется поиск.
+ * @return Структура с id найденных ask-заявок и их суммарным количеством.
  */
 inline PricesInfo OrderBook::GetPricesAsksInfo(common::Price price) const {
     std::shared_lock lock(asks_mutex_);
