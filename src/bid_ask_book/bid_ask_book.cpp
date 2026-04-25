@@ -4,8 +4,9 @@
 
 using namespace server;
 using namespace common;
-
 namespace {
+constexpr auto kSnapshotFeedInterval = std::chrono::milliseconds(50);
+
 bool Validate(const Order& order, const char* operation) {
     if (order.price == 0 || order.quantity == 0) {
         Logger::Log(LogLevel::Error, std::format("{}: Invalid order, id = {}", operation, order.id));
@@ -16,7 +17,48 @@ bool Validate(const Order& order, const char* operation) {
 }
 }  // namespace
 
-void OrderBook::NewBid(Order order) {
+OrderBook::OrderBook(bool enable_snapshot_feed) : snapshot_feed_enabled_(enable_snapshot_feed) {
+    if (snapshot_feed_enabled_) {
+        StartSnapshotFeed();
+    }
+}
+
+OrderBook::~OrderBook() {
+    StopSnapshotFeed();
+}
+
+void OrderBook::StartSnapshotFeed() {
+    if (snapshot_feed_running_.exchange(true)) {
+        return;
+    }
+
+    snapshot_feed_thread_ = std::thread(&OrderBook::SnapshotFeedLoop, this);
+}
+
+void OrderBook::StopSnapshotFeed() {
+    if (!snapshot_feed_running_.exchange(false)) {
+        return;
+    }
+
+    snapshot_feed_cv_.notify_all();
+    if (snapshot_feed_thread_.joinable()) {
+        snapshot_feed_thread_.join();
+    }
+}
+
+void OrderBook::SnapshotFeedLoop() {
+    while (snapshot_feed_running_) {
+        NewBid(snapshot_source_->GetNewBid());
+        NewAsk(snapshot_source_->GetNewAsk());
+
+        std::unique_lock lock(snapshot_feed_mutex_);
+        snapshot_feed_cv_.wait_for(lock, kSnapshotFeedInterval, [this] {
+            return !snapshot_feed_running_.load();
+        });
+    }
+}
+
+inline void OrderBook::NewBid(Order order) {
     if (!Validate(order, "NewBid")) {
         return;
     }
@@ -31,7 +73,7 @@ void OrderBook::NewBid(Order order) {
     }
 }
 
-void OrderBook::NewAsk(Order order) {
+inline void OrderBook::NewAsk(Order order) {
     if (!Validate(order, "NewAsk")) {
         return;
     }
@@ -46,7 +88,7 @@ void OrderBook::NewAsk(Order order) {
     }
 }
 
-void OrderBook::CancelBid(ID order_id) {
+inline void OrderBook::CancelBid(ID order_id) {
     std::unique_lock lock(bids_mutex_);
 
     auto& index = bids_.get<1>();
@@ -59,7 +101,7 @@ void OrderBook::CancelBid(ID order_id) {
     }
 }
 
-void OrderBook::CancelAsk(ID order_id) {
+inline void OrderBook::CancelAsk(ID order_id) {
     std::unique_lock lock(asks_mutex_);
 
     auto& index = asks_.get<1>();
@@ -72,7 +114,7 @@ void OrderBook::CancelAsk(ID order_id) {
     }
 }
 
-void OrderBook::ReplaceBid(Order old_order, Order new_order) {
+inline void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     if (new_order.price == 0 || new_order.quantity == 0) {
         Logger::Log(LogLevel::Error, std::format("ReplaceBid: Invalid order, id = {}", new_order.id));
         return;
@@ -100,7 +142,7 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     }
 }
 
-void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
+inline void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     if (new_order.price == 0 || new_order.quantity == 0) {
         Logger::Log(LogLevel::Error, std::format("ReplaceAsk: Invalid order, id = {}", new_order.id));
         return;
@@ -128,42 +170,33 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     }
 }
 
-Snapshot OrderBook::GetTopSnapshot() const {
-    // Snapshot snapshot{};
-    //
-    // std::scoped_lock lock(bids_mutex_, asks_mutex_);
-    //
-    // const auto& bid_index = bids_.get<0>();
-    // if (bid_index.empty()) {
-    //     Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Bids available");
-    // } else if (bid_index.size() < topN) {
-    //     Logger::Log(LogLevel::Warning,
-    //         std::format("GetTopSnapshot: not enough Bids, {} available", bid_index.size()));
-    // }
-    // size_t count = 0;
-    // for (const auto& bid : bid_index) {
-    //     if (count >= topN) break;
-    //     snapshot.topBids[count++] = bid;
-    // }
-    //
-    // const auto& ask_index = asks_.get<0>();
-    // if (ask_index.empty()) {
-    //     Logger::Log(LogLevel::Warning, "GetTopSnapshot: No Asks available");
-    // } else if (ask_index.size() < topN) {
-    //     Logger::Log(LogLevel::Warning,
-    //         std::format("GetTopSnapshot: not enough Asks, {} available", ask_index.size()));
-    // }
-    // count = 0;
-    // for (const auto& ask : ask_index) {
-    //     if (count >= topN) break;
-    //     snapshot.topAsks[count++] = ask;
-    // }
-    //
-    // return snapshot;
-    return *snapshot_source_->get_snapshot();
+inline Snapshot OrderBook::GetTopSnapshot() const {
+    Snapshot snapshot{};
+    std::shared_lock bids_lock(bids_mutex_);
+    std::shared_lock asks_lock(asks_mutex_);
+
+    const auto& bid_index = bids_.get<0>();
+    size_t count = 0;
+    for (const auto& bid : bid_index) {
+        if (count >= topN) {
+            break;
+        }
+        snapshot.topBids[count++] = bid;
+    }
+
+    const auto& ask_index = asks_.get<0>();
+    count = 0;
+    for (const auto& ask : ask_index) {
+        if (count >= topN) {
+            break;
+        }
+        snapshot.topAsks[count++] = ask;
+    }
+
+    return snapshot;
 }
 
-Order OrderBook::BestBid() const {
+inline Order OrderBook::BestBid() const {
     std::shared_lock lock(bids_mutex_);
 
     if (bids_.empty()) {
@@ -174,7 +207,7 @@ Order OrderBook::BestBid() const {
     return *bid_index.begin();
 }
 
-Order OrderBook::BestAsk() const {
+inline Order OrderBook::BestAsk() const {
     std::shared_lock lock(asks_mutex_);
 
     if (asks_.empty()) {
@@ -185,6 +218,26 @@ Order OrderBook::BestAsk() const {
     return *ask_index.begin();
 }
 
+inline std::optional<common::MDUpdate> OrderBook::GenerateMDUpdate() const {
+    common::Order kEmptyOrder(0, 0, 0);
+
+    Order best_bid = BestBid();
+    Order best_ask = BestAsk();
+
+    if (best_bid == kEmptyOrder && best_ask == kEmptyOrder) {
+        Logger::Log(LogLevel::Warning, "OrderBook: is empty");
+        return std::nullopt;
+    }
+
+    PricesInfo best_bid_price_info = GetPricesBidsInfo(best_bid.price);
+    PricesInfo best_ask_price_info = GetPricesAsksInfo(best_ask.price);
+
+    return common::MDUpdate{.best_bid_price = best_bid.price,
+                            .best_bid_qty = best_bid_price_info.quantity_,
+                            .best_ask_price = best_ask.price,
+                            .best_ask_qty = best_ask_price_info.quantity_};
+}
+
 /**
  * @brief шаблонная функция для поиска по цене
  * @param container контейнер bids_ или asks_
@@ -193,7 +246,7 @@ Order OrderBook::BestAsk() const {
  * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
  */
 template <typename Container>
-PricesInfo GetContainerPrice(const Container& container, common::Price price, std::string message) {
+inline PricesInfo GetContainerPrice(const Container& container, common::Price price, std::string message) {
     if (container.empty()) {
         Logger::Log(LogLevel::Warning, message);
         return {};
@@ -213,7 +266,7 @@ PricesInfo GetContainerPrice(const Container& container, common::Price price, st
  * @param price цена
  * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
  */
-PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
+inline PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
     std::shared_lock lock(bids_mutex_);
     return GetContainerPrice<BidContainer>(bids_, price, "Not bids for this price");
 }
@@ -223,7 +276,7 @@ PricesInfo OrderBook::GetPricesBidsInfo(common::Price price) const {
  * @param price цена
  * @return объект PricesInfo с контейнером IDs объект по этой цене и количество этих объектов
  */
-PricesInfo OrderBook::GetPricesAsksInfo(common::Price price) const {
+inline PricesInfo OrderBook::GetPricesAsksInfo(common::Price price) const {
     std::shared_lock lock(asks_mutex_);
     return GetContainerPrice<AskContainer>(asks_, price, "Not asks for this price");
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 
-#include "../bid_ask_book/src/bid_ask_book.h"
+#include "bid_ask_book.h"
 #include "dom_manager.h"
 
 int main() {
@@ -11,7 +11,7 @@ int main() {
     boost::asio::io_context io_context;
     int num_of_snapshots = 5;
     bool is_random = false;
-    std::unique_ptr<server::OrderBook> order_book = std::make_unique<server::OrderBook>();
+    std::unique_ptr<server::OrderBook> order_book = std::make_unique<server::OrderBook>(true);
     std::unique_ptr<IClientList> client_list = makeClientList();
     server::DOMManager dom(io_context, *client_list, std::move(order_book));
 
