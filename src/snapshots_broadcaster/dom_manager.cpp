@@ -32,6 +32,7 @@ void DOMManager::operator()(Command cmd) {
     });
 }
 
+
 void DOMManager::start_broadcasting(int interval_ms, bool use_test_broadcast) {
     if (broadcasting_) {
         return;
@@ -49,24 +50,33 @@ void DOMManager::schedule_next_broadcast(int interval_ms, bool use_test_broadcas
     if (!broadcasting_) {
         return;
     }
+
     broadcast_timer_.expires_after(std::chrono::milliseconds(interval_ms));
-    broadcast_timer_.async_wait([this, interval_ms, use_test_broadcast](const boost::system::error_code& ec) {
-        if (ec || !broadcasting_) {
-            return;
-        }
-        try {
-            send_snapshot(use_test_broadcast);
-            schedule_next_broadcast(interval_ms, use_test_broadcast);
-        } catch (const std::exception& e) {
-            std::cerr << "Error during scheduled broadcast: " << e.what() << std::endl;
-            // stop_broadcasting();
-        }
-    });
+    broadcast_timer_.async_wait(
+        [this, interval_ms, use_test_broadcast](const boost::system::error_code& ec) {
+            if (ec || !broadcasting_) {
+                return;
+            }
+
+            try {
+                // MDUpdate — каждый тик
+                send_mdupdate(use_test_broadcast);
+
+                // Snapshot — редко
+                if (++tick_ % SNAPSHOT_EVERY_N_TICKS == 0) {
+                    send_snapshot(use_test_broadcast);
+                }
+
+                schedule_next_broadcast(interval_ms, use_test_broadcast);
+            } catch (const std::exception& e) {
+                std::cerr << "Error during scheduled broadcast: " << e.what() << std::endl;
+            }
+        });
 }
 
 void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetTopSnapshot();
         if (!snapshot) {
             std::cout << "there is no snapshot" << std::endl;
             return;
@@ -79,9 +89,10 @@ void DOMManager::send_snapshot_by_client_id(ClientId client_id, bool use_test_br
     }
 }
 
+
 void DOMManager::send_snapshot(bool use_test_broadcast) {
     try {
-        std::optional<common::Snapshot> snapshot = order_book_->GetSnapshot();
+        std::optional<common::Snapshot> snapshot = order_book_->GetTopSnapshot();
         if (!snapshot) {
             std::cout << "there is no snapshot" << std::endl;
             return;
@@ -118,4 +129,36 @@ void DOMManager::Handle(const StartBroadcastCmd& cmd) {
     start_broadcasting(cmd.interval_ms, cmd.use_test_broadcast);
 }
 
-}  // namespace server
+void DOMManager::send_mdupdate(bool use_test_broadcast) {
+    try {
+        std::optional<common::MDUpdate> md_update = order_book_->GenerateMDUpdate(); // Предполагаемый метод
+        if (!md_update) {
+            std::cout << "there is no md update" << std::endl;
+            return;
+        }
+        auto cmd = std::make_unique<BroadcastMDUpdateCommand>(std::move(*md_update));
+        broadcaster_->enqueue(std::move(cmd));
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to send md update: " << e.what() << std::endl;
+    }
+}
+
+void DOMManager::send_mdupdate_by_client_id(ClientId client_id, bool use_test_broadcast) {
+    try {
+        std::optional<common::MDUpdate> md_update = order_book_->GenerateMDUpdate();
+        if (!md_update) {
+            std::cout << "there is no md update for client " << client_id << std::endl;
+            return;
+        }
+        auto cmd = std::make_unique<BroadcastMDUpdateCommand>(client_id, std::move(*md_update));
+        broadcaster_->enqueue(std::move(cmd));
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to send md update to client " << client_id << ": " << e.what() << std::endl;
+    }
+}
+
+void DOMManager::Handle(const SendMDUpdateToClientCmd& cmd) {
+    send_mdupdate_by_client_id(cmd.client_id, cmd.use_test_broadcast);
+}
+   
+}
