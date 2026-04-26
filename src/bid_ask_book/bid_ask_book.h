@@ -5,15 +5,18 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <shared_mutex>
+#include <thread>
 
-#include "../bid_ask_snaphot_interface/bid_ask_interface.h"
+#include "bid_ask_interface.h"
 #include "../snapshots_broadcaster/snapshot_source.h"
 #include "logger.h"
 
 namespace server {
 
-/// Структура для возврата из функции поиска заявок по цене
+/// Структура для результата поиска заявок по уровню цены.
 struct PricesInfo {
     std::vector<common::ID> ids_{};
     common::Quantity quantity_ = 0;
@@ -21,8 +24,11 @@ struct PricesInfo {
 
 class OrderBook {
 public:
-    // TODO: Оставить публичными парные методы Bid/Ask, а общую логику добавления,
-    // отмены и замены ордеров вынести в приватные методы
+    explicit OrderBook(bool enable_snapshot_feed = false);
+    ~OrderBook();
+
+    // TODO: оставить публичными парные методы Bid/Ask, а общую логику
+    // добавления, отмены и замены ордеров вынести в приватные методы.
 
     void NewBid(common::Order order);
     void NewAsk(common::Order order);
@@ -38,8 +44,13 @@ public:
 
     [[nodiscard]] common::Order BestBid() const;
     [[nodiscard]] common::Order BestAsk() const;
+    [[nodiscard]] std::optional<common::MDUpdate> GenerateMDUpdate() const;
 
 private:
+    void StartSnapshotFeed();
+    void StopSnapshotFeed();
+    void SnapshotFeedLoop();
+
     struct BidComparator {
         bool operator()(const common::Order& a, const common::Order& b) const {
             return a.price > b.price || (a.price == b.price && a.quantity > b.quantity) ||
@@ -75,8 +86,13 @@ private:
     AskContainer asks_;
 
     const std::unique_ptr<ISnapshotSource> snapshot_source_ = makeTmpSnapshotCreator();
+    const bool snapshot_feed_enabled_ = false;
+    std::atomic<bool> snapshot_feed_running_{false};
+    std::thread snapshot_feed_thread_;
+    std::mutex snapshot_feed_mutex_;
+    std::condition_variable snapshot_feed_cv_;
 
-    // мьютексы для потокобезопасности
+    // Мьютексы для потокобезопасного доступа к контейнерам bid/ask.
     mutable std::shared_mutex bids_mutex_;
     mutable std::shared_mutex asks_mutex_;
 };
