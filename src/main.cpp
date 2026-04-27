@@ -21,18 +21,13 @@ namespace {
 
         void OnTopOfBook(const common::Snapshot& snapshot) override {
             std::cout << "=== Snapshot received ===\n";
-            for (size_t i = 0; i < common::topN; ++i) {
-                const auto& bid = snapshot.topBids[i];
-                const auto& ask = snapshot.topAsks[i];
-                if (bid.id != 0) {
-                    std::cout << "Bid:  Price=" << bid.price
-                              << " Qty=" << bid.quantity << '\n';
-                }
-                if (ask.id != 0) {
-                    std::cout << "Ask:  Price=" << ask.price
-                              << " Qty=" << ask.quantity << '\n';
-                }
-            }
+            common::to_string(snapshot);
+            std::cout << "========================\n";
+        }
+
+        void OnMDUpdate(const common::MDUpdate& md_update) override {
+            std::cout << "=== MDUpdate received ===\n";
+            common::to_string(md_update);
             std::cout << "========================\n";
         }
 

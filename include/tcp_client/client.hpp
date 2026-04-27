@@ -30,6 +30,8 @@ namespace tcp_client {
         virtual void OnDisconnected() = 0;
         // Вызывается при обновлении снапшота топ-бид/аск.
         virtual void OnTopOfBook(const common::Snapshot& snapshot) = 0;
+        // Вызывается при получении md_update
+        virtual void OnMDUpdate(const common::MDUpdate& md_update) = 0;
         // Вызывается при ошибках транспорта/протокола.
         virtual void OnError(std::string_view message) = 0;
     };
@@ -57,6 +59,9 @@ namespace tcp_client {
 
         // Возвращает состояние подключения.
         bool IsConnected() const;
+
+        // Обработка полученного сообщения
+        void ProcessMessage(common::MessageType type) const;
 
     private:
         struct Impl;

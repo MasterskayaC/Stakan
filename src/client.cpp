@@ -53,23 +53,10 @@ bool TcpClient::Connect() const {
         impl_->io_thread = std::thread([this]() {
             try {
                 while (impl_->connected) {
-                    // сначала читаем размер снапшота
-                    std::vector<uint8_t> size_buf(sizeof(uint32_t));
-                    boost::asio::read(impl_->socket, boost::asio::buffer(size_buf));
-
-                    uint32_t snapshot_size;
-                    std::memcpy(&snapshot_size, size_buf.data(), sizeof(snapshot_size));
-                    snapshot_size = ntohl(snapshot_size); // если сервер отправляет в network order
-
-                    // Читаем бинарный снапшот
-                    std::vector<uint8_t> data(snapshot_size);
-                    boost::asio::read(impl_->socket, boost::asio::buffer(data));
-
-                    // Десериализация и вызов колбэка
-                    common::Snapshot snapshot = common::DeserializeSnapshot(data);
-                    if (impl_->callbacks) {
-                        impl_->callbacks->OnTopOfBook(snapshot);
-                    }
+                    std::vector<uint8_t> type_buf(1);
+                    boost::asio::read(impl_->socket, boost::asio::buffer(type_buf));
+                    common::MessageType type = static_cast<common::MessageType>(type_buf[0]);
+                    ProcessMessage(type);
                 }
             } catch (const std::exception& e) {
                 server::Logger::Log(server::LogLevel::Error,
@@ -158,6 +145,34 @@ bool TcpClient::Unsubscribe(std::string symbol) const {
 
 bool TcpClient::IsConnected() const {
     return impl_->connected;
+}
+
+void TcpClient::ProcessMessage(common::MessageType type) const {
+    switch (type) {
+        case common::MessageType::SNAPSHOT: {
+            std::vector<char> data(sizeof(common::Snapshot));
+            boost::asio::read(impl_->socket, boost::asio::buffer(data));
+            common::Snapshot snapshot = common::Snapshot::deserialize(data);
+            if (impl_->callbacks) {
+                impl_->callbacks->OnTopOfBook(snapshot);
+            }
+            break;
+        }
+        case common::MessageType::MD_UPDATE: {
+            std::vector<char> data(sizeof(common::MDUpdate));
+            boost::asio::read(impl_->socket, boost::asio::buffer(data));
+
+            common::MDUpdate md_update = common::MDUpdate::deserialize(data);
+            if (impl_->callbacks) {
+                impl_->callbacks->OnMDUpdate(md_update);
+            }
+            break;
+        }
+        default: {
+            throw std::runtime_error("Failed to read message type");
+            break;
+        }
+    }
 }
 
 } // namespace tcp_client
