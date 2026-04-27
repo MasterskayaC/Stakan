@@ -23,7 +23,7 @@ struct RemoveOrderCmd {
     bool is_bid = true;
 };
 struct StartBroadcastCmd {
-    int interval_ms;
+    int64_t interval_ms;
     bool use_test_broadcast = true;
 };
 struct StopBroadcastCmd {};
@@ -69,7 +69,7 @@ public:
     
 
 private:
-    int tick_ = 0;
+    int64_t tick_ = 0;
     static constexpr int SNAPSHOT_EVERY_N_TICKS = 10; 
     IClientList& client_list_;  ///< connected clients
     std::unique_ptr<OrderBook> order_book_;
@@ -87,7 +87,7 @@ private:
      * @param use_test_broadcast If true, uses test snapshots from
      * TmpSnapshotCreator; otherwise uses the order book snapshots
      */
-    void start_broadcasting(int interval_ms = DEFAULT_INTERVAL, bool use_test_broadcast = true);
+    void start_broadcasting(int64_t interval_ms = DEFAULT_INTERVAL, bool use_test_broadcast = true);
 
     /**
      * @brief Stops broadcasting snapshots and cancels the timer
@@ -116,7 +116,7 @@ private:
      * @param use_test_broadcast Whether to use test snapshots
      * @todo Consider moving periodic broadcast logic to Broadcaster class
      */
-    void schedule_next_broadcast(int interval_ms,
+    void schedule_next_broadcast(int64_t interval_ms,
                                  bool use_test_broadcast);  ///< Maybe it'll move to a broadcaster
        
     void send_mdupdate(bool use_test_broadcast = false);
