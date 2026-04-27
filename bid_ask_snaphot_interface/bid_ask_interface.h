@@ -82,14 +82,10 @@ struct Snapshot {
 };
 
 struct MDUpdate {
-    Price best_price_;
-    Quantity bids_nums_;
-    Quantity bids_items_nums_;
-
-    Quantity asks_nums_;
-    Quantity askss_items_nums_;
-
-    Quantity all_orders_nums_;
+    Price best_bid_price;
+    Quantity best_bid_qty;
+    Price best_ask_price;
+    Quantity best_ask_qty;
 
     /**
      * @brief serialize MDUpdate

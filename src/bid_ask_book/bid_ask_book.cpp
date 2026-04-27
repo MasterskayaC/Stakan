@@ -1,4 +1,5 @@
 #include "bid_ask_book.h"
+
 #include <format>
 #include <mutex>
 
@@ -183,6 +184,26 @@ Order OrderBook::BestAsk() const {
     }
     const auto& ask_index = asks_.get<0>();
     return *ask_index.begin();
+}
+
+std::optional<common::MDUpdate> OrderBook::GenerateMDUpdate() const {
+    constexpr common::Order kEmptyOrder(0, 0, 0);
+
+    Order best_bid = BestBid();
+    Order best_ask = BestAsk();
+
+    if (best_bid == kEmptyOrder && best_ask == kEmptyOrder) {
+        Logger::Log(LogLevel::Warning, "OrderBook: is empty");
+        return std::nullopt;
+    }
+
+    PricesInfo best_bid_price_info = GetPricesBidsInfo(best_bid.price);
+    PricesInfo best_ask_price_info = GetPricesAsksInfo(best_ask.price);
+
+    return common::MDUpdate{.best_bid_price = best_bid.price,
+                            .best_bid_qty = best_bid_price_info.quantity_,
+                            .best_ask_price = best_ask.price,
+                            .best_ask_qty = best_ask_price_info.quantity_};
 }
 
 /**
