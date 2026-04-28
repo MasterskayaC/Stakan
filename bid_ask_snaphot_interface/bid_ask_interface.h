@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <format>
 #include <sstream>
 #include <string>
@@ -86,6 +87,9 @@ struct MDUpdate {
     Quantity best_bid_qty;
     Price best_ask_price;
     Quantity best_ask_qty;
+
+    Quantity total_bid_qty;
+    Quantity total_ask_qty;
 
     /**
      * @brief serialize MDUpdate

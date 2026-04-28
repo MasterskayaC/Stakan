@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -77,6 +78,9 @@ private:
     AskContainer asks_;
 
     const std::unique_ptr<ISnapshotSource> snapshot_source_ = makeTmpSnapshotCreator();
+
+    std::atomic<common::Quantity> total_bid_quantity_{0};
+    std::atomic<common::Quantity> total_ask_quantity_{0};
 
     // мьютексы для потокобезопасности
     mutable std::shared_mutex bids_mutex_;
