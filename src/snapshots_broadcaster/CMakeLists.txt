@@ -1,6 +1,6 @@
 add_library(snapshots_broadcaster INTERFACE
 broadcaster.h
-command_queue.h))
+command_queue.h)
 
 target_include_directories(snapshots_broadcaster
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}

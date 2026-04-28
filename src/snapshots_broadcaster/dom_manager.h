@@ -6,7 +6,7 @@
 #include <memory>
 #include <variant>
 
-#include "../bid_ask_book/src/bid_ask_book.h"
+#include "bid_ask_book.h"
 #include "broadcaster.h"
 #include "client_list.h"
 
@@ -23,7 +23,7 @@ struct RemoveOrderCmd {
     bool is_bid = true;
 };
 struct StartBroadcastCmd {
-    int interval_ms;
+    int64_t interval_ms;
     bool use_test_broadcast = true;
 };
 struct StopBroadcastCmd {};
@@ -31,9 +31,14 @@ struct SendSnapshotToClientCmd {
     ClientId client_id;
     bool use_test_broadcast;
 };
+struct SendMDUpdateToClientCmd{
+    ClientId client_id;
+    bool use_test_broadcast;
+};
 
 /// Variant type holding all possible commands that can be sent to DOMManager.
-using Command = std::variant<AddOrderCmd, RemoveOrderCmd, StartBroadcastCmd, StopBroadcastCmd, SendSnapshotToClientCmd>;
+using Command = std::variant<AddOrderCmd, RemoveOrderCmd, StartBroadcastCmd, StopBroadcastCmd, 
+                SendSnapshotToClientCmd, SendMDUpdateToClientCmd>;
 
 /**
  * @brief Manages the Depth of Market (DOM) and broadcasts snapshots to clients
@@ -61,8 +66,11 @@ public:
      * @param cmd The command to process
      */
     void operator()(Command cmd);
+    
 
 private:
+    int64_t tick_ = 0;
+    static constexpr int SNAPSHOT_EVERY_N_TICKS = 10; 
     IClientList& client_list_;  ///< connected clients
     std::unique_ptr<OrderBook> order_book_;
     std::unique_ptr<Broadcaster> broadcaster_;  ///< Component responsible for sending data to clients
@@ -79,7 +87,7 @@ private:
      * @param use_test_broadcast If true, uses test snapshots from
      * TmpSnapshotCreator; otherwise uses the order book snapshots
      */
-    void start_broadcasting(int interval_ms = DEFAULT_INTERVAL, bool use_test_broadcast = true);
+    void start_broadcasting(int64_t interval_ms = DEFAULT_INTERVAL, bool use_test_broadcast = true);
 
     /**
      * @brief Stops broadcasting snapshots and cancels the timer
@@ -91,6 +99,7 @@ private:
      * @param use_test_broadcast If true, uses test snapshots from
      * TmpSnapshotCreator; otherwise uses the order book snapshots
      */
+   
     void send_snapshot(bool use_test_broadcast = false);
 
     /**
@@ -107,15 +116,19 @@ private:
      * @param use_test_broadcast Whether to use test snapshots
      * @todo Consider moving periodic broadcast logic to Broadcaster class
      */
-    void schedule_next_broadcast(int interval_ms,
+    void schedule_next_broadcast(int64_t interval_ms,
                                  bool use_test_broadcast);  ///< Maybe it'll move to a broadcaster
-
+       
+    void send_mdupdate(bool use_test_broadcast = false);
+    
+    void send_mdupdate_by_client_id(ClientId client_id, bool use_test_broadcast = false);
     // Command handlers (called from operator() after dispatching to io_context)
     void Handle(const AddOrderCmd& cmd);              ///< Handles AddOrderCmd
     void Handle(const RemoveOrderCmd& cmd);           ///< Handles RemoveOrderCmd
     void Handle(const StopBroadcastCmd&);             ///< Handles StopBroadcastCmd
     void Handle(const SendSnapshotToClientCmd& cmd);  ///< Handles SendSnapshotToClientCmd
-    void Handle(const StartBroadcastCmd& cmd);        ///< Handles StartBroadcastCmd
+    void Handle(const StartBroadcastCmd& cmd);  ///< Handles StartBroadcastCmd
+    void Handle(const SendMDUpdateToClientCmd& cmd);      
 };
 
 }  // namespace server

@@ -12,7 +12,7 @@
 #include "bid_ask_interface.h"
 
 using SessionId = std::size_t;
-
+/*
 struct MDUpdate {  // TMP for std::variant
     enum class UpdateType : uint8_t { Add, Modify, Delete };
 
@@ -20,7 +20,7 @@ struct MDUpdate {  // TMP for std::variant
     bool is_bid = true;
     common::Order order;
 };
-
+*/
 /// @brief Типы команд — что broadcaster должен делать.
 enum class CommandType : uint8_t {
     SendSnapshot,  ///< Отправить snapshot
@@ -81,23 +81,23 @@ protected:
 
 struct BroadcastMDUpdateCommand : BroadcastCommand {
 public:
-    MDUpdate data;
+    common::MDUpdate data;
 
-    explicit BroadcastMDUpdateCommand(MDUpdate update)
+    explicit BroadcastMDUpdateCommand(common::MDUpdate update)
                         : BroadcastCommand(CommandType::SendMDUpdate)
                         , data(std::move(update))
     {}
 
-    BroadcastMDUpdateCommand(std::optional<SessionId> id, MDUpdate update)
+    BroadcastMDUpdateCommand(std::optional<SessionId> id, common::MDUpdate update)
                         : BroadcastCommand(CommandType::SendMDUpdate, id)
                         , data(std::move(update))
     {}
 
-    const MDUpdate& get_update() const { return data; }
+    const common::MDUpdate& get_update() const { return data; }
 
 protected:
     const std::type_info& get_data_type() const override {
-        return typeid(MDUpdate);
+        return typeid(common::MDUpdate);
     }
 
     const void* get_data_ptr() const override {
