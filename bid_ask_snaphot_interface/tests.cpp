@@ -105,15 +105,20 @@ TEST_CASE("Snapshot to string function") {
 TEST_CASE("MDUpdate serialization") {
     auto areEqual = [](const common::MDUpdate& lhs, const common::MDUpdate& rhs) {
         auto tieFields = [](const common::MDUpdate& mdup) {
-            return std::tie(mdup.best_bid_price, mdup.best_bid_qty, mdup.best_ask_price, mdup.best_ask_qty);
+            return std::tie(mdup.best_bid_price,
+                            mdup.best_bid_qty,
+                            mdup.best_ask_price,
+                            mdup.best_ask_qty,
+                            mdup.total_bid_qty,
+                            mdup.total_ask_qty);
         };
         return tieFields(lhs) == tieFields(rhs);
     };
 
-    auto [mdup, description] =
-        GENERATE(table<common::MDUpdate, std::string>({{{1, 2, 3, 4}, "Сonsecutive values"},
-                                                       {{0, 0, 0, 0}, "Zero values"},
-                                                       {{UINT64_MAX, 9, UINT64_MAX, 0}, "Max and mix values"}}));
+    auto [mdup, description] = GENERATE(
+        table<common::MDUpdate, std::string>({{{1, 2, 3, 4, 5, 6}, "Consecutive values"},
+                                              {{0, 0, 0, 0, 0, 0}, "Zero values"},
+                                              {{UINT64_MAX, 9, UINT64_MAX, 0, 100, 200}, "Max and mix values"}}));
 
     DYNAMIC_SECTION("Testing case: " << description) {
         std::vector<char> serialized = mdup.serialize();
@@ -123,6 +128,6 @@ TEST_CASE("MDUpdate serialization") {
 
         REQUIRE(serialized.size() == expected_size);
         CHECK(areEqual(mdup, deserialized));
-        CHECK(static_cast<int>(serialized[common::kPtrForMsgType]) == 1);
+        CHECK(static_cast<int>(serialized[common::kPtrForMsgType]) == static_cast<int>(common::MessageType::MD_UPDATE));
     }
 }

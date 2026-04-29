@@ -26,6 +26,7 @@ void OrderBook::NewBid(Order order) {
 
     auto result = bids_.insert(order);
     if (result.second) {
+        total_bid_quantity_ += order.quantity;
         Logger::Log(LogLevel::Info, std::format("New BID added, id = {}", order.id));
     } else {
         Logger::Log(LogLevel::Error, std::format("NewBid: BID id = {} already exists", order.id));
@@ -41,6 +42,7 @@ void OrderBook::NewAsk(Order order) {
 
     auto result = asks_.insert(order);
     if (result.second) {
+        total_ask_quantity_ += order.quantity;
         Logger::Log(LogLevel::Info, std::format("New ASK added, id = {}", order.id));
     } else {
         Logger::Log(LogLevel::Error, std::format("NewAsk: ASK id = {} already exists", order.id));
@@ -53,6 +55,7 @@ void OrderBook::CancelBid(ID order_id) {
     auto& index = bids_.get<1>();
     auto it = index.find(order_id);
     if (it != index.end()) {
+        total_bid_quantity_ -= it->quantity;
         index.erase(it);
         Logger::Log(LogLevel::Info, std::format("Bid canceled, id = {}", order_id));
     } else {
@@ -66,6 +69,7 @@ void OrderBook::CancelAsk(ID order_id) {
     auto& index = asks_.get<1>();
     auto it = index.find(order_id);
     if (it != index.end()) {
+        total_ask_quantity_ -= it->quantity;
         index.erase(it);
         Logger::Log(LogLevel::Info, std::format("Ask canceled, id = {}", order_id));
     } else {
@@ -91,6 +95,9 @@ void OrderBook::ReplaceBid(Order old_order, Order new_order) {
     auto& index = bids_.get<1>();
     auto it = index.find(old_order.id);
     if (it != index.end()) {
+        total_bid_quantity_ -= it->quantity;
+        total_bid_quantity_ += new_order.quantity;
+
         index.modify(it, [&](Order& o) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
@@ -119,6 +126,9 @@ void OrderBook::ReplaceAsk(Order old_order, Order new_order) {
     auto& index = asks_.get<1>();
     auto it = index.find(old_order.id);
     if (it != index.end()) {
+        total_ask_quantity_ -= it->quantity;
+        total_ask_quantity_ += new_order.quantity;
+
         index.modify(it, [&](Order& o) {
             o.price = new_order.price;
             o.quantity = new_order.quantity;
@@ -187,7 +197,7 @@ Order OrderBook::BestAsk() const {
 }
 
 std::optional<common::MDUpdate> OrderBook::GenerateMDUpdate() const {
-    constexpr common::Order kEmptyOrder(0, 0, 0);
+    const common::Order kEmptyOrder(0, 0, 0);
 
     Order best_bid = BestBid();
     Order best_ask = BestAsk();
@@ -203,7 +213,9 @@ std::optional<common::MDUpdate> OrderBook::GenerateMDUpdate() const {
     return common::MDUpdate{.best_bid_price = best_bid.price,
                             .best_bid_qty = best_bid_price_info.quantity_,
                             .best_ask_price = best_ask.price,
-                            .best_ask_qty = best_ask_price_info.quantity_};
+                            .best_ask_qty = best_ask_price_info.quantity_,
+                            .total_bid_qty = total_bid_quantity_.load(),
+                            .total_ask_qty = total_ask_quantity_.load()};
 }
 
 /**

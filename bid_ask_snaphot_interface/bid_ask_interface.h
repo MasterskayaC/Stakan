@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <format>
 #include <sstream>
 #include <string>
@@ -87,6 +88,9 @@ struct MDUpdate {
     Price best_ask_price;
     Quantity best_ask_qty;
 
+    Quantity total_bid_qty;
+    Quantity total_ask_qty;
+
     /**
      * @brief serialize MDUpdate
      * @return vector of char
@@ -158,15 +162,19 @@ inline std::string to_string(const Snapshot& snapshot) {
 inline std::string to_string(const MDUpdate& md_update) {
     if (md_update.best_ask_price == 0 && md_update.best_bid_price == 0)
         return "";
-    std::string result = std::format("Best bid price: {}\n"
+    std::string result = std::format(
+        "Best bid price: {}\n"
         "Bid items by this price: {}\n"
-        "Beset ask price: {}\n"
-        "Ask items by this price: {}\n",
+        "Best ask price: {}\n"
+        "Ask items by this price: {}\n"
+        "Total bid quantity: {}\n"
+        "Total ask quantity: {}\n",
         md_update.best_bid_price,
         md_update.best_bid_qty,
         md_update.best_ask_price,
-        md_update.best_ask_qty
-        );
+        md_update.best_ask_qty,
+        md_update.total_bid_qty,
+        md_update.total_ask_qty);
     return result;
 }
 

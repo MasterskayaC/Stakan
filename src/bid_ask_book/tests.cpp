@@ -201,3 +201,232 @@ TEST_CASE("Check GetPricesInfo function"){
         REQUIRE(info_ask.quantity_ == 42);
     }
 }
+
+TEST_CASE("GenerateMDUpdate total quantities with validation") {
+    OrderBook book;
+
+    SECTION("Empty book returns nullopt") {
+        auto md_update = book.GenerateMDUpdate();
+        CHECK_FALSE(md_update.has_value());
+    }
+
+    SECTION("Invalid orders are rejected and don't affect totals") {
+        // Try to add Order with zero price and qty
+        book.NewBid(Order(1, 0, 10));
+        book.NewAsk(Order(2, 100, 0));
+
+        auto md_update = book.GenerateMDUpdate();
+        CHECK_FALSE(md_update.has_value());
+
+        // Add correct Orders
+        book.NewBid(Order(3, 100, 10));
+        book.NewAsk(Order(4, 105, 5));
+
+        md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->total_ask_qty == 5);
+    }
+}
+
+TEST_CASE("GenerateMDUpdate total quantities with multiple operations") {
+    OrderBook book;
+
+    SECTION("Add bids and asks with same price") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewBid(Order(2, 100, 20));
+        book.NewBid(Order(3, 100, 30));
+
+        book.NewAsk(Order(4, 105, 5));
+        book.NewAsk(Order(5, 105, 15));
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 60);
+        CHECK(md_update->total_ask_qty == 20);
+        CHECK(md_update->best_bid_price == 100);
+        CHECK(md_update->best_ask_price == 105);
+    }
+
+    SECTION("Cancel operations update totals correctly") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewBid(Order(2, 101, 20));
+        book.NewAsk(Order(3, 105, 5));
+        book.NewAsk(Order(4, 106, 8));
+
+        book.CancelBid(1);
+        book.CancelAsk(3);
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 20);
+        CHECK(md_update->total_ask_qty == 8);
+        CHECK(md_update->best_bid_price == 101);
+        CHECK(md_update->best_ask_price == 106);
+    }
+
+    SECTION("Cancel non-existent orders don't affect totals") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewAsk(Order(2, 105, 5));
+
+        book.CancelBid(999);
+        book.CancelAsk(999);
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->total_ask_qty == 5);
+    }
+}
+
+TEST_CASE("GenerateMDUpdate total quantities with replace operations") {
+    OrderBook book;
+
+    SECTION("Replace bid with different quantity") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewAsk(Order(2, 105, 5));
+
+        Order new_bid(1, 110, 25);
+        book.ReplaceBid(Order(1, 100, 10), new_bid);
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 25);
+        CHECK(md_update->total_ask_qty == 5);
+        CHECK(md_update->best_bid_price == 110);
+    }
+
+    SECTION("Replace ask with different quantity") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewAsk(Order(2, 105, 5));
+
+        Order new_ask(2, 100, 15);
+        book.ReplaceAsk(Order(2, 105, 5), new_ask);
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->total_ask_qty == 15);
+        CHECK(md_update->best_ask_price == 100);
+    }
+
+    SECTION("Replace with invalid order (zero price or quantity)") {
+        book.NewBid(Order(1, 100, 10));
+        book.NewAsk(Order(2, 105, 5));
+
+        // Try to replace to Order with zero price and qty
+        book.ReplaceBid(Order(1, 100, 10), Order(1, 0, 25));
+        book.ReplaceAsk(Order(2, 105, 5), Order(2, 105, 0));
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->total_ask_qty == 5);
+        CHECK(md_update->best_bid_price == 100);
+        CHECK(md_update->best_ask_price == 105);
+    }
+
+    SECTION("Replace with different id does nothing") {
+        book.NewBid(Order(1, 100, 10));
+
+        book.ReplaceBid(Order(1, 100, 10), Order(2, 110, 15));
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->best_bid_price == 100);
+        CHECK(md_update->best_bid_qty == 10);
+    }
+
+    SECTION("Replace non-existent order") {
+        book.NewBid(Order(1, 100, 10));
+
+        book.ReplaceBid(Order(999, 100, 10), Order(999, 110, 15));
+
+        auto md_update = book.GenerateMDUpdate();
+        REQUIRE(md_update.has_value());
+        CHECK(md_update->total_bid_qty == 10);
+        CHECK(md_update->best_bid_price == 100);
+    }
+}
+
+TEST_CASE("GenerateMDUpdate total quantities with mixed operations sequence") {
+    OrderBook book;
+
+    book.NewBid(Order(1, 100, 10));  // total_bid = 10
+    book.NewBid(Order(2, 101, 20));  // total_bid = 30
+    book.NewAsk(Order(3, 105, 5));   // total_ask = 5
+    book.NewAsk(Order(4, 106, 8));   // total_ask = 13
+
+    auto md_update = book.GenerateMDUpdate();
+    REQUIRE(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 30);
+    CHECK(md_update->total_ask_qty == 13);
+
+    book.ReplaceBid(Order(2, 101, 20), Order(2, 102, 30));
+    md_update = book.GenerateMDUpdate();
+    REQUIRE(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 40);
+    CHECK(md_update->total_ask_qty == 13);
+
+    book.CancelAsk(3);              // total_ask = 8
+    md_update = book.GenerateMDUpdate();
+    REQUIRE(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 40);
+    CHECK(md_update->total_ask_qty == 8);
+
+    book.NewAsk(Order(5, 104, 12));  // total_ask = 20
+    md_update = book.GenerateMDUpdate();
+    REQUIRE(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 40);
+    CHECK(md_update->total_ask_qty == 20);
+    CHECK(md_update->best_ask_price == 104);
+}
+
+TEST_CASE("GenerateMDUpdate returns nullopt when bids/asks empty") {
+    OrderBook book;
+
+    auto md_update = book.GenerateMDUpdate();
+    CHECK_FALSE(md_update.has_value());
+
+    book.NewBid(Order(1, 100, 10));
+    md_update = book.GenerateMDUpdate();
+    CHECK(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 10);
+    CHECK(md_update->total_ask_qty == 0);
+
+    book.CancelBid(1);
+    md_update = book.GenerateMDUpdate();
+    CHECK_FALSE(md_update.has_value());
+
+    book.NewAsk(Order(2, 105, 5));
+    md_update = book.GenerateMDUpdate();
+    CHECK(md_update.has_value());
+    CHECK(md_update->total_bid_qty == 0);
+    CHECK(md_update->total_ask_qty == 5);
+}
+
+TEST_CASE("GenerateMDUpdate total quantities with price info consistency") {
+    OrderBook book;
+
+    // Add Orders with diff prices
+    book.NewBid(Order(1, 100, 10));
+    book.NewBid(Order(2, 99, 15));
+    book.NewBid(Order(3, 98, 20));
+
+    book.NewAsk(Order(4, 101, 5));
+    book.NewAsk(Order(5, 102, 8));
+    book.NewAsk(Order(6, 103, 12));
+
+    auto md_update = book.GenerateMDUpdate();
+    REQUIRE(md_update.has_value());
+
+    CHECK(md_update->total_bid_qty == 45);
+    CHECK(md_update->total_ask_qty == 25);
+
+    CHECK(md_update->best_bid_price == 100);
+    CHECK(md_update->best_ask_price == 101);
+
+    CHECK(md_update->best_bid_qty == 10);
+    CHECK(md_update->best_ask_qty == 5);
+}
